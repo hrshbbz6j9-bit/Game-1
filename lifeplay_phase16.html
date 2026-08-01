@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LifePlay</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --accent:#3fb950; --accent2:#58a6ff;
+    --danger:#f85149; --warn:#d29922; --text:#e6edf3; --sub:#8b949e; --border:#30363d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);}
+  #phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow-x:hidden;}
+  .hidden{display:none !important;}
+  /* Loading */
+  #screen-loading{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0d1117,#1a2233);}
+  #screen-loading h1{font-size:2.4em;letter-spacing:2px;margin-bottom:6px;background:linear-gradient(90deg,#3fb950,#58a6ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  #screen-loading p{color:var(--sub);margin-top:0;}
+  .loadbar-track{width:70%;height:10px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:30px;}
+  .loadbar-fill{height:100%;width:0%;background:linear-gradient(90deg,#3fb950,#58a6ff);transition:width .1s linear;}
+  #loading-tip{margin-top:14px;font-size:.8em;color:var(--sub);text-align:center;padding:0 20px;}
+  /* New life */
+  #screen-newlife{padding:24px 20px;display:flex;flex-direction:column;gap:14px;min-height:100vh;}
+  #screen-newlife h2{text-align:center;margin-bottom:0;}
+  .field label{display:block;font-size:.8em;color:var(--sub);margin-bottom:4px;}
+  .field input, .field select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:1em;}
+  .btn{padding:12px 16px;border-radius:12px;border:none;background:var(--panel2);color:var(--text);font-size:1em;cursor:pointer;text-align:center;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(90deg,#3fb950,#2ea043);color:#04140a;font-weight:700;}
+  .btn-danger{background:linear-gradient(90deg,#f85149,#da3633);color:#fff;font-weight:700;}
+  .btn-accent{background:linear-gradient(90deg,#58a6ff,#388bfd);color:#04101f;font-weight:700;}
+  .btn-block{width:100%;}
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+  /* Game screen */
+  #screen-game{display:flex;flex-direction:column;height:100vh;}
+  #header{padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border);}
+  #header .who{display:flex;align-items:center;gap:10px;}
+  #header .avatar{font-size:2em;}
+  #header .who-info{flex:1;}
+  #header .who-info b{font-size:1.05em;}
+  #header .who-info span{display:block;font-size:.75em;color:var(--sub);}
+  #header .money{font-weight:700;color:var(--accent);}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+  .stat{font-size:.72em;}
+  .stat .lbl{display:flex;justify-content:space-between;color:var(--sub);margin-bottom:2px;}
+  .stat .bar{height:6px;border-radius:4px;background:#0d1117;overflow:hidden;}
+  .stat .bar i{display:block;height:100%;border-radius:4px;}
+  #log{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column-reverse;gap:8px;}
+  .logline{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:.88em;line-height:1.35;}
+  .logline .age{color:var(--sub);font-size:.75em;display:block;margin-bottom:2px;}
+  .logline.good{border-left:3px solid var(--accent);}
+  .logline.bad{border-left:3px solid var(--danger);}
+  .logline.neutral{border-left:3px solid var(--accent2);}
+  .newspaper{background:#f4ecd8;color:#1a1a1a;border:2px solid #2b2b2b;border-radius:4px;padding:12px 14px;font-family:Georgia,'Times New Roman',serif;}
+  .newspaper .np-name{font-size:.65em;letter-spacing:3px;text-transform:uppercase;text-align:center;border-bottom:2px solid #1a1a1a;border-top:2px solid #1a1a1a;padding:3px 0;margin-bottom:6px;}
+  .newspaper h3{margin:0 0 4px;font-size:1.15em;text-align:center;line-height:1.2;}
+  .newspaper p{margin:0;font-size:.78em;text-align:center;font-style:italic;}
+  #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:1px solid var(--border);}
+  #bottomnav button{background:none;border:none;color:var(--sub);padding:8px 2px;font-size:.65em;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
+  #bottomnav button .ic{font-size:1.35em;}
+  #bottomnav button.active{color:var(--accent2);}
+  #ageup-btn{position:sticky;bottom:0;margin:0;border-radius:0;padding:14px;}
+  /* Panel / modal */
+  #panel-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;z-index:50;}
+  #panel{background:var(--bg);width:100%;max-height:82vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden;}
+  #panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  #panel-head h3{margin:0;}
+  #panel-body{padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+  .close-x{background:none;border:none;color:var(--sub);font-size:1.3em;cursor:pointer;}
+  .list-item{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .list-item .li-main b{display:block;}
+  .list-item .li-main span{font-size:.78em;color:var(--sub);}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68em;background:var(--panel2);color:var(--sub);}
+  #modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
+  #modal-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;}
+  #modal-card h3{margin-top:0;}
+  #modal-card .choices{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  /* Death screen */
+  #screen-dead{padding:24px 20px;text-align:center;min-height:100vh;background:radial-gradient(circle at top,#1a1010,#000);display:flex;flex-direction:column;gap:12px;}
+  #screen-dead h1{color:var(--danger);}
+  .legacy-badge{font-size:3em;font-weight:800;margin:6px 0 0;}
+  .legacy-grade{font-size:1em;color:var(--sub);}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+</style>
+</head>
+<body>
+<div id="phone">
+
+  <div id="screen-loading">
+    <h1>LifePlay</h1>
+    <p>a life simulator</p>
+    <div class="loadbar-track"><div class="loadbar-fill" id="loadbar-fill"></div></div>
+    <div id="loading-tip">Loading...</div>
+  </div>
+
+  <div id="screen-newlife" class="hidden">
+    <h2>New Life</h2>
+    <div class="field">
+      <label>First Name</label>
+      <input id="nl-first" type="text" placeholder="Random">
+    </div>
+    <div class="field">
+      <label>Last Name</label>
+      <input id="nl-last" type="text" placeholder="Random">
+    </div>
+    <div class="field">
+      <label>Gender</label>
+      <select id="nl-gender">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Nonbinary">Nonbinary</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>City</label>
+      <select id="nl-city"></select>
+    </div>
+    <button class="btn btn-primary btn-block" id="nl-start" style="margin-top:10px;">Start Life</button>
+  </div>
+
+  <div id="screen-game" class="hidden">
+    <div id="header">
+      <div class="who">
+        <div class="avatar" id="hd-avatar">👶</div>
+        <div class="who-info">
+          <b id="hd-name">-</b>
+          <span id="hd-sub">-</span>
+        </div>
+        <div class="money" id="hd-money">$0</div>
+      </div>
+      <div class="stats" id="hd-stats"></div>
+    </div>
+    <div id="log"></div>
+    <button class="btn btn-primary" id="ageup-btn">🎂 Age Up</button>
+    <div id="bottomnav">
+      <button data-panel="career"><span class="ic">💼</span>Career</button>
+      <button data-panel="assets"><span class="ic">💰</span>Assets</button>
+      <button data-panel="relationships"><span class="ic">❤️</span>People</button>
+      <button data-panel="activities"><span class="ic">🎲</span>Activities</button>
+      <button data-panel="world"><span class="ic">🌍</span>World</button>
+      <button data-panel="profile"><span class="ic">👤</span>Profile</button>
+    </div>
+  </div>
+
+  <div id="screen-dead" class="hidden"></div>
+
+  <div id="panel-overlay" class="hidden">
+    <div id="panel">
+      <div id="panel-head"><h3 id="panel-title">Panel</h3><button class="close-x" id="panel-close">✕</button></div>
+      <div id="panel-body"></div>
+    </div>
+  </div>
+
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-card"></div>
+  </div>
+
+</div>
+<script>
+'use strict';
+/* =========================================================================
+   LIFEPLAY — single file life simulator
+   ========================================================================= */
+
+/* ============================ UTILITIES ================================ */
+function $(id){ return document.getElementById(id); }
+function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pick(arr){ return arr[rand(0,arr.length-1)]; }
+function chance(pct){ return Math.random()*100 < pct; }
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+function fmtMoney(n){
+  n = Math.round(n);
+  const neg = n<0; n = Math.abs(n);
+  let s = n.toLocaleString('en-US');
+  return (neg?'-$':'$')+s;
+}
+function uid(){ return 'id'+Math.random().toString(36).slice(2,10); }
+
+/* ============================ DATA: STATIC =============================== */
+const CITIES = ["New York","Los Angeles","Chicago","Houston","Miami","Las Vegas","Seattle","Boston",
+  "Austin","Denver","Atlanta","Nashville","Phoenix","Portland","New Orleans","San Francisco"];
+
+const MALE_FIRST = ["James","John","Robert","Michael","David","William","Richard","Joseph","Thomas","Charles",
+  "Daniel","Matthew","Anthony","Mark","Andrew","Joshua","Kevin","Brian","Tyler","Jordan"];
+const FEMALE_FIRST = ["Mary","Patricia","Jennifer","Linda","Elizabeth","Barbara","Susan","Jessica","Sarah","Karen",
+  "Lisa","Nancy","Emily","Amanda","Ashley","Megan","Olivia","Sophia","Ava","Mia"];
+const NB_FIRST = ["Alex","Jordan","Taylor","Casey","Riley","Morgan","Avery","Quinn","Skyler","Dakota"];
+const LAST_NAMES = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez",
+  "Hernandez","Lopez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee"];
+
+function randomFirstName(gender){
+  if(gender==='Male') return pick(MALE_FIRST);
+  if(gender==='Female') return pick(FEMALE_FIRST);
+  return pick(NB_FIRST);
+}
+
+/* ============================ STATE ====================================== */
+let state = null;
+
+function freshState(){
+  return {
+    name:'', first:'', last:'', gender:'Male', city:'New York', age:0, alive:true, birthYear: 2026 - rand(0,0),
+    stats:{health:100, happiness:80, smarts:50, looks:50, karma:50},
+    money: 0,
+    eduStage:'none', // none, elementary, middle, highschool, college, grad
+    eduYear:0, major:null, gpa:3.0, dropped:false, expelled:false,
+    job:null, jobHistory:[],
+    relationships:[], // {id,name,type,rel,alive,gender,age}
+    spouseId:null, kids:[],
+    assets:{cars:[], houses:[], businesses:[]},
+    pets:[],
+    crypto:{btc:0, eth:0, lifecoin:0, memetoken:0},
+    criminalRecord:[], inPrison:false, prisonYearsLeft:0, prisonRep:0, escapePlan:0,
+    gang:null,
+    drugEmpire:{tier:0, heat:0, name:null},
+    influencer:{tier:0, followers:0, platform:null},
+    sportsCareer:null,
+    clubs:[],
+    achievements:new Set(),
+    log:[],
+    rival:null, mentor:null,
+    religion:null, faithLevel:0,
+    flags:{}, // arbitrary story flags
+    bucketList:[],
+    addiction:null,
+    illness:null,
+    politics:{office:null, approval:50, campaign:null, termYears:0, scandalCount:0},
+    business:{companies:[]},
+    loveLanguage:null,
+    lastCause:null,
+    murders:0,
+  };
+}
+
+function newRelationship(type, opts){
+  opts = opts||{};
+  const gender = opts.gender || pick(['Male','Female']);
+  return {
+    id: uid(), type, gender,
+    name: opts.name || (randomFirstName(gender)+' '+ (opts.last || state.last)),
+    age: opts.age!=null?opts.age:rand(20,45),
+    rel: opts.rel!=null?opts.rel:rand(50,90),
+    alive:true, jobless:false,
+  };
+}
+
+/* ============================ RENDER ENGINE ============================== */
+function showScreen(name){
+  ['loading','newlife','game','dead'].forEach(s=>{
+    $('screen-'+s).classList.toggle('hidden', s!==name);
+  });
+}
+
+function statColor(v){
+  if(v>=70) return '#3fb950';
+  if(v>=40) return '#d29922';
+  return '#f85149';
+}
+
+function avatarFor(){
+  const a = state.age;
+  if(!state.alive) return '💀';
+  if(a<2) return '👶';
+  if(a<13) return state.gender==='Female'?'👧':(state.gender==='Male'?'👦':'🧒');
+  if(a<20) return state.gender==='Female'?'👩‍🦱':(state.gender==='Male'?'👨‍🦱':'🧑');
+  if(a<60) return state.gender==='Female'?'👩':(state.gender==='Male'?'👨':'🧑');
+  return state.gender==='Female'?'👵':(state.gender==='Male'?'👴':'🧓');
+}
+
+function render(){
+  if(!state) return;
+  if(!state.alive){ renderDeathScreen(); return; }
+  showScreen('game');
+  $('hd-avatar').textContent = avatarFor();
+  $('hd-name').textContent = state.name;
+  let sub = 'Age '+state.age+' · '+state.city;
+  if(state.job) sub += ' · '+state.job.title;
+  else if(state.inPrison) sub += ' · Incarcerated';
+  $('hd-sub').textContent = sub;
+  $('hd-money').textContent = fmtMoney(state.money);
+  const statsHtml = ['health','happiness','smarts','looks','karma'].map(k=>{
+    const v = clamp(Math.round(state.stats[k]),0,100);
+    return `<div class="stat"><div class="lbl"><span>${k[0].toUpperCase()+k.slice(1)}</span><span>${v}</span></div>
+      <div class="bar"><i style="width:${v}%;background:${statColor(v)}"></i></div></div>`;
+  }).join('');
+  $('hd-stats').innerHTML = statsHtml;
+  renderLog();
+}
+
+function renderLog(){
+  const el = $('log');
+  el.innerHTML = state.log.slice(-200).map(entry=>{
+    if(entry.newspaper){
+      return `<div class="newspaper"><div class="np-name">${entry.paper||'The Daily Life'}</div>
+        <h3>${entry.headline}</h3><p>${entry.sub||''}</p></div>`;
+    }
+    return `<div class="logline ${entry.type||'neutral'}"><span class="age">Age ${entry.age}</span>${entry.text}</div>`;
+  }).join('');
+}
+
+function log(text, type, age){
+  state.log.push({text, type:type||'neutral', age: age!=null?age:state.age});
+  renderLog();
+}
+
+function newspaper(headline, sub, paper){
+  state.log.push({newspaper:true, headline, sub, paper: paper || pick(['The Daily Life','City Herald','The Chronicle','Metro Times'])});
+  renderLog();
+}
+
+/* ============================ MODAL / PANEL HELPERS ======================= */
+function openPanel(title, bodyHtml){
+  $('panel-title').textContent = title;
+  $('panel-body').innerHTML = bodyHtml;
+  $('panel-overlay').classList.remove('hidden');
+}
+function closePanel(){ $('panel-overlay').classList.add('hidden'); }
+$('panel-close').onclick = closePanel;
+$('panel-overlay').addEventListener('click', e=>{ if(e.target.id==='panel-overlay') closePanel(); });
+
+function showModal(html){
+  $('modal-card').innerHTML = html;
+  $('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){ $('modal-overlay').classList.add('hidden'); }
+$('modal-overlay').addEventListener('click', e=>{ if(e.target.id==='modal-overlay') closeModal(); });
+
+/* Generic "scene" engine used by many storylines (debate, chemo, therapy, sponsor talks...) */
+function playScene(scene){
+  // scene: {title, text, choices:[{label, run(){...}}]}
+  const choicesHtml = scene.choices.map((c,i)=>`<button class="btn btn-block" data-i="${i}">${c.label}</button>`).join('');
+  showModal(`<h3>${scene.title}</h3><p>${scene.text}</p><div class="choices">${choicesHtml}</div>`);
+  $('modal-card').querySelectorAll('button[data-i]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const c = scene.choices[+btn.dataset.i];
+      closeModal();
+      if(c.run) c.run();
+      render();
+    };
+  });
+}
+
+/* ============================ NEW LIFE FLOW =============================== */
+function populateCitySelect(){
+  const sel = $('nl-city');
+  sel.innerHTML = CITIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function startNewLife(){
+  state = freshState();
+  const gender = $('nl-gender').value;
+  state.gender = gender;
+  state.first = $('nl-first').value.trim() || randomFirstName(gender);
+  state.last = $('nl-last').value.trim() || pick(LAST_NAMES);
+  state.name = state.first+' '+state.last;
+  state.city = $('nl-city').value;
+  state.stats.smarts = clamp(rand(20,80),0,100);
+  state.stats.looks = clamp(rand(20,80),0,100);
+  state.stats.health = rand(80,100);
+  state.stats.happiness = rand(60,100);
+  state.stats.karma = 50;
+  state.money = 0;
+
+  // parents
+  const dad = newRelationship('parent',{gender:'Male', age:rand(24,42), rel:rand(60,95), last:state.last});
+  const mom = newRelationship('parent',{gender:'Female', age:rand(22,40), rel:rand(60,95), last:state.last});
+  dad.name = randomFirstName('Male')+' '+state.last;
+  mom.name = randomFirstName('Female')+' '+state.last;
+  state.relationships.push(dad, mom);
+  if(chance(60)){
+    const sib = newRelationship('sibling',{gender:pick(['Male','Female']), age:rand(0,10), rel:rand(50,90), last:state.last});
+    state.relationships.push(sib);
+  }
+  state.eduStage='none';
+  log(`You were born in ${state.city} to ${mom.name} and ${dad.name}.`,'good',0);
+  render();
+  showScreen('game');
+}
+
+/* ============================ BOTTOM NAV WIRING =========================== */
+document.querySelectorAll('#bottomnav button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const p = btn.dataset.panel;
+    if(p==='career') openCareerPanel();
+    else if(p==='assets') openAssetsPanel();
+    else if(p==='relationships') openRelationshipsPanel();
+    else if(p==='activities') openActivitiesPanel();
+    else if(p==='world') openWorldPanel();
+    else if(p==='profile') openProfilePanel();
+  });
+});
+
+/* ============================ JOBS DATA ==================================== */
+const JOBS = [
+  {title:'Fast Food Worker', edu:'none', salary:18000, tier:1},
+  {title:'Retail Associate', edu:'none', salary:21000, tier:1},
+  {title:'Janitor', edu:'none', salary:23000, tier:1},
+  {title:'Cashier', edu:'none', salary:20000, tier:1},
+  {title:'Landscaper', edu:'none', salary:26000, tier:1},
+  {title:'Construction Worker', edu:'highschool', salary:34000, tier:2},
+  {title:'Truck Driver', edu:'highschool', salary:39000, tier:2},
+  {title:'Police Officer', edu:'highschool', salary:48000, tier:2},
+  {title:'Firefighter', edu:'highschool', salary:47000, tier:2},
+  {title:'Electrician', edu:'highschool', salary:54000, tier:2},
+  {title:'Real Estate Agent', edu:'highschool', salary:42000, tier:2},
+  {title:'Chef', edu:'highschool', salary:38000, tier:2},
+  {title:'Teacher', edu:'college', salary:44000, tier:3},
+  {title:'Nurse', edu:'college', salary:62000, tier:3},
+  {title:'Accountant', edu:'college', salary:56000, tier:3},
+  {title:'Software Engineer', edu:'college', salary:92000, tier:3},
+  {title:'Marketing Manager', edu:'college', salary:59000, tier:3},
+  {title:'Journalist', edu:'college', salary:41000, tier:3},
+  {title:'Graphic Designer', edu:'college', salary:46000, tier:3},
+  {title:'Civil Engineer', edu:'college', salary:67000, tier:3},
+  {title:'Architect', edu:'college', salary:71000, tier:3},
+  {title:'Lawyer', edu:'grad', salary:115000, tier:4},
+  {title:'Doctor', edu:'grad', salary:190000, tier:4},
+  {title:'Psychologist', edu:'grad', salary:78000, tier:4},
+  {title:'Professor', edu:'grad', salary:73000, tier:4},
+  {title:'Investment Banker', edu:'grad', salary:145000, tier:4},
+];
+
+function jobsAvailable(){
+  const order = {none:0, highschool:1, college:2, grad:3};
+  const myLevel = order[state.eduStage] ?? 0;
+  return JOBS.filter(j=> order[j.edu] <= myLevel);
+}
+
+function applyForJob(job){
+  const chanceToGet = clamp(50 + (state.stats.smarts-50)*0.4 + (state.stats.looks-50)*0.2 - (state.criminalRecord.length*10), 5, 95);
+  if(chance(chanceToGet)){
+    state.job = {title:job.title, salary:job.salary, tier:job.tier, years:0};
+    log(`You got hired as a ${job.title}, earning ${fmtMoney(job.salary)}/yr.`,'good');
+    checkAchievement('first_job');
+  } else {
+    log(`You applied for ${job.title} but didn't get the job.`,'bad');
+  }
+  closePanel();
+  render();
+}
+
+function quitJob(){
+  if(!state.job) return;
+  state.jobHistory.push(state.job);
+  log(`You quit your job as a ${state.job.title}.`,'neutral');
+  state.job = null;
+  closePanel(); render();
+}
+
+/* ============================ CAREER / EDUCATION PANEL ===================== */
+function openCareerPanel(){
+  let html = '';
+  html += `<div class="list-item"><div class="li-main"><b>Education</b><span>${eduLabel()}</span></div></div>`;
+  if(state.eduStage==='none' && state.age>=5 && state.age<11){
+    html += `<button class="btn btn-block" onclick="enrollSchool('elementary')">Enroll in Elementary School</button>`;
+  }
+  if(state.eduStage==='elementary' && state.age>=11){
+    html += `<button class="btn btn-block" onclick="enrollSchool('middle')">Enroll in Middle School</button>`;
+  }
+  if(state.eduStage==='middle' && state.age>=14){
+    html += `<button class="btn btn-block" onclick="enrollSchool('highschool')">Enroll in High School</button>`;
+  }
+  if(state.eduStage==='highschool' && state.eduYear>=4 && state.age>=18){
+    html += `<button class="btn btn-block" onclick="applyCollege()">Apply to College</button>`;
+  }
+  if(state.eduStage==='college' && state.eduYear>=4 && !state.dropped){
+    html += `<button class="btn btn-block" onclick="applyGradSchool()">Apply to Grad School</button>`;
+  }
+  if(state.eduStage==='college' || state.eduStage==='grad'){
+    html += `<button class="btn btn-block btn-danger" onclick="dropOut()">Drop Out</button>`;
+  }
+  html += `<hr style="border-color:var(--border)">`;
+  if(state.job){
+    html += `<div class="list-item"><div class="li-main"><b>${state.job.title}</b><span>${fmtMoney(state.job.salary)}/yr · ${state.job.years} yrs</span></div>
+      <button class="btn" onclick="quitJob()">Quit</button></div>`;
+    html += `<button class="btn btn-block btn-accent" onclick="askForRaise()">Ask for Raise</button>`;
+  } else if(state.age>=16 && !state.inPrison){
+    html += `<b>Available Jobs</b>`;
+    jobsAvailable().forEach(j=>{
+      html += `<div class="list-item"><div class="li-main"><b>${j.title}</b><span>${fmtMoney(j.salary)}/yr · requires ${j.edu}</span></div>
+        <button class="btn" onclick='applyForJobByTitle(${JSON.stringify(j.title)})'>Apply</button></div>`;
+    });
+  } else {
+    html += `<p style="color:var(--sub)">You're too young to work, or currently unavailable.</p>`;
+  }
+  openPanel('Career', html);
+}
+function applyForJobByTitle(title){ applyForJob(JOBS.find(j=>j.title===title)); }
+
+function askForRaise(){
+  if(!state.job) return;
+  const succ = chance(clamp(40+(state.stats.smarts-50)*0.5,10,85));
+  if(succ){
+    const bump = Math.round(state.job.salary*0.1);
+    state.job.salary += bump;
+    log(`Your boss approved your raise request! +${fmtMoney(bump)}/yr.`,'good');
+  } else {
+    log(`Your boss denied your raise request.`,'bad');
+    state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+  }
+  closePanel(); render();
+}
+
+function eduLabel(){
+  const map = {none:'Not enrolled', elementary:'Elementary School', middle:'Middle School',
+    highschool:'High School', college:'College'+(state.major?(' - '+state.major):''), grad:'Grad School'};
+  let l = map[state.eduStage] || 'Unknown';
+  if(state.eduStage!=='none') l += ` (Year ${state.eduYear}, GPA ${state.gpa.toFixed(1)})`;
+  return l;
+}
+
+function enrollSchool(stage){
+  state.eduStage = stage; state.eduYear = 0;
+  log(`You enrolled in ${stage==='highschool'?'High School':stage[0].toUpperCase()+stage.slice(1)+' School'}.`,'good');
+  closePanel(); render();
+}
+
+const MAJORS = ["Computer Science","Business","Nursing","Education","Engineering","Communications","Art","Psychology","Biology","Law (Pre-Law)"];
+function applyCollege(){
+  const got = chance(clamp(35+(state.stats.smarts-50)*0.7,5,95));
+  if(got){
+    state.eduStage='college'; state.eduYear=0; state.major = pick(MAJORS); state.dropped=false;
+    log(`You were accepted into college! Major: ${state.major}.`,'good');
+    checkAchievement('college_accept');
+  } else {
+    log(`You were rejected from every college you applied to.`,'bad');
+  }
+  closePanel(); render();
+}
+function applyGradSchool(){
+  const got = chance(clamp(30+(state.stats.smarts-50)*0.7,5,90));
+  if(got){
+    state.eduStage='grad'; state.eduYear=0;
+    log(`You were accepted into grad school for ${state.major}.`,'good');
+  } else {
+    log(`Grad schools rejected your application.`,'bad');
+  }
+  closePanel(); render();
+}
+function dropOut(){
+  state.dropped = true; state.eduStage='highschool'; // fallback credential
+  log(`You dropped out of school.`,'bad');
+  closePanel(); render();
+}
+
+/* ============================ GENERIC LIFE EVENTS ========================= */
+const CHILD_EVENTS = [
+  {text:'You learned to ride a bike!', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You made a new best friend at school.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You got in trouble for talking back to a teacher.', type:'bad', fx:s=>{s.stats.karma-=2;}},
+  {text:'You won a spelling bee!', type:'good', fx:s=>{s.stats.smarts+=3; s.stats.happiness+=2;}},
+  {text:'You broke your arm falling off the monkey bars.', type:'bad', fx:s=>{s.stats.health-=8;}},
+  {text:'You got a shiny new bike for your birthday.', type:'good', fx:s=>{s.stats.happiness+=5;}},
+  {text:'A bully picked on you at recess.', type:'bad', fx:s=>{s.stats.happiness-=5;}},
+  {text:'You joined a youth soccer league.', type:'good', fx:s=>{s.stats.health+=3;}},
+];
+const TEEN_EVENTS = [
+  {text:'You had your first crush.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You got acne and felt self-conscious.', type:'bad', fx:s=>{s.stats.looks-=3; s.stats.happiness-=2;}},
+  {text:'You threw a house party while your parents were away.', type:'neutral', fx:s=>{s.stats.happiness+=4; s.stats.karma-=1;}},
+  {text:'You aced your final exams.', type:'good', fx:s=>{s.stats.smarts+=4; s.gpa=clamp(s.gpa+0.2,0,4);}},
+  {text:'You got detention for skipping class.', type:'bad', fx:s=>{s.gpa=clamp(s.gpa-0.2,0,4);}},
+  {text:'You got your driver\'s license!', type:'good', fx:s=>{s.stats.happiness+=5;}},
+  {text:'You were cyberbullied online.', type:'bad', fx:s=>{s.stats.happiness-=6;}},
+  {text:'You started a part-time after-school job.', type:'neutral', fx:s=>{s.money+=rand(200,900);}},
+];
+const ADULT_EVENTS = [
+  {text:'You found a $20 bill on the sidewalk.', type:'good', fx:s=>{s.money+=20;}},
+  {text:'Your car needed unexpected repairs.', type:'bad', fx:s=>{s.money-=rand(300,1500);}},
+  {text:'You went on a relaxing vacation.', type:'good', fx:s=>{s.stats.happiness+=8; s.money-=rand(500,2000);}},
+  {text:'You caught a bad flu.', type:'bad', fx:s=>{s.stats.health-=6;}},
+  {text:'You reconnected with an old friend.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'Your identity was stolen online.', type:'bad', fx:s=>{s.money-=rand(500,3000);}},
+  {text:'You volunteered at a local shelter.', type:'good', fx:s=>{s.stats.karma+=4; s.stats.happiness+=2;}},
+  {text:'You had a minor car accident.', type:'bad', fx:s=>{s.stats.health-=5; s.money-=rand(200,1200);}},
+];
+const ELDER_EVENTS = [
+  {text:'You spent a quiet afternoon gardening.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'Your joints ached more than usual this year.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You told grandkids stories about the old days.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You had a scary fall at home.', type:'bad', fx:s=>{s.stats.health-=10;}},
+];
+
+function ageBracketEvents(){
+  if(state.age<13) return CHILD_EVENTS;
+  if(state.age<18) return TEEN_EVENTS;
+  if(state.age<65) return ADULT_EVENTS;
+  return ELDER_EVENTS;
+}
+
+/* ============================ AGE UP CORE =================================== */
+function ageUp(){
+  if(!state.alive) return;
+  state.age++;
+
+  // education year progression
+  if(state.eduStage!=='none' && state.eduStage!=='grad-done'){
+    state.eduYear++;
+    state.gpa = clamp(state.gpa + (chance(50)?0.1:-0.1)*(state.stats.smarts>50?1:-1), 0, 4);
+  }
+
+  // job pay + tenure
+  if(state.job){
+    state.money += state.job.salary;
+    state.job.years++;
+  }
+
+  // relationship aging
+  state.relationships.forEach(r=>{ if(r.alive) r.age++; });
+
+  // random generic event
+  if(chance(55)){
+    const pool = ageBracketEvents();
+    const e = pick(pool);
+    e.fx(state);
+    log(e.text, e.type);
+  }
+
+  // natural stat drift
+  state.stats.happiness = clamp(state.stats.happiness + rand(-2,2), 0, 100);
+  if(state.age>50) state.stats.health = clamp(state.stats.health - rand(0,2), 0, 100);
+  clampAllStats();
+
+  // prison ticking
+  if(state.inPrison){ tickPrison(); }
+
+  // sports ticking
+  if(state.sportsCareer){ tickSports(); }
+
+  // crypto market ticks every year
+  tickCryptoPrices();
+
+  // death checks
+  checkDeath();
+
+  if(state.alive){
+    checkAchievementsPassive();
+  }
+  render();
+}
+
+function clampAllStats(){
+  for(const k in state.stats) state.stats[k] = clamp(state.stats[k],0,100);
+}
+
+/* ============================ DEATH CHECK (base) ============================ */
+function checkDeath(){
+  if(!state.alive) return;
+  if(state.stats.health<=0){ die('poor health'); return; }
+  let deathChance = 0;
+  if(state.age>70) deathChance = (state.age-70)*1.2;
+  if(state.age>90) deathChance += 15;
+  if(chance(deathChance)){ die('old age'); return; }
+  if(chance(0.3)){ die('a sudden accident'); return; }
+}
+
+function die(cause){
+  state.alive = false;
+  state.lastCause = cause;
+  log(`You died of ${cause} at age ${state.age}.`,'bad');
+  newspaper(`LOCAL RESIDENT ${state.name.toUpperCase()} DIES AT ${state.age}`, `Cause: ${cause}. Survived by family and friends.`);
+}
+
+/* ============================ RELATIONSHIPS ================================= */
+function relLabel(type){
+  return {parent:'Parent', sibling:'Sibling', spouse:'Spouse', child:'Child', friend:'Friend',
+    exspouse:'Ex-Spouse', datingpartner:'Dating'}[type] || type;
+}
+
+function openRelationshipsPanel(){
+  let html = '';
+  const living = state.relationships.filter(r=>r.alive);
+  if(living.length===0) html += `<p style="color:var(--sub)">No relationships yet.</p>`;
+  living.forEach(r=>{
+    html += `<div class="list-item"><div class="li-main"><b>${r.name}</b><span>${relLabel(r.type)} · Age ${r.age} · Relationship ${Math.round(r.rel)}%</span></div>
+      <button class="btn" onclick='interactWith(${JSON.stringify(r.id)})'>Interact</button></div>`;
+  });
+  if(state.age>=16 && !state.spouseId){
+    html += `<button class="btn btn-block btn-accent" onclick="findDate()">Find a Date</button>`;
+  }
+  const datingPartner = living.find(r=>r.type==='datingpartner');
+  if(datingPartner){
+    html += `<button class="btn btn-block btn-primary" onclick='proposeMarriage(${JSON.stringify(datingPartner.id)})'>Propose Marriage</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick='breakUp(${JSON.stringify(datingPartner.id)})'>Break Up</button>`;
+  }
+  if(state.spouseId){
+    html += `<button class="btn btn-block" onclick="goOnDateNight()">Date Night</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick="fileDivorce()">File for Divorce</button>`;
+    if(state.age>=18) html += `<button class="btn btn-block" onclick="tryForBaby()">Try for a Baby</button>`;
+  }
+  html += `<button class="btn btn-block" onclick="openTherapyPanel()">Book Therapy Session</button>`;
+  openPanel('People', html);
+}
+
+function interactWith(id){
+  const r = state.relationships.find(x=>x.id===id);
+  if(!r) return;
+  const opts = [
+    {label:'Spend Time Together', run:()=>{ r.rel=clamp(r.rel+rand(3,10),0,100); state.stats.happiness=clamp(state.stats.happiness+3,0,100); log(`You spent quality time with ${r.name}. Relationship improved.`,'good'); }},
+    {label:'Give a Gift', run:()=>{ if(state.money>=100){ state.money-=100; r.rel=clamp(r.rel+8,0,100); log(`You gave ${r.name} a gift.`,'good'); } else { log(`Not enough money for a gift.`,'bad'); } }},
+    {label:'Compliment Them', run:()=>{ r.rel=clamp(r.rel+rand(1,6),0,100); log(`You complimented ${r.name}.`,'good'); }},
+    {label:'Insult Them', run:()=>{ r.rel=clamp(r.rel-rand(5,15),0,100); state.stats.karma=clamp(state.stats.karma-3,0,100); log(`You insulted ${r.name}. Relationship damaged.`,'bad'); }},
+  ];
+  playScene({title:r.name, text:`How do you want to interact with ${r.name}?`, choices:opts});
+}
+
+function findDate(){
+  if(chance(70)){
+    const p = newRelationship('datingpartner',{gender:pick(['Male','Female']), age:clamp(state.age+rand(-3,3),16,99), rel:rand(40,70)});
+    state.relationships.push(p);
+    log(`You started dating ${p.name}.`,'good');
+  } else {
+    log(`You went on a date but there was no spark.`,'neutral');
+  }
+  closePanel(); render();
+}
+function breakUp(id){
+  const r = state.relationships.find(x=>x.id===id);
+  if(r){ r.type='ex'; r.alive=false; log(`You broke up with ${r.name}.`,'bad'); }
+  closePanel(); render();
+}
+function proposeMarriage(id){
+  const r = state.relationships.find(x=>x.id===id);
+  if(!r) return;
+  if(r.rel>=50 && chance(70)){
+    r.type='spouse'; state.spouseId=r.id;
+    state.flags.anniversaryAge = state.age;
+    log(`${r.name} said YES! You got married!`,'good');
+    newspaper(`${state.name.toUpperCase()} TIES THE KNOT`, `Local resident marries ${r.name} in a joyful ceremony.`);
+    checkAchievement('married');
+  } else {
+    log(`${r.name} said no... awkward.`,'bad');
+  }
+  closePanel(); render();
+}
+function fileDivorce(){
+  const r = state.relationships.find(x=>x.id===state.spouseId);
+  if(r){
+    r.type='exspouse'; state.spouseId=null;
+    state.money -= Math.round(state.money*0.25);
+    log(`You divorced ${r.name}. It cost you a chunk of your savings.`,'bad');
+    state.flags.divorced = true;
+    state.flags.healingArc = {yearsLeft:3, startAge: state.age};
+  }
+  closePanel(); render();
+}
+function goOnDateNight(){
+  const r = state.relationships.find(x=>x.id===state.spouseId);
+  if(!r) return;
+  const scenes = [
+    {title:'Dinner at a Fancy Restaurant', text:`You and ${r.name} shared a candlelit dinner downtown.`, fx:2000},
+    {title:'Movie Night', text:`You and ${r.name} watched a movie and shared popcorn.`, fx:40},
+    {title:'Weekend Getaway', text:`You and ${r.name} took a spontaneous weekend trip.`, fx:1200},
+  ];
+  const s = pick(scenes);
+  if(state.money>=s.fx){ state.money-=s.fx; r.rel=clamp(r.rel+rand(5,12),0,100); state.stats.happiness=clamp(state.stats.happiness+6,0,100); log(`${s.title}: ${s.text}`,'good'); }
+  else { log(`You couldn't afford a date night out this year.`,'bad'); }
+  closePanel(); render();
+}
+function tryForBaby(){
+  if(chance(35)){
+    const kid = newRelationship('child',{gender:pick(['Male','Female']), age:0, rel:90});
+    state.relationships.push(kid); state.kids.push(kid.id);
+    log(`You had a baby! Welcome, ${kid.name}.`,'good');
+    newspaper(`WELCOME TO THE WORLD`, `${state.name} welcomes a new child, ${kid.name}.`);
+    checkAchievement('parent');
+  } else {
+    log(`You tried for a baby this year, but no luck yet.`,'neutral');
+  }
+  closePanel(); render();
+}
+
+/* Therapy mini-game - 5 topics */
+const THERAPY_TOPICS = ['Childhood','Career Stress','Relationships','Self-Esteem','Grief'];
+function openTherapyPanel(){
+  if(state.money<150){ log(`You can't afford a therapy session.`,'bad'); closePanel(); render(); return; }
+  const topic = pick(THERAPY_TOPICS);
+  state.money -= 150;
+  playScene({title:`Therapy: ${topic}`, text:`Your therapist asks you to open up about ${topic.toLowerCase()}.`, choices:[
+    {label:'Open up honestly', run:()=>{ state.stats.happiness=clamp(state.stats.happiness+8,0,100); state.stats.karma=clamp(state.stats.karma+2,0,100); log(`You had a breakthrough discussing ${topic}.`,'good'); }},
+    {label:'Deflect with humor', run:()=>{ state.stats.happiness=clamp(state.stats.happiness+2,0,100); log(`You joked your way through the session on ${topic}.`,'neutral'); }},
+    {label:'Shut down emotionally', run:()=>{ state.stats.happiness=clamp(state.stats.happiness-2,0,100); log(`You struggled to open up about ${topic}.`,'bad'); }},
+  ]});
+}
+
+/* ============================ SPORTS ======================================== */
+const SPORTS = ["Basketball","Football","Baseball","Soccer","Tennis","Golf","Boxing","MMA","Track & Field","Hockey"];
+const SPORTS_STAGES = ["Youth League","JV Team","Varsity","College Scholarship","College Star","Draft Prospect","Professional"];
+
+function joinSport(sport){
+  state.sportsCareer = {sport, stage:0, skill:rand(20,40)};
+  log(`You joined a youth ${sport} league.`,'good');
+  closePanel(); render();
+}
+
+function trainSport(){
+  if(!state.sportsCareer) return;
+  const sc = state.sportsCareer;
+  sc.skill = clamp(sc.skill + rand(4,12), 0, 100);
+  state.stats.health = clamp(state.stats.health+2,0,100);
+  log(`You trained hard in ${sc.sport}. Skill is now ${sc.skill}.`,'good');
+  closePanel(); render();
+}
+
+function tickSports(){
+  const sc = state.sportsCareer;
+  if(!sc) return;
+  const ageGates = [6,14,16,18,19,21,22]; // youth,jv,varsity,scholarship,collegestar,draft,pro
+  const nextStage = sc.stage+1;
+  if(nextStage < SPORTS_STAGES.length && state.age>=ageGates[nextStage] && sc.skill>=(30+nextStage*8)){
+    if(chance(clamp(30+sc.skill*0.5,10,90))){
+      sc.stage = nextStage;
+      log(`Your ${sc.sport} career advanced to: ${SPORTS_STAGES[sc.stage]}!`,'good');
+      newspaper(`${state.name.toUpperCase()} ADVANCES IN ${sc.sport.toUpperCase()}`, `Local athlete reaches ${SPORTS_STAGES[sc.stage]} status.`);
+      if(sc.stage===6){
+        const salary = rand(80000,900000);
+        state.job = {title:`Pro ${sc.sport} Athlete`, salary, tier:5, years:0};
+        checkAchievement('pro_athlete');
+      }
+    }
+  }
+  if(sc.stage<6 && chance(15)){
+    sc.skill = clamp(sc.skill-rand(1,6),0,100);
+  }
+}
+
+/* ============================ CRIME & PRISON =============================== */
+const CRIMES = [
+  {name:'Shoplifting', risk:20, reward:[50,300], sentence:1},
+  {name:'Pickpocketing', risk:25, reward:[30,400], sentence:1},
+  {name:'Grand Theft Auto', risk:45, reward:[1000,8000], sentence:3},
+  {name:'Armed Robbery', risk:55, reward:[2000,15000], sentence:5},
+  {name:'Fraud', risk:35, reward:[1000,20000], sentence:4},
+  {name:'Murder', risk:65, reward:[0,0], sentence:20},
+];
+function commitCrime(name){
+  const c = CRIMES.find(x=>x.name===name);
+  const caught = chance(clamp(c.risk - (state.stats.smarts-50)*0.2,5,95));
+  if(name==='Murder') state.murders++;
+  if(caught){
+    state.criminalRecord.push(c.name);
+    state.inPrison = true;
+    state.prisonYearsLeft = c.sentence;
+    log(`You were caught committing ${c.name}! Sentenced to ${c.sentence} years in prison.`,'bad');
+    newspaper(`${state.name.toUpperCase()} ARRESTED`, `Local resident charged with ${c.name.toLowerCase()}.`);
+  } else {
+    const gain = rand(c.reward[0], c.reward[1]);
+    state.money += gain;
+    state.stats.karma = clamp(state.stats.karma - 10, 0, 100);
+    log(`You committed ${c.name} and got away with ${fmtMoney(gain)}.`,'neutral');
+  }
+  closePanel(); render();
+}
+function tickPrison(){
+  state.prisonYearsLeft--;
+  state.stats.happiness = clamp(state.stats.happiness-5,0,100);
+  if(state.prisonYearsLeft<=0){
+    state.inPrison=false;
+    log(`You were released from prison.`,'neutral');
+  }
+}
+function prisonActivity(kind){
+  if(kind==='workout'){ state.stats.health=clamp(state.stats.health+5,0,100); state.prisonRep+=2; log(`You worked out in the yard.`,'neutral'); }
+  if(kind==='socialize'){ state.stats.happiness=clamp(state.stats.happiness+4,0,100); state.prisonRep+=3; log(`You socialized with other inmates.`,'neutral'); }
+  if(kind==='escape'){
+    state.escapePlan += rand(10,30);
+    if(state.escapePlan>=100){
+      if(chance(40)){ state.inPrison=false; state.prisonYearsLeft=0; state.escapePlan=0; log(`You successfully escaped prison!`,'good'); checkAchievement('escaped'); }
+      else { state.prisonYearsLeft+=5; state.escapePlan=0; log(`Your escape attempt failed. 5 years added to your sentence.`,'bad'); }
+    } else {
+      log(`You worked on your escape plan (${state.escapePlan}% ready).`,'neutral');
+    }
+  }
+  if(kind==='parole'){
+    if(chance(clamp(state.prisonRep,5,80))){
+      state.inPrison=false; state.prisonYearsLeft=0;
+      log(`Parole granted! You're free.`,'good');
+    } else {
+      log(`Parole denied.`,'bad');
+    }
+  }
+  closePanel(); render();
+}
+
+/* ============================ ASSETS: CARS / PETS / HOUSES ================= */
+const CAR_MODELS = [
+  {name:'Used Sedan', price:4000}, {name:'Sports Coupe', price:35000}, {name:'Luxury SUV', price:65000},
+  {name:'Supercar', price:220000}, {name:'Motorcycle', price:9000},
+];
+function buyCar(name){
+  const c = CAR_MODELS.find(x=>x.name===name);
+  if(state.money>=c.price){ state.money-=c.price; state.assets.cars.push({name:c.name, value:c.price}); log(`You bought a ${c.name}.`,'good'); }
+  else log(`You can't afford a ${c.name}.`,'bad');
+  closePanel(); render();
+}
+function sellCar(i){
+  const c = state.assets.cars.splice(i,1)[0];
+  const sale = Math.round(c.value*0.6);
+  state.money += sale; log(`You sold your ${c.name} for ${fmtMoney(sale)}.`,'neutral');
+  closePanel(); render();
+}
+const PET_TYPES = ['Dog','Cat','Parrot','Hamster','Snake','Rabbit'];
+function adoptPet(type){
+  state.pets.push({name:type+' '+pick(['Buddy','Max','Luna','Milo','Coco']), type, age:0, alive:true, happiness:80});
+  log(`You adopted a pet ${type}.`,'good');
+  checkAchievement('pet_owner');
+  closePanel(); render();
+}
+const HOUSE_TYPES = [
+  {name:'Studio Apartment', price:80000}, {name:'Suburban House', price:280000},
+  {name:'Downtown Condo', price:420000}, {name:'Mansion', price:1800000},
+];
+function buyHouse(name){
+  const h = HOUSE_TYPES.find(x=>x.name===name);
+  if(state.money>=h.price){ state.money-=h.price; state.assets.houses.push({name:h.name, value:h.price}); log(`You bought a ${h.name}.`,'good'); checkAchievement('homeowner'); }
+  else log(`You can't afford a ${h.name}.`,'bad');
+  closePanel(); render();
+}
+
+function openAssetsPanel(){
+  let html = `<b>Cars</b>`;
+  state.assets.cars.forEach((c,i)=>{ html += `<div class="list-item"><div class="li-main"><b>${c.name}</b><span>${fmtMoney(c.value)}</span></div><button class="btn" onclick="sellCar(${i})">Sell</button></div>`; });
+  html += CAR_MODELS.map(c=>`<button class="btn btn-block" onclick='buyCar(${JSON.stringify(c.name)})'>Buy ${c.name} (${fmtMoney(c.price)})</button>`).join('');
+  html += `<hr style="border-color:var(--border)"><b>Houses</b>`;
+  state.assets.houses.forEach(h=>{ html += `<div class="list-item"><div class="li-main"><b>${h.name}</b><span>${fmtMoney(h.value)}</span></div></div>`; });
+  html += HOUSE_TYPES.map(h=>`<button class="btn btn-block" onclick='buyHouse(${JSON.stringify(h.name)})'>Buy ${h.name} (${fmtMoney(h.price)})</button>`).join('');
+  html += `<hr style="border-color:var(--border)"><b>Pets</b>`;
+  state.pets.forEach(p=>{ html += `<div class="list-item"><div class="li-main"><b>${p.name}</b><span>${p.type} · Age ${p.age}</span></div></div>`; });
+  html += PET_TYPES.map(t=>`<button class="btn btn-block" onclick='adoptPet(${JSON.stringify(t)})'>Adopt a ${t}</button>`).join('');
+  html += `<hr style="border-color:var(--border)"><b>Crypto Wallet</b>`;
+  html += `<div class="list-item"><div class="li-main"><span>BTC: ${state.crypto.btc.toFixed(4)} · ETH: ${state.crypto.eth.toFixed(2)} · LifeCoin: ${state.crypto.lifecoin.toFixed(0)} · MemeToken: ${state.crypto.memetoken.toFixed(0)}</span></div></div>`;
+  html += `<button class="btn btn-block btn-accent" onclick="openCryptoPanel()">Open Crypto Exchange</button>`;
+  openPanel('Assets', html);
+}
+
+/* ============================ CRYPTO ======================================== */
+const CRYPTO_PRICES = {btc:40000, eth:2500, lifecoin:1, memetoken:0.01};
+function tickCryptoPrices(){
+  for(const k in CRYPTO_PRICES){
+    const vol = k==='memetoken'?0.6:(k==='lifecoin'?0.3:0.15);
+    CRYPTO_PRICES[k] = Math.max(0.001, CRYPTO_PRICES[k]*(1+(Math.random()*2-1)*vol));
+  }
+}
+function openCryptoPanel(){
+  let html = '';
+  for(const k in CRYPTO_PRICES){
+    html += `<div class="list-item"><div class="li-main"><b>${k.toUpperCase()}</b><span>Price: ${fmtMoney(CRYPTO_PRICES[k])} · Holding: ${state.crypto[k].toFixed(4)}</span></div>
+      <div class="row"><button class="btn" onclick='buyCrypto(${JSON.stringify(k)})'>Buy $500</button><button class="btn" onclick='sellCrypto(${JSON.stringify(k)})'>Sell All</button></div></div>`;
+  }
+  openPanel('Crypto Exchange', html);
+}
+function buyCrypto(k){
+  const amt = 500;
+  if(state.money<amt){ log(`Not enough cash to buy ${k.toUpperCase()}.`,'bad'); closePanel(); render(); return; }
+  state.money -= amt;
+  state.crypto[k] += amt/CRYPTO_PRICES[k];
+  log(`You bought ${fmtMoney(amt)} of ${k.toUpperCase()}.`,'neutral');
+  openCryptoPanel();
+}
+function sellCrypto(k){
+  const value = state.crypto[k]*CRYPTO_PRICES[k];
+  state.money += value; state.crypto[k]=0;
+  log(`You sold all your ${k.toUpperCase()} for ${fmtMoney(value)}.`,'neutral');
+  openCryptoPanel();
+}
+
+/* ============================ CASINO ========================================= */
+function playSlots(){
+  if(state.money<100){ log(`Not enough money to play slots.`,'bad'); closePanel(); render(); return; }
+  state.money -= 100;
+  if(chance(20)){ const win=rand(200,2000); state.money+=win; log(`🎰 JACKPOT! You won ${fmtMoney(win)}!`,'good'); }
+  else { log(`🎰 You lost $100 on the slots.`,'bad'); }
+  closePanel(); render();
+}
+function playBlackjack(){
+  if(state.money<200){ log(`Not enough money for blackjack.`,'bad'); closePanel(); render(); return; }
+  state.money -= 200;
+  if(chance(45)){ state.money+=400; log(`🃏 You won at blackjack! +${fmtMoney(400)}.`,'good'); }
+  else { log(`🃏 You lost your blackjack hand.`,'bad'); }
+  closePanel(); render();
+}
+function playRoulette(){
+  if(state.money<150){ log(`Not enough money for roulette.`,'bad'); closePanel(); render(); return; }
+  state.money -= 150;
+  if(chance(35)){ const win=rand(150,1200); state.money+=win; log(`🎡 You won ${fmtMoney(win)} at roulette!`,'good'); }
+  else { log(`🎡 The roulette wheel wasn't in your favor.`,'bad'); }
+  closePanel(); render();
+}
+
+/* ============================ GANG / DRUG EMPIRE ============================= */
+const DRUG_TIERS = ["Street Dealer","Corner Boss","Block Captain","District Supplier","Regional Kingpin","Cartel Boss"];
+function drugAction(action){
+  const de = state.drugEmpire;
+  if(action==='deal'){
+    const gain = rand(200,1500) * (de.tier+1);
+    if(chance(clamp(20+de.heat*0.5,10,80))){
+      state.inPrison=true; state.prisonYearsLeft = 2+de.tier; de.heat=0;
+      log(`Police busted your operation! You're headed to prison.`,'bad');
+    } else {
+      state.money += gain; de.heat = clamp(de.heat+8,0,100); state.stats.karma=clamp(state.stats.karma-5,0,100);
+      log(`You made ${fmtMoney(gain)} dealing on the streets.`,'neutral');
+    }
+  }
+  if(action==='expand' && de.tier<5){
+    const cost = 5000*(de.tier+1);
+    if(state.money>=cost){ state.money-=cost; de.tier++; de.name=DRUG_TIERS[de.tier]; log(`Your operation expanded. You're now a ${DRUG_TIERS[de.tier]}.`,'good'); checkAchievement('drug_lord'); }
+    else log(`Not enough money to expand your operation.`,'bad');
+  }
+  if(action==='laylow'){ de.heat = clamp(de.heat-30,0,100); log(`You laid low for a while. Heat reduced.`,'neutral'); }
+  closePanel(); render();
+}
+
+/* ============================ INFLUENCER ====================================== */
+const INFLUENCER_TIERS = ["Nobody","Micro-Influencer","Rising Star","Verified Influencer","Celebrity","Global Icon"];
+function influencerAction(action){
+  const inf = state.influencer;
+  if(!inf.platform) inf.platform = pick(['InstaFame','TikTome','YouStar']);
+  if(action==='post'){
+    const gain = rand(0,500)*(inf.tier+1);
+    inf.followers += rand(50,5000)*(inf.tier+1);
+    state.money += gain;
+    log(`Your ${inf.platform} post blew up! +${inf.followers>0?rand(50,5000):0} followers, +${fmtMoney(gain)}.`,'good');
+  }
+  if(action==='brand-deal' && inf.tier>=1){
+    const gain = rand(1000,20000)*inf.tier;
+    state.money += gain; log(`You landed a brand deal worth ${fmtMoney(gain)}.`,'good');
+  }
+  if(inf.followers > (inf.tier+1)*20000 && inf.tier<5){
+    inf.tier++; log(`You leveled up to ${INFLUENCER_TIERS[inf.tier]}!`,'good'); checkAchievement('influencer');
+  }
+  closePanel(); render();
+}
+
+/* ============================ RELIGION ======================================== */
+const FAITHS = ["Christianity","Islam","Judaism","Hinduism","Buddhism","Atheism","Paganism"];
+function chooseFaith(faith){
+  state.religion = faith; state.faithLevel = 10;
+  log(`You began practicing ${faith}.`,'neutral');
+  closePanel(); render();
+}
+function attendService(){
+  if(!state.religion){ closePanel(); render(); return; }
+  state.faithLevel = clamp(state.faithLevel+10,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  state.stats.karma = clamp(state.stats.karma+2,0,100);
+  log(`You attended a ${state.religion} service and felt at peace.`,'good');
+  closePanel(); render();
+}
+
+/* ============================ LOTTERY / DNA =================================== */
+function buyScratcher(){
+  if(state.money<5){ closePanel(); render(); return; }
+  state.money -= 5;
+  if(chance(10)){ const win=rand(10,500); state.money+=win; log(`🎫 Scratcher win! +${fmtMoney(win)}.`,'good'); }
+  else if(chance(1)){ const win=rand(5000,100000); state.money+=win; log(`🎫 HUGE SCRATCHER WIN! +${fmtMoney(win)}!!`,'good'); newspaper('LOCAL RESIDENT WINS BIG', `${state.name} takes home a massive lottery prize.`); }
+  else { log(`🎫 No luck on the scratcher.`,'neutral'); }
+  closePanel(); render();
+}
+function playLottery(){
+  if(state.money<10){ closePanel(); render(); return; }
+  state.money -= 10;
+  if(chance(0.5)){ state.money+=1000000; log(`🎉 YOU WON THE LOTTERY JACKPOT!!`,'good'); newspaper('JACKPOT WINNER!', `${state.name} wins the state lottery grand prize.`); checkAchievement('lottery_winner'); }
+  else { log(`No lottery win this time.`,'neutral'); }
+  closePanel(); render();
+}
+function dnaTest(){
+  if(state.money<99){ closePanel(); render(); return; }
+  state.money -= 99;
+  const ancestry = [pick(['British','Irish','German','Italian','Scandinavian','West African','East Asian','South Asian','Native American','Iberian'])+' '+rand(10,40)+'%',
+    pick(['French','Polish','Greek','Nigerian','Korean','Mexican','Ashkenazi Jewish','Filipino'])+' '+rand(5,30)+'%'];
+  log(`Your DNA ancestry results: ${ancestry.join(', ')}.`,'neutral');
+  closePanel(); render();
+}
+
+/* ============================ ACTIVITIES / WORLD PANELS ======================= */
+function openActivitiesPanel(){
+  let html = '';
+  if(state.inPrison){
+    html += `<p style="color:var(--sub)">You're in prison (${state.prisonYearsLeft} yrs left).</p>`;
+    html += `<button class="btn btn-block" onclick="prisonActivity('workout')">Work Out</button>`;
+    html += `<button class="btn btn-block" onclick="prisonActivity('socialize')">Socialize</button>`;
+    html += `<button class="btn btn-block" onclick="prisonActivity('escape')">Work on Escape Plan (${state.escapePlan}%)</button>`;
+    html += `<button class="btn btn-block btn-accent" onclick="prisonActivity('parole')">Request Parole</button>`;
+    openPanel('Activities', html); return;
+  }
+  html += `<b>Casino</b>`;
+  html += `<button class="btn btn-block" onclick="playSlots()">Slots ($100)</button>`;
+  html += `<button class="btn btn-block" onclick="playBlackjack()">Blackjack ($200)</button>`;
+  html += `<button class="btn btn-block" onclick="playRoulette()">Roulette ($150)</button>`;
+  html += `<hr style="border-color:var(--border)"><b>Crime</b>`;
+  CRIMES.forEach(c=>{ html += `<button class="btn btn-block btn-danger" onclick='commitCrime(${JSON.stringify(c.name)})'>${c.name}</button>`; });
+  if(state.drugEmpire.tier>0 || state.age>=16){
+    html += `<hr style="border-color:var(--border)"><b>Drug Empire (${DRUG_TIERS[state.drugEmpire.tier]})</b>`;
+    html += `<button class="btn btn-block" onclick="drugAction('deal')">Deal Product</button>`;
+    html += `<button class="btn btn-block" onclick="drugAction('expand')">Expand Operation</button>`;
+    html += `<button class="btn btn-block" onclick="drugAction('laylow')">Lay Low (Heat: ${state.drugEmpire.heat})</button>`;
+  }
+  html += `<hr style="border-color:var(--border)"><b>Influencer (${INFLUENCER_TIERS[state.influencer.tier]})</b>`;
+  html += `<button class="btn btn-block" onclick="influencerAction('post')">Post Content</button>`;
+  html += `<button class="btn btn-block" onclick="influencerAction('brand-deal')">Land Brand Deal</button>`;
+  if(!state.sportsCareer && state.age>=5 && state.age<16){
+    html += `<hr style="border-color:var(--border)"><b>Sports</b>`;
+    SPORTS.forEach(s=>{ html += `<button class="btn btn-block" onclick='joinSport(${JSON.stringify(s)})'>Join ${s}</button>`; });
+  } else if(state.sportsCareer){
+    html += `<hr style="border-color:var(--border)"><b>${state.sportsCareer.sport} (${SPORTS_STAGES[state.sportsCareer.stage]})</b>`;
+    html += `<button class="btn btn-block" onclick="trainSport()">Train</button>`;
+  }
+  openPanel('Activities', html);
+}
+
+function openWorldPanel(){
+  let html = `<b>Religion</b>`;
+  if(!state.religion){
+    FAITHS.forEach(f=>{ html += `<button class="btn btn-block" onclick='chooseFaith(${JSON.stringify(f)})'>Follow ${f}</button>`; });
+  } else {
+    html += `<p>You practice ${state.religion} (Faith: ${state.faithLevel}).</p>`;
+    html += `<button class="btn btn-block" onclick="attendService()">Attend Service</button>`;
+  }
+  html += `<hr style="border-color:var(--border)"><b>Lottery</b>`;
+  html += `<button class="btn btn-block" onclick="buyScratcher()">Buy Scratcher ($5)</button>`;
+  html += `<button class="btn btn-block" onclick="playLottery()">Play Lottery ($10)</button>`;
+  html += `<hr style="border-color:var(--border)"><b>Misc</b>`;
+  html += `<button class="btn btn-block" onclick="dnaTest()">Take DNA Ancestry Test ($99)</button>`;
+  openPanel('World', html);
+}
+
+/* ============================ ACHIEVEMENTS (50) ============================== */
+const ACHIEVEMENTS = {
+  first_job:'Got your first job', college_accept:'Accepted into college', married:'Got married', parent:'Became a parent',
+  pet_owner:'Adopted a pet', homeowner:'Bought a house', pro_athlete:'Went pro in sports', escaped:'Escaped prison',
+  drug_lord:'Rose in the drug empire', influencer:'Became an influencer', lottery_winner:'Won the lottery',
+  millionaire:'Reached $1,000,000 net worth', billionaire:'Reached $1,000,000,000 net worth', karma_saint:'Reached 100 karma',
+  karma_devil:'Reached 0 karma', centenarian:'Lived to 100 years old', bookworm:'Reached 100 smarts',
+  supermodel:'Reached 100 looks', gym_rat:'Reached 100 health', ever_happy:'Reached 100 happiness',
+  car_collector:'Owned 5 cars', pet_lover:'Owned 5 pets', family_person:'Had 5 kids', globe_trotter:'Visited another city',
+  crypto_whale:'Held $100,000 in crypto', casino_king:'Won $10,000 gambling', ex_con:'Went to prison and got out',
+  faithful:'Reached 100 faith level', doctorate:'Completed grad school', dropout:'Dropped out of school',
+  divorced_once:'Went through a divorce', therapy_regular:'Attended 10 therapy sessions', crime_spree:'Committed 5 crimes',
+  murderer_ach:'Committed murder', gang_member:'Joined a gang', business_owner:'Started a business',
+  politician_ach:'Held political office', president_ach:'Became President', bucket_lister:'Completed all bucket list items',
+  world_traveler:'Traveled to 3+ cities', clean_record:'Reached age 40 with no crimes', philanthropist:'Donated $10,000+ to charity',
+  scholar:'Graduated with honors', olympic_ach:'Won an Olympic medal', mogul:'Owned 3 businesses', sober_year:'Reached 1 year sober',
+  survivor:'Beat a terminal illness', legacy_gold:'Achieved a Legacy Score of 90+', social_butterfly:'Had 10+ relationships',
+  reformed:'Went from criminal to legit career', self_made:'Reached $1M from $0', long_marriage:'Stayed married 25+ years',
+  animal_whisperer:'Kept a pet alive 15+ years', wall_street:'Made $50,000 in one crypto trade', night_owl:'Won at the casino 5 nights running'
+};
+function checkAchievement(key){
+  if(!state.achievements.has(key) && ACHIEVEMENTS[key]){
+    state.achievements.add(key);
+    log(`🏆 Achievement Unlocked: ${ACHIEVEMENTS[key]}`,'good');
+  }
+}
+function netWorth(){
+  let nw = state.money;
+  state.assets.cars.forEach(c=>nw+=c.value);
+  state.assets.houses.forEach(h=>nw+=h.value);
+  for(const k in state.crypto) nw += state.crypto[k]*CRYPTO_PRICES[k];
+  return nw;
+}
+function checkAchievementsPassive(){
+  const nw = netWorth();
+  if(nw>=1000000) checkAchievement('millionaire');
+  if(nw>=1000000000) checkAchievement('billionaire');
+  if(state.stats.karma>=100) checkAchievement('karma_saint');
+  if(state.stats.karma<=0) checkAchievement('karma_devil');
+  if(state.age>=100) checkAchievement('centenarian');
+  if(state.stats.smarts>=100) checkAchievement('bookworm');
+  if(state.stats.looks>=100) checkAchievement('supermodel');
+  if(state.stats.health>=100) checkAchievement('gym_rat');
+  if(state.stats.happiness>=100) checkAchievement('ever_happy');
+  if(state.assets.cars.length>=5) checkAchievement('car_collector');
+  if(state.pets.length>=5) checkAchievement('pet_lover');
+  if(state.kids.length>=5) checkAchievement('family_person');
+  for(const k in state.crypto){ if(state.crypto[k]*CRYPTO_PRICES[k] >= 100000){ checkAchievement('crypto_whale'); break; } }
+  if(state.faithLevel>=100) checkAchievement('faithful');
+  if(state.criminalRecord.length>=5) checkAchievement('crime_spree');
+  if(state.murders>0) checkAchievement('murderer_ach');
+  if(state.business.companies.length>=1) checkAchievement('business_owner');
+  if(state.business.companies.length>=3) checkAchievement('mogul');
+  if(state.politics.office) checkAchievement('politician_ach');
+  if(state.politics.office==='President') checkAchievement('president_ach');
+}
+
+/* ============================ PROFILE PANEL =================================== */
+function openProfilePanel(){
+  const nw = netWorth();
+  let html = `<div class="list-item"><div class="li-main"><b>${state.name}</b><span>${state.gender} · Age ${state.age} · ${state.city}</span></div></div>`;
+  html += `<div class="list-item"><div class="li-main"><b>Net Worth</b><span>${fmtMoney(nw)}</span></div></div>`;
+  html += `<div class="list-item"><div class="li-main"><b>Education</b><span>${eduLabel()}</span></div></div>`;
+  html += `<div class="list-item"><div class="li-main"><b>Career</b><span>${state.job?state.job.title:'Unemployed'}</span></div></div>`;
+  html += `<div class="list-item"><div class="li-main"><b>Criminal Record</b><span>${state.criminalRecord.length} offenses</span></div></div>`;
+  if(state.age>=60){
+    html += `<hr style="border-color:var(--border)"><b>Bucket List</b>`;
+    if(state.bucketList.length===0){
+      html += `<button class="btn btn-block" onclick="openBucketListSetup()">Set Bucket List (5 items)</button>`;
+    } else {
+      state.bucketList.forEach((b,i)=>{
+        html += `<div class="list-item"><div class="li-main"><b>${b.text}</b><span>${b.done?'✅ Completed':'In progress'}</span></div>
+          ${!b.done?`<button class="btn" onclick='attemptBucketItem(${i})'>Attempt</button>`:''}</div>`;
+      });
+    }
+  }
+  html += `<hr style="border-color:var(--border)"><b>Achievements (${state.achievements.size}/${Object.keys(ACHIEVEMENTS).length})</b>`;
+  html += [...state.achievements].map(k=>`<div class="pill">🏆 ${ACHIEVEMENTS[k]}</div>`).join(' ') || `<p style="color:var(--sub)">None yet.</p>`;
+  openPanel('Profile', html);
+}
+
+/* ============================ BUCKET LIST (base) =============================== */
+const BUCKET_LIST_OPTIONS = ["Skydive out of a plane","Visit every continent","Write a memoir","Learn to play piano",
+  "Reconcile with an estranged relative","Run a marathon","Renew wedding vows","Plant a garden that outlives you",
+  "See the northern lights","Give away $10,000 to charity","Learn a new language","Reconnect with an old friend"];
+function openBucketListSetup(){
+  let picks = [];
+  let html = `<p>Select 5 bucket list goals for your remaining years:</p>`;
+  html += BUCKET_LIST_OPTIONS.map((o,i)=>`<label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" value="${i}" class="bl-check"> ${o}</label>`).join('');
+  html += `<button class="btn btn-block btn-primary" style="margin-top:10px" onclick="confirmBucketList()">Confirm</button>`;
+  openPanel('Bucket List', html);
+}
+function confirmBucketList(){
+  const checked = [...document.querySelectorAll('.bl-check:checked')].map(c=>+c.value).slice(0,5);
+  if(checked.length===0){ return; }
+  state.bucketList = checked.map(i=>({text:BUCKET_LIST_OPTIONS[i], done:false}));
+  log(`You set your bucket list for your golden years.`,'good');
+  closePanel(); render();
+}
+function attemptBucketItem(i){
+  const item = state.bucketList[i];
+  if(!item || item.done) return;
+  const succ = chance(60);
+  if(succ){ item.done=true; state.stats.happiness=clamp(state.stats.happiness+8,0,100); log(`Bucket list complete: "${item.text}"!`,'good'); }
+  else { state.stats.happiness=clamp(state.stats.happiness-2,0,100); log(`You attempted "${item.text}" but it didn't work out this year.`,'bad'); }
+  if(state.bucketList.every(b=>b.done)){
+    state.flags.bucketListComplete = true;
+    checkAchievement('bucket_lister');
+    log(`You completed your entire bucket list! What a life.`,'good');
+  }
+  closePanel(); openProfilePanel();
+}
+
+/* ============================ SECRET ENDINGS (20 base) ========================= */
+const SECRET_ENDINGS = [
+  {id:'saint', title:'The Saint', cond:s=>s.stats.karma>=95 && s.log.some(l=>l.text.includes('volunteered'))},
+  {id:'kingpin', title:'The Kingpin', cond:s=>s.drugEmpire.tier>=5},
+  {id:'icon', title:'Cultural Icon', cond:s=>s.influencer.tier>=5},
+  {id:'jailbird', title:'Career Criminal', cond:s=>s.criminalRecord.length>=8},
+  {id:'goldenlife', title:'The Golden Life', cond:s=>netWorth()>=5000000 && s.stats.happiness>=80},
+  {id:'lonelyrich', title:'Lonely at the Top', cond:s=>netWorth()>=5000000 && s.relationships.filter(r=>r.alive).length===0},
+  {id:'familyfirst', title:'Family First', cond:s=>s.kids.length>=3 && s.stats.happiness>=75},
+  {id:'brokebutloved', title:'Broke but Loved', cond:s=>netWorth()<1000 && s.relationships.filter(r=>r.alive && r.rel>=80).length>=3},
+  {id:'escapee', title:'The Ghost', cond:s=>s.flags.everEscaped},
+  {id:'athlete_legend', title:'Sports Legend', cond:s=>s.sportsCareer && s.sportsCareer.stage>=6 && s.sportsCareer.skill>=95},
+  {id:'genius', title:'The Genius', cond:s=>s.stats.smarts>=100 && s.eduStage==='grad'},
+  {id:'recluse', title:'The Recluse', cond:s=>s.relationships.filter(r=>r.alive).length===0 && s.age>=80},
+  {id:'self_made_ending', title:'Self-Made', cond:s=>netWorth()>=1000000 && s.job && s.job.tier<=2},
+  {id:'devout', title:'The Devout', cond:s=>s.faithLevel>=100},
+  {id:'wanderer', title:'The Wanderer', cond:s=>s.flags.citiesVisited && s.flags.citiesVisited.length>=5},
+  {id:'gambler_ending', title:'High Roller', cond:s=>s.flags.casinoWinnings && s.flags.casinoWinnings>=100000},
+  {id:'crypto_king', title:'Crypto King', cond:s=>Object.values(s.crypto).some(v=>v>0) && netWorth()>=2000000},
+  {id:'redemption', title:'Redemption Arc', cond:s=>s.criminalRecord.length>=1 && s.stats.karma>=80 && s.age>=50},
+  {id:'forgotten', title:'Died Forgotten', cond:s=>s.age>=85 && s.relationships.filter(r=>r.alive).length===0 && netWorth()<5000},
+  {id:'renaissance', title:'Renaissance Life', cond:s=>s.stats.smarts>=80 && s.stats.looks>=80 && netWorth()>=500000 && s.stats.karma>=70},
+];
+function checkSecretEndings(){
+  const earned = SECRET_ENDINGS.filter(e=>{ try{ return e.cond(state); }catch(err){ return false; } });
+  return earned;
+}
+
+/* ============================ LEGACY SCORE (base, extended in Phase 16) ======== */
+function calcLegacyScore(){
+  let score = 0;
+  const livingFamily = state.relationships.filter(r=>r.alive && r.rel>=50).length;
+  score += clamp(livingFamily*4, 0, 20);
+  score += clamp((state.job?state.job.tier:0)*4, 0, 20);
+  score += clamp(state.stats.karma*0.2, 0, 20);
+  score += clamp(state.achievements.size*0.6, 0, 15);
+  score += clamp(state.kids.length*3, 0, 10);
+  score += clamp(Math.log10(Math.max(1,netWorth()))*1.5, 0, 15);
+  return clamp(Math.round(score),0,100);
+}
+function legacyGrade(score){
+  if(score>=90) return {grade:'S', title:'Legendary Life'};
+  if(score>=75) return {grade:'A', title:'Remarkable Life'};
+  if(score>=60) return {grade:'B', title:'Well-Lived Life'};
+  if(score>=40) return {grade:'C', title:'Ordinary Life'};
+  if(score>=20) return {grade:'D', title:'Troubled Life'};
+  return {grade:'F', title:'Wasted Potential'};
+}
+
+/* ============================ DEATH SCREEN ====================================== */
+function renderDeathScreen(){
+  showScreen('dead');
+  const score = calcLegacyScore();
+  const lg = legacyGrade(score);
+  const endings = checkSecretEndings();
+  let html = `<h1>💀 Game Over</h1>`;
+  html += `<p>${state.name} died at age ${state.age}${state.lastCause?(' of '+state.lastCause):''}.</p>`;
+  html += `<div class="legacy-badge">${lg.grade}</div>`;
+  html += `<div class="legacy-grade">Legacy Score: ${score}/100 — "${lg.title}"</div>`;
+  if(endings.length){
+    html += `<div style="margin-top:10px;"><b>🏅 Secret Endings Unlocked:</b><br>` + endings.map(e=>`<span class="pill">${e.title}</span>`).join(' ') + `</div>`;
+  }
+  html += `<div style="margin-top:10px;color:var(--sub);font-size:.85em;">Net Worth: ${fmtMoney(netWorth())} · Achievements: ${state.achievements.size} · Kids: ${state.kids.length}</div>`;
+  html += `<button class="btn btn-primary btn-block" style="margin-top:16px" onclick="restartGame()">Start New Life</button>`;
+  $('screen-dead').innerHTML = html;
+}
+function restartGame(){
+  state = null;
+  showScreen('newlife');
+  $('nl-first').value=''; $('nl-last').value='';
+}
+
+/* ============================ INIT ========================================= */
+window.addEventListener('DOMContentLoaded', ()=>{
+  populateCitySelect();
+  $('nl-start').onclick = startNewLife;
+  $('ageup-btn').onclick = ()=>ageUp();
+  // loading screen animation
+  const tips = ["Raising stats...","Assigning a hometown...","Generating family tree...","Rolling the dice of fate...","Loading the multiverse of possibility..."];
+  $('loading-tip').textContent = pick(tips);
+  let p=0;
+  const iv = setInterval(()=>{
+    p += rand(4,12);
+    if(p>=100){ p=100; clearInterval(iv); setTimeout(()=>showScreen('newlife'), 300); }
+    $('loadbar-fill').style.width = p+'%';
+  }, 120);
+});
+
+/* =========================================================================
+   PHASE 16 ADDITIONS — injected below existing code per project convention.
+   Existing functions are extended via the const _orig = fn; fn = function(){...}
+   override pattern. Nothing above this line is rewritten.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   16.1 WORLD EVENTS EXPANSION — 50 new random world events
+   --------------------------------------------------------------------- */
+const WORLD_EVENTS_P16 = [
+  // Politics
+  {text:"Congress passed a surprise tax reform bill, raising your cost of living.", type:'bad', fx:s=>{s.money-=rand(300,1500);}},
+  {text:"A new president was inaugurated nationwide amid celebration.", type:'neutral', fx:s=>{s.stats.happiness+=2;}},
+  {text:"Your city council raised property taxes.", type:'bad', fx:s=>{s.money-=rand(200,900);}},
+  {text:"A political scandal rocked the nation, but you stayed out of it.", type:'neutral', fx:s=>{s.stats.happiness-=1;}},
+  {text:"Voter turnout hit a record high this year.", type:'good', fx:s=>{s.stats.karma=clamp(s.stats.karma+2,0,100);}},
+  {text:"A contested election sparked nationwide protests.", type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:"A landmark policy reform improved public healthcare.", type:'good', fx:s=>{s.stats.health=clamp(s.stats.health+3,0,100);}},
+  // Economy
+  {text:"The stock market crashed overnight!", type:'bad', fx:s=>{s.money-=Math.round(s.money*0.1);}},
+  {text:"The stock market boomed, lifting everyone's fortunes.", type:'good', fx:s=>{s.money+=Math.round(s.money*0.08)+rand(100,500);}},
+  {text:"Inflation spiked, and prices went up everywhere.", type:'bad', fx:s=>{s.money-=rand(300,1200);}},
+  {text:"Your city entered an economic boom.", type:'good', fx:s=>{s.money+=rand(500,3000);}},
+  {text:"A recession hit and layoffs spread nationwide.", type:'bad', fx:s=>{ if(s.job && chance(15)){ s.jobHistory.push(s.job); s.job=null; } else { s.money-=rand(200,900); } }},
+  {text:"Gas prices dropped significantly.", type:'good', fx:s=>{s.money+=rand(50,300);}},
+  {text:"A housing market bubble burst nationwide.", type:'bad', fx:s=>{s.money-=rand(200,800); s.assets.houses.forEach(h=>h.value=Math.round(h.value*0.9));}},
+  // Culture
+  {text:"A blockbuster movie swept the nation.", type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:"A viral dance trend took over social media.", type:'good', fx:s=>{s.stats.happiness+=2; s.influencer.followers+=rand(100,2000);}},
+  {text:"A beloved celebrity passed away, and the world mourned.", type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:"A new fashion trend hit the streets.", type:'good', fx:s=>{s.stats.looks=clamp(s.stats.looks+2,0,100);}},
+  {text:"A massive music festival came to your city.", type:'good', fx:s=>{s.stats.happiness+=4; s.money-=rand(100,400);}},
+  {text:"A controversial art exhibit sparked national debate.", type:'neutral', fx:s=>{s.stats.happiness+=1;}},
+  {text:"Your favorite show got cancelled.", type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  // Technology
+  {text:"A groundbreaking AI system was released to the public.", type:'good', fx:s=>{s.stats.smarts=clamp(s.stats.smarts+2,0,100);}},
+  {text:"A massive data breach exposed millions of accounts, including yours.", type:'bad', fx:s=>{s.money-=rand(100,600);}},
+  {text:"Self-driving cars became mainstream.", type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:"Your phone got hacked.", type:'bad', fx:s=>{s.money-=rand(100,500);}},
+  {text:"A new social media platform exploded in popularity.", type:'good', fx:s=>{s.influencer.followers+=rand(200,3000);}},
+  {text:"A major tech company you'd invested in tanked.", type:'bad', fx:s=>{s.money-=rand(150,900);}},
+  {text:"Scientists announced a breakthrough in renewable energy.", type:'good', fx:s=>{s.stats.happiness+=1; s.stats.karma=clamp(s.stats.karma+1,0,100);}},
+  // Sports
+  {text:"Your city's team won the championship!", type:'good', fx:s=>{s.stats.happiness+=6;}},
+  {text:"Your city's team suffered a heartbreaking loss.", type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:"The Olympics captivated the world this year.", type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:"A doping scandal rocked professional sports.", type:'neutral', fx:s=>{s.stats.happiness-=1;}},
+  {text:"A record-breaking marathon was held in your city.", type:'good', fx:s=>{s.stats.health=clamp(s.stats.health+2,0,100);}},
+  {text:"Your city hosted a major international sporting event.", type:'good', fx:s=>{s.money+=rand(200,900); s.stats.happiness+=3;}},
+  // Disasters
+  {text:"A hurricane battered the coast near your city.", type:'bad', fx:s=>{s.stats.health-=5; s.money-=rand(300,2000);}},
+  {text:"An earthquake shook your region.", type:'bad', fx:s=>{s.stats.health-=6; s.money-=rand(500,2500);}},
+  {text:"Wildfires spread across the region.", type:'bad', fx:s=>{s.stats.health-=4; s.stats.happiness-=3;}},
+  {text:"A severe flood damaged homes nearby.", type:'bad', fx:s=>{s.money-=rand(400,1800);}},
+  {text:"A blizzard paralyzed the city for days.", type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:"A brutal heatwave gripped the nation.", type:'bad', fx:s=>{s.stats.health-=3;}},
+  {text:"A tornado touched down just outside your city.", type:'bad', fx:s=>{s.stats.health-=5; s.money-=rand(200,1200);}},
+  {text:"A pandemic scare disrupted daily life.", type:'bad', fx:s=>{s.stats.health-=4; s.stats.happiness-=4; s.money-=rand(200,1000);}},
+  // Viral moments
+  {text:"You accidentally went viral for something embarrassing.", type:'bad', fx:s=>{s.stats.happiness-=5; s.influencer.followers+=rand(500,5000);}},
+  {text:"A video of you doing something kind went viral.", type:'good', fx:s=>{s.stats.happiness+=5; s.stats.karma=clamp(s.stats.karma+3,0,100); s.influencer.followers+=rand(1000,8000);}},
+  {text:"An old photo of you resurfaced online and caused a stir.", type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:"You were featured in a viral 'people of your city' post.", type:'good', fx:s=>{s.influencer.followers+=rand(300,2000);}},
+  {text:"A meme was made about your hometown, and it's everywhere.", type:'neutral', fx:s=>{s.stats.happiness+=1;}},
+  {text:"A prank video from your teenage years leaked online.", type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:"A stranger's act of kindness toward you went viral.", type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:"You were mistaken for a celebrity and it caused a scene.", type:'good', fx:s=>{s.stats.happiness+=2; s.stats.looks=clamp(s.stats.looks+1,0,100);}},
+];
+
+function rollWorldEventP16(){
+  if(!state || !state.alive) return;
+  if(chance(35)){
+    const e = pick(WORLD_EVENTS_P16);
+    e.fx(state);
+    clampAllStats();
+    log('🌎 '+e.text, e.type, state.age);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   16.2 POLITICAL CAMPAIGN SYSTEM — City Council -> President
+   --------------------------------------------------------------------- */
+const OFFICES_P16 = [
+  {title:'City Council Member', minAge:18, salary:45000},
+  {title:'Mayor', minAge:25, salary:110000},
+  {title:'State Senator', minAge:25, salary:95000},
+  {title:'Governor', minAge:30, salary:175000},
+  {title:'U.S. Senator', minAge:30, salary:180000},
+  {title:'President', minAge:35, salary:400000},
+];
+function currentOfficeIndexP16(){ return state.politics.office ? OFFICES_P16.findIndex(o=>o.title===state.politics.office) : -1; }
+function nextOfficeP16(){ return OFFICES_P16[currentOfficeIndexP16()+1]; }
+
+function startCampaignP16(){
+  const next = nextOfficeP16();
+  if(!next || state.age<next.minAge) return;
+  state.politics.campaign = {target: next.title, approval:50, oppApproval: clamp(50+rand(-10,10),20,80), actions:0};
+  log(`You launched your campaign for ${next.title}!`,'neutral');
+  newspaper(`${state.name.toUpperCase()} ENTERS RACE FOR ${next.title.toUpperCase()}`, `Candidate kicks off campaign with high hopes.`);
+  closePanel(); render();
+}
+
+const DEBATE_QUESTIONS_P16 = [
+  {q:"How will you address rising crime in our city?", choices:[
+    {label:'Propose more community policing', d:6}, {label:'Dodge the question with a soundbite', d:-2}, {label:"Attack your opponent's record", d:2}]},
+  {q:"What's your plan for the local economy?", choices:[
+    {label:'Lay out a detailed jobs plan', d:7}, {label:'Give vague promises of prosperity', d:0}, {label:"Attack your opponent's record", d:3}]},
+  {q:"How do you respond to critics of your record?", choices:[
+    {label:'Own your mistakes honestly', d:5}, {label:'Deflect and change the subject', d:-1}, {label:'Go on the offensive', d:2}]},
+  {q:"What is your stance on climate policy?", choices:[
+    {label:'Commit to bold climate action', d:6}, {label:'Promise a "balanced" review', d:1}, {label:'Dismiss it as a non-issue', d:-4}]},
+];
+function runDebateP16(){
+  const camp = state.politics.campaign; if(!camp) return;
+  const q = pick(DEBATE_QUESTIONS_P16);
+  playScene({title:'Live Debate', text:q.q, choices:q.choices.map(c=>({label:c.label, run:()=>{
+    camp.approval = clamp(camp.approval + c.d + rand(-2,2), 0, 100);
+    camp.oppApproval = clamp(camp.oppApproval + rand(-3,3), 0, 100);
+    camp.actions++;
+    log(`Debate moment: "${c.label}" — your approval is now ${camp.approval}%.`, c.d>=4?'good':(c.d<0?'bad':'neutral'));
+    openPoliticsPanel();
+  }}))});
+}
+function runAdP16(){
+  const camp = state.politics.campaign; if(!camp) return;
+  if(state.money<5000){ log(`Not enough money to run a campaign ad.`,'bad'); openPoliticsPanel(); return; }
+  state.money -= 5000;
+  camp.approval = clamp(camp.approval + rand(3,8), 0, 100); camp.actions++;
+  log(`You ran a campaign ad. Approval up to ${camp.approval}%.`,'good');
+  openPoliticsPanel();
+}
+function briberyP16(){
+  const camp = state.politics.campaign; if(!camp) return;
+  if(state.money<10000){ log(`Not enough money to attempt bribery.`,'bad'); openPoliticsPanel(); return; }
+  state.money -= 10000; camp.actions++;
+  if(chance(60)){
+    camp.approval = clamp(camp.approval + rand(8,15),0,100);
+    state.stats.karma = clamp(state.stats.karma-10,0,100);
+    log(`You secretly bribed a local official. Approval jumped, but your conscience took a hit.`,'bad');
+  } else {
+    state.stats.karma = clamp(state.stats.karma-15,0,100);
+    log(`Your bribery attempt was caught by a reporter! A scandal is brewing.`,'bad');
+    triggerScandalP16();
+  }
+  openPoliticsPanel();
+}
+function pressConferenceP16(){
+  const camp = state.politics.campaign;
+  playScene({title:'Press Conference', text:'Reporters are grilling you with tough questions.', choices:[
+    {label:'Stay composed and on-message', run:()=>{ if(camp){camp.approval=clamp(camp.approval+rand(3,7),0,100);} else {state.politics.approval=clamp(state.politics.approval+rand(2,5),0,100);} log(`You handled the press conference well.`,'good'); }},
+    {label:'Lose your temper at a reporter', run:()=>{ if(camp){camp.approval=clamp(camp.approval-rand(4,10),0,100);} else {state.politics.approval=clamp(state.politics.approval-rand(3,8),0,100);} log(`You snapped at a reporter on live TV. Not a good look.`,'bad'); }},
+    {label:'Make a bold policy pledge', run:()=>{ const d=rand(1,10)-rand(0,6); if(camp){camp.approval=clamp(camp.approval+d,0,100);} else {state.politics.approval=clamp(state.politics.approval+d,0,100);} log(`You made a bold pledge to voters.`,'neutral'); }},
+  ]});
+  if(camp) camp.actions++;
+}
+const SCANDAL_CARDS_P16 = [
+  {title:'Financial Scandal', text:'Reporters uncovered irregularities in your campaign finances.'},
+  {title:'Personal Scandal', text:'An old embarrassing story about you resurfaced in the press.'},
+  {title:'Leaked Emails', text:'Private campaign emails were leaked to the media.'},
+];
+function triggerScandalP16(){
+  const camp = state.politics.campaign;
+  const s = pick(SCANDAL_CARDS_P16);
+  state.politics.scandalCount++;
+  newspaper(`SCANDAL ROCKS ${state.name.toUpperCase()}'S CAMPAIGN`, s.text);
+  playScene({title:s.title, text:s.text, choices:[
+    {label:'Deny everything', run:()=>{ const ok=chance(40); const d = ok?2:-12; if(camp){camp.approval=clamp(camp.approval+d,0,100);} log(ok?`Your denial mostly worked.`:`Nobody believed your denial. Approval dropped.`, ok?'neutral':'bad'); }},
+    {label:'Apologize publicly', run:()=>{ if(camp) camp.approval=clamp(camp.approval-4,0,100); state.stats.karma=clamp(state.stats.karma+3,0,100); log(`Your apology softened the blow.`,'neutral'); }},
+    {label:'Come clean with the full truth', run:()=>{ if(camp) camp.approval=clamp(camp.approval-8,0,100); state.stats.karma=clamp(state.stats.karma+8,0,100); log(`You came clean. Approval dropped but you kept your integrity.`,'good'); }},
+  ]});
+}
+function holdElectionP16(){
+  const camp = state.politics.campaign; if(!camp) return;
+  const win = (camp.approval + rand(-8,8)) > (camp.oppApproval + rand(-8,8));
+  const office = OFFICES_P16.find(o=>o.title===camp.target);
+  if(win){
+    state.politics.office = office.title; state.politics.approval = camp.approval; state.politics.termYears = 0;
+    state.job = {title: office.title, salary: office.salary, tier:5, years:0};
+    log(`🎉 You won the election for ${office.title}!`,'good');
+    newspaper(`${state.name.toUpperCase()} ELECTED ${office.title.toUpperCase()}`, `Voters chose ${state.name} in a decisive victory.`);
+    checkAchievement('politician_ach');
+    if(office.title==='President') checkAchievement('president_ach');
+  } else {
+    log(`You lost the election for ${office.title}. Better luck next time.`,'bad');
+    newspaper(`${state.name.toUpperCase()} CONCEDES RACE`, `Challenger falls short in bid for ${office.title}.`);
+  }
+  state.politics.campaign = null;
+  closePanel(); render();
+}
+function tickPoliticalTermP16(){
+  if(state.politics.office){
+    state.politics.termYears++;
+    state.politics.approval = clamp(state.politics.approval + rand(-5,5), 0, 100);
+    if(state.politics.approval<20 && chance(20)) log(`Your approval rating cratered. Calls for your resignation are growing.`,'bad');
+    if(chance(10)) triggerScandalP16();
+  }
+}
+function openPoliticsPanel(){
+  let html = '';
+  if(state.politics.office){
+    html += `<div class="list-item"><div class="li-main"><b>${state.politics.office}</b><span>Approval: ${state.politics.approval}% · Term Year ${state.politics.termYears} · Scandals: ${state.politics.scandalCount}</span></div></div>`;
+    html += `<button class="btn btn-block" onclick="pressConferenceP16()">Hold Press Conference</button>`;
+  }
+  const next = nextOfficeP16();
+  if(state.politics.campaign){
+    const camp = state.politics.campaign;
+    html += `<div class="list-item"><div class="li-main"><b>Campaign: ${camp.target}</b><span>Your approval: ${camp.approval}% · Opponent: ${camp.oppApproval}%</span></div></div>`;
+    html += `<button class="btn btn-block" onclick="runDebateP16()">Participate in Debate</button>`;
+    html += `<button class="btn btn-block" onclick="runAdP16()">Run Campaign Ad ($5,000)</button>`;
+    html += `<button class="btn btn-block" onclick="pressConferenceP16()">Press Conference</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick="briberyP16()">Attempt Bribery ($10,000)</button>`;
+    html += `<button class="btn btn-block btn-primary" onclick="holdElectionP16()">Hold Election</button>`;
+  } else if(next && state.age>=next.minAge){
+    html += `<button class="btn btn-block btn-accent" onclick="startCampaignP16()">Run for ${next.title}</button>`;
+  } else if(next){
+    html += `<p style="color:var(--sub)">You must be at least ${next.minAge} to run for ${next.title}.</p>`;
+  } else {
+    html += `<p style="color:var(--sub)">You've reached the highest office in the land.</p>`;
+  }
+  openPanel('Politics', html);
+}
+const _origOpenCareerPanel_P16 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P16();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className='btn btn-block btn-accent';
+  btn.textContent='🗳️ Politics'+(state.politics.office?(' ('+state.politics.office+')'):'');
+  btn.onclick = openPoliticsPanel;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   16.3 BUSINESS EMPIRE — named employees, locations, morale, rivals, takeovers, franchising
+   --------------------------------------------------------------------- */
+function randomEmployeeNameP16(){ const g=pick(['Male','Female']); return randomFirstName(g)+' '+pick(LAST_NAMES); }
+
+function startBusinessP16(){
+  const cost=20000;
+  if(state.money<cost){ log(`You need $20,000 to start a business.`,'bad'); openBusinessPanel(); return; }
+  state.money-=cost;
+  const biz = {id:uid(), name: state.city+' '+pick(['Ventures','Holdings','Co.','Enterprises','Group']), locations:1, employees:[], morale:70, franchise:false, takeoverOffer:null};
+  state.business.companies.push(biz);
+  log(`You started a new business: ${biz.name}!`,'good');
+  checkAchievement('business_owner');
+  openBusinessPanel();
+}
+function hireEmployeeP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  const cost = 2000;
+  if(state.money<cost){ log(`Not enough money to hire.`,'bad'); openBusinessPanel(); return; }
+  state.money-=cost;
+  const emp = {id:uid(), name:randomEmployeeNameP16(), role:pick(['Manager','Sales Associate','Accountant','Technician','Marketing Lead']), salary:rand(28000,60000), morale:rand(50,80)};
+  biz.employees.push(emp);
+  log(`You hired ${emp.name} as ${emp.role} at ${biz.name}.`,'good');
+  openBusinessPanel();
+}
+function fireEmployeeP16(bizId, empId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  const idx = biz.employees.findIndex(e=>e.id===empId);
+  if(idx>=0){
+    const emp = biz.employees.splice(idx,1)[0];
+    biz.morale = clamp(biz.morale-8,0,100);
+    log(`You fired ${emp.name} from ${biz.name}. Staff morale dropped.`,'bad');
+  }
+  openBusinessPanel();
+}
+function openLocationP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  const cost = 15000*(biz.locations+1);
+  if(state.money<cost){ log(`Not enough money to open a new location.`,'bad'); openBusinessPanel(); return; }
+  state.money-=cost; biz.locations++;
+  log(`${biz.name} expanded to a new location! Now ${biz.locations} locations.`,'good');
+  openBusinessPanel();
+}
+function franchiseP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  if(biz.locations<3){ log(`You need at least 3 locations to franchise.`,'bad'); openBusinessPanel(); return; }
+  biz.franchise = true;
+  log(`${biz.name} became a franchise! Passive income increased.`,'good');
+  openBusinessPanel();
+}
+function boostMoraleP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  const cost=1000;
+  if(state.money<cost){ log(`Not enough money for a morale-boosting event.`,'bad'); openBusinessPanel(); return; }
+  state.money-=cost;
+  biz.morale = clamp(biz.morale+15,0,100);
+  log(`You threw a staff party at ${biz.name}. Morale improved!`,'good');
+  openBusinessPanel();
+}
+function acceptTakeoverP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz || !biz.takeoverOffer) return;
+  state.money += biz.takeoverOffer;
+  log(`You sold ${biz.name} in a hostile takeover for ${fmtMoney(biz.takeoverOffer)}.`,'neutral');
+  state.business.companies = state.business.companies.filter(b=>b.id!==bizId);
+  openBusinessPanel();
+}
+function rejectTakeoverP16(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId); if(!biz) return;
+  biz.takeoverOffer = null;
+  log(`You rejected the takeover offer for ${biz.name}.`,'neutral');
+  openBusinessPanel();
+}
+function tickBusinessEmpireP16(){
+  state.business.companies.forEach(biz=>{
+    let revenue = Math.round(biz.employees.length*rand(2000,6000)*biz.locations*(biz.franchise?1.6:1)*(biz.morale/100));
+    state.money += revenue;
+    biz.employees.forEach(e=>{ state.money -= e.salary; });
+    biz.morale = clamp(biz.morale + rand(-6,4),0,100);
+    if(biz.morale<30 && biz.employees.length>0 && chance(25)){
+      const quitEmp = pick(biz.employees);
+      biz.employees = biz.employees.filter(e=>e.id!==quitEmp.id);
+      log(`${quitEmp.name} quit ${biz.name} due to low morale.`,'bad');
+    }
+    if(chance(8)){
+      const rivalName = randomEmployeeNameP16()+"'s "+pick(['Corp','Enterprises','Group']);
+      log(`A new competitor, ${rivalName}, opened up near ${biz.name} and is stealing customers.`,'bad');
+      state.money -= rand(500,3000);
+    }
+    if(!biz.takeoverOffer && chance(4)){
+      biz.takeoverOffer = Math.round((biz.employees.length+1)*biz.locations*15000*(1+Math.random()));
+      log(`A larger company offered to acquire ${biz.name} for ${fmtMoney(biz.takeoverOffer)}. Review the offer in the Business panel.`,'neutral');
+    }
+  });
+}
+function openBusinessPanel(){
+  let html = '';
+  if(state.business.companies.length===0){
+    html += `<p style="color:var(--sub)">You don't own any businesses yet.</p>`;
+    html += `<button class="btn btn-block btn-primary" onclick="startBusinessP16()">Start a Business ($20,000)</button>`;
+  } else {
+    state.business.companies.forEach(biz=>{
+      html += `<div class="list-item"><div class="li-main"><b>${biz.name}${biz.franchise?' 🏷️ Franchise':''}</b><span>${biz.locations} location(s) · Morale ${biz.morale}% · ${biz.employees.length} staff</span></div></div>`;
+      biz.employees.forEach(e=>{
+        html += `<div class="list-item"><div class="li-main"><b>${e.name}</b><span>${e.role} · ${fmtMoney(e.salary)}/yr</span></div><button class="btn" onclick='fireEmployeeP16(${JSON.stringify(biz.id)},${JSON.stringify(e.id)})'>Fire</button></div>`;
+      });
+      html += `<button class="btn btn-block" onclick='hireEmployeeP16(${JSON.stringify(biz.id)})'>Hire Employee ($2,000)</button>`;
+      html += `<button class="btn btn-block" onclick='openLocationP16(${JSON.stringify(biz.id)})'>Open New Location</button>`;
+      html += `<button class="btn btn-block" onclick='boostMoraleP16(${JSON.stringify(biz.id)})'>Boost Morale ($1,000)</button>`;
+      if(!biz.franchise) html += `<button class="btn btn-block btn-accent" onclick='franchiseP16(${JSON.stringify(biz.id)})'>Franchise Business</button>`;
+      if(biz.takeoverOffer){
+        html += `<div class="list-item"><div class="li-main"><b>Hostile Takeover Offer</b><span>${fmtMoney(biz.takeoverOffer)}</span></div></div>`;
+        html += `<div class="row"><button class="btn btn-primary" onclick='acceptTakeoverP16(${JSON.stringify(biz.id)})'>Accept</button><button class="btn" onclick='rejectTakeoverP16(${JSON.stringify(biz.id)})'>Reject</button></div>`;
+      }
+      html += `<hr style="border-color:var(--border)">`;
+    });
+    if(state.money>=20000) html += `<button class="btn btn-block btn-primary" onclick="startBusinessP16()">Start Another Business ($20,000)</button>`;
+  }
+  openPanel('Business Empire', html);
+}
+const _origOpenAssetsPanel_P16 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P16();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className='btn btn-block btn-primary';
+  btn.textContent='🏢 Business Empire';
+  btn.onclick = openBusinessPanel;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   16.4 RELATIONSHIP DEPTH — love languages, narrative date nights,
+   anniversaries, post-divorce healing, toxic relationship warning signs
+   --------------------------------------------------------------------- */
+const LOVE_LANGUAGES_P16 = ['acts','gifts','quality','words','touch'];
+const LOVE_LANGUAGE_LABELS_P16 = {acts:'Acts of Service', gifts:'Give a Thoughtful Gift', quality:'Quality Time Together', words:'Words of Affirmation', touch:'A Warm Hug'};
+
+function checkToxicSignsP16(r){
+  if(r.rel<25 && !r.toxicWarned){
+    r.toxicWarned = true;
+    log(`⚠️ Warning sign: your relationship with ${r.name} feels increasingly one-sided and tense. This may be turning toxic.`,'bad');
+  }
+}
+
+const _origInteractWith_P16 = interactWith;
+interactWith = function(id){
+  const r = state.relationships.find(x=>x.id===id);
+  if(r && (r.type==='datingpartner' || r.type==='spouse')){
+    if(!r.loveLanguage) r.loveLanguage = pick(LOVE_LANGUAGES_P16);
+    const opts = LOVE_LANGUAGES_P16.map(ll=>({
+      label: LOVE_LANGUAGE_LABELS_P16[ll],
+      run:()=>{
+        const match = ll===r.loveLanguage;
+        const gain = match ? rand(10,18) : rand(2,6);
+        r.rel = clamp(r.rel+gain,0,100);
+        state.stats.happiness = clamp(state.stats.happiness+(match?4:1),0,100);
+        log(match?`You showed "${LOVE_LANGUAGE_LABELS_P16[ll]}" — exactly what ${r.name} needed! Relationship soared.`:`You showed "${LOVE_LANGUAGE_LABELS_P16[ll]}". ${r.name} appreciated it.`,'good');
+        checkToxicSignsP16(r);
+      }
+    }));
+    playScene({title:r.name, text:`How do you want to express love to ${r.name} today?`, choices:opts});
+    return;
+  }
+  _origInteractWith_P16(id);
+};
+
+const _origFindDate_P16 = findDate;
+findDate = function(){
+  _origFindDate_P16();
+  const dp = [...state.relationships].reverse().find(r=>r.type==='datingpartner' && r.alive);
+  if(dp && !dp.loveLanguage) dp.loveLanguage = pick(LOVE_LANGUAGES_P16);
+};
+
+const _origGoOnDateNight_P16 = goOnDateNight;
+goOnDateNight = function(){
+  const r = state.relationships.find(x=>x.id===state.spouseId);
+  if(!r){ _origGoOnDateNight_P16(); return; }
+  const cost = 150;
+  if(state.money<cost){ log(`You couldn't afford a date night out this year.`,'bad'); closePanel(); render(); return; }
+  state.money -= cost;
+  closePanel();
+  playScene({title:'Date Night: Dinner Reservation', text:`You booked a candlelit table for two with ${r.name}. The night is yours to shape.`, choices:[
+    {label:'Order champagne and toast to us', run:()=>{ r.rel=clamp(r.rel+12,0,100); state.stats.happiness=clamp(state.stats.happiness+6,0,100); log(`A magical night with ${r.name}.`,'good'); }},
+    {label:'Talk through a recent argument', run:()=>{ r.rel=clamp(r.rel+4,0,100); log(`You and ${r.name} worked through some tension.`,'neutral'); }},
+    {label:'Spend the whole dinner on your phone', run:()=>{ r.rel=clamp(r.rel-8,0,100); checkToxicSignsP16(r); log(`${r.name} was hurt that you were on your phone all night.`,'bad'); }},
+  ]});
+};
+
+function tickAnniversaryP16(){
+  if(!state.spouseId || state.flags.anniversaryAge==null) return;
+  const years = state.age - state.flags.anniversaryAge;
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse || years<=0) return;
+  if([1,5,10,15,20,25,30,40,50].includes(years)){
+    spouse.rel = clamp(spouse.rel+10,0,100);
+    state.stats.happiness = clamp(state.stats.happiness+6,0,100);
+    log(`💍 Happy ${years}-year anniversary with ${spouse.name}! You celebrated together.`,'good');
+    if(years>=25) checkAchievement('long_marriage');
+  }
+}
+function tickHealingArcP16(){
+  const h = state.flags.healingArc;
+  if(!h) return;
+  h.yearsLeft--;
+  if(h.yearsLeft===2){ log(`You're still processing the divorce, but starting to feel like yourself again.`,'neutral'); state.stats.happiness=clamp(state.stats.happiness+3,0,100); }
+  else if(h.yearsLeft===1){ log(`You've mostly healed from the divorce and feel ready to move forward.`,'good'); state.stats.happiness=clamp(state.stats.happiness+4,0,100); }
+  else if(h.yearsLeft<=0){ log(`You've fully healed from your divorce. A new chapter begins.`,'good'); state.stats.happiness=clamp(state.stats.happiness+5,0,100); state.flags.healingArc=null; }
+}
+
+/* ---------------------------------------------------------------------
+   16.5 TERMINAL ILLNESS ARC — diagnosis, chemo/experimental choices,
+   family gathering, bucket list tie-in, survive-or-die
+   --------------------------------------------------------------------- */
+const ILLNESS_NAMES_P16 = ['cancer','a rare autoimmune disease','a severe heart condition','a degenerative illness'];
+
+function familyGatheringSceneP16(){
+  const ill = state.illness; if(!ill || ill.gatheringDone) return;
+  ill.gatheringDone = true;
+  const family = state.relationships.filter(r=>r.alive && (r.type==='parent'||r.type==='sibling'||r.type==='spouse'||r.type==='child'));
+  playScene({title:'Family Gathering', text:`Your family gathered around you, uncertain what to say. This might be your chance to say what matters.`, choices:[
+    {label:'Tell them how much you love them', run:()=>{ family.forEach(f=>{f.rel=clamp(f.rel+15,0,100);}); state.stats.happiness=clamp(state.stats.happiness+10,0,100); log(`You told your family how much they mean to you. Tears were shed, but good ones.`,'good'); }},
+    {label:'Make peace with old grudges', run:()=>{ family.forEach(f=>{f.rel=clamp(f.rel+8,0,100);}); state.stats.karma=clamp(state.stats.karma+8,0,100); log(`You let go of old resentments and made peace.`,'good'); }},
+    {label:"Stay quiet, it's too hard to talk about", run:()=>{ log(`The room sat in heavy silence. Some things went unsaid.`,'bad'); }},
+  ]});
+}
+function illnessTreatmentSceneP16(){
+  const ill = state.illness; if(!ill) return;
+  playScene({title:'Treatment Decision', text:`Your oncologist lays out your options for this year.`, choices:[
+    {label:'Aggressive chemotherapy', run:()=>{ state.stats.health=clamp(state.stats.health-12,0,100); ill.survivalChance=clamp(ill.survivalChance+15,0,100); log(`The chemo was brutal, but it's fighting the illness hard.`,'neutral'); }},
+    {label:'Try an experimental treatment trial ($8,000)', run:()=>{
+      if(state.money<8000){ log(`You can't afford the experimental treatment this year.`,'bad'); return; }
+      state.money-=8000;
+      if(chance(50)){ ill.survivalChance=clamp(ill.survivalChance+25,0,100); state.stats.health=clamp(state.stats.health-4,0,100); log(`The experimental treatment showed real promise!`,'good'); }
+      else { ill.survivalChance=clamp(ill.survivalChance-5,0,100); state.stats.health=clamp(state.stats.health-8,0,100); log(`The experimental treatment had harsh side effects with little benefit.`,'bad'); }
+    }},
+    {label:'Choose palliative comfort care', run:()=>{ state.stats.happiness=clamp(state.stats.happiness+10,0,100); ill.survivalChance=clamp(ill.survivalChance-8,0,100); log(`You chose comfort over aggressive treatment, focusing on quality of life.`,'neutral'); }},
+  ]});
+}
+function diagnoseIllnessP16(){
+  const name = pick(ILLNESS_NAMES_P16);
+  state.illness = {name, stage:1, diagnosedAge: state.age, survivalChance:60, gatheringDone:false};
+  log(`🏥 You were diagnosed with ${name}.`,'bad');
+  newspaper(`${state.name.toUpperCase()} FACES HEALTH BATTLE`, `Community rallies around ${state.name} after a difficult diagnosis.`);
+  playScene({title:'Diagnosis', text:`Your doctor sits you down: "The tests confirm it. You have ${name}. We need to talk about treatment."`, choices:[
+    {label:'Get a second opinion', run:()=>{ log(`The second opinion confirmed the diagnosis, but you feel more informed.`,'neutral'); state.illness.survivalChance+=5; }},
+    {label:'Start treatment immediately', run:()=>{ log(`You decided to fight this head-on, starting treatment right away.`,'neutral'); state.illness.survivalChance+=3; }},
+    {label:'Try to ignore it and hope it goes away', run:()=>{ log(`You put off treatment, hoping for the best.`,'bad'); state.illness.survivalChance-=10; }},
+  ]});
+}
+function tickIllnessOnsetCheck(){
+  if(!state.illness && state.age>=30){
+    const risk = 0.3 + Math.max(0,(state.age-50))*0.15 + Math.max(0,(50-state.stats.health))*0.05;
+    if(chance(risk)) diagnoseIllnessP16();
+  }
+}
+function tickIllnessP16(){
+  const ill = state.illness; if(!ill) return;
+  ill.stage++;
+  if(state.age<60 && state.bucketList.length===0) state.flags.illnessBucketUnlocked = true;
+  if(ill.stage===3 && !ill.gatheringDone) familyGatheringSceneP16();
+  else illnessTreatmentSceneP16();
+  if(ill.stage>=2 && !chance(ill.survivalChance) && chance(35)){ die(ill.name); return; }
+  if(ill.survivalChance>=90 && ill.stage>=3 && chance(30)){
+    log(`🎉 Your doctors confirmed you're in remission! You beat ${ill.name}.`,'good');
+    newspaper(`${state.name.toUpperCase()} BEATS THE ODDS`, `After a hard-fought battle, ${state.name} is declared cancer-free.`);
+    checkAchievement('survivor');
+    state.illness = null;
+  }
+}
+const _origOpenProfilePanel_P16 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P16();
+  if(state.flags.illnessBucketUnlocked && state.age<60 && state.bucketList.length===0){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className='btn btn-block btn-danger';
+    btn.textContent='📝 Set Bucket List (facing illness)';
+    btn.onclick = openBucketListSetup;
+    body.appendChild(btn);
+  }
+};
+
+/* ---------------------------------------------------------------------
+   16.6 ADDICTION RECOVERY — 12-step arc, sponsor, meetings, chips, relapse
+   --------------------------------------------------------------------- */
+function tickAddictionOnsetCheck(){
+  if(state.addiction) return;
+  let risk = 0;
+  if(state.drugEmpire.tier>0) risk += 8;
+  if(state.stats.happiness<30) risk += 5;
+  if(state.criminalRecord.length>0) risk += 2;
+  if(risk>0 && chance(risk)){
+    const substance = pick(['alcohol','opioids','cocaine','methamphetamine']);
+    state.addiction = {substance, inRecovery:false, soberYears:0, sponsor:null, chips:[], meetingsAttended:0, relapses:0};
+    state.stats.health=clamp(state.stats.health-10,0,100);
+    log(`You developed a dependency on ${substance}. It's starting to control your life.`,'bad');
+  }
+}
+function enterRecoveryP16(){
+  const add = state.addiction; if(!add || add.inRecovery) return;
+  add.inRecovery = true; add.sponsor = randomEmployeeNameP16(); add.soberYears=0;
+  log(`You entered a 12-step recovery program. Your sponsor, ${add.sponsor}, will guide you.`,'good');
+  openAddictionPanel();
+}
+function attendMeetingP16(){
+  const add = state.addiction; if(!add || !add.inRecovery) return;
+  add.meetingsAttended++;
+  state.stats.happiness=clamp(state.stats.happiness+2,0,100);
+  log(`You attended a weekly recovery meeting with ${add.sponsor}.`,'good');
+  openAddictionPanel();
+}
+function tickAddictionRecoveryP16(){
+  const add = state.addiction; if(!add || !add.inRecovery) return;
+  add.soberYears++;
+  const relapseChance = clamp(20 - add.meetingsAttended*1.5,2,20);
+  if(chance(relapseChance)){
+    add.relapses++; add.soberYears=0;
+    state.stats.happiness=clamp(state.stats.happiness-10,0,100);
+    log(`💔 You relapsed after a hard year. ${add.sponsor} reminds you that recovery isn't linear.`,'bad');
+  } else {
+    state.stats.health=clamp(state.stats.health+3,0,100);
+    state.stats.happiness=clamp(state.stats.happiness+2,0,100);
+    if(add.soberYears===1){
+      add.chips.push('1 Year Chip');
+      log(`🎉 ONE YEAR SOBER! You celebrated your 1-year chip with ${add.sponsor} and your support group.`,'good');
+      newspaper(`${state.name.toUpperCase()} CELEBRATES ONE YEAR OF SOBRIETY`, `Friends and family gather to honor this hard-won milestone.`);
+      checkAchievement('sober_year');
+    } else if([2,5,10].includes(add.soberYears)){
+      add.chips.push(add.soberYears+' Year Chip');
+      log(`🏅 You earned your ${add.soberYears}-year sobriety chip!`,'good');
+    }
+    if(add.soberYears>=5 && chance(15)){
+      log(`You've been sober for years now. ${add.sponsor} says you're ready to sponsor someone else.`,'good');
+      state.stats.karma=clamp(state.stats.karma+5,0,100);
+      state.flags.recoveredFromAddiction = true;
+      state.addiction = null;
+    }
+  }
+}
+function openAddictionPanel(){
+  const add = state.addiction;
+  let html='';
+  if(!add){ html += `<p style="color:var(--sub)">You have no active struggles with addiction.</p>`; openPanel('Recovery', html); return; }
+  html += `<div class="list-item"><div class="li-main"><b>Struggling with ${add.substance}</b><span>${add.inRecovery?('In recovery · '+add.soberYears+' yrs sober'):'Not yet in treatment'}</span></div></div>`;
+  if(!add.inRecovery){
+    html += `<button class="btn btn-block btn-primary" onclick="enterRecoveryP16()">Enter a 12-Step Recovery Program</button>`;
+  } else {
+    html += `<div class="list-item"><div class="li-main"><b>Sponsor</b><span>${add.sponsor}</span></div></div>`;
+    html += `<button class="btn btn-block" onclick="attendMeetingP16()">Attend Weekly Meeting</button>`;
+    html += `<div class="list-item"><div class="li-main"><b>Chips Earned</b><span>${add.chips.join(', ')||'None yet'}</span></div></div>`;
+    html += `<div class="list-item"><div class="li-main"><b>Relapses</b><span>${add.relapses}</span></div></div>`;
+  }
+  openPanel('Recovery', html);
+}
+const _origOpenActivitiesPanel_P16 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P16();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className='btn btn-block'+(state.addiction && !state.addiction.inRecovery?' btn-danger':'');
+  btn.textContent = state.addiction ? '🩹 Recovery Program' : '🩹 Recovery Support';
+  btn.onclick = openAddictionPanel;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   16.x SCENE QUEUE FIX — story scenes from different systems (illness,
+   scandals, relationships...) can now trigger in the same year. Queue
+   them instead of letting a later scene silently overwrite an earlier one.
+   --------------------------------------------------------------------- */
+const _origPlayScene_P16 = playScene;
+const _sceneQueueP16 = [];
+playScene = function(scene){
+  if(!$('modal-overlay').classList.contains('hidden')){ _sceneQueueP16.push(scene); return; }
+  _origPlayScene_P16(scene);
+};
+const _origCloseModal_P16 = closeModal;
+closeModal = function(){
+  _origCloseModal_P16();
+  if(_sceneQueueP16.length){
+    const next = _sceneQueueP16.shift();
+    setTimeout(()=>playScene(next), 50);
+  }
+};
+
+/* ---------------------------------------------------------------------
+   16.7 TEN MORE SECRET ENDINGS
+   --------------------------------------------------------------------- */
+SECRET_ENDINGS.push(
+  {id:'cult_leader', title:'Cult Leader', cond:s=>s.faithLevel>=80 && s.influencer.followers>=50000 && s.stats.karma<=20},
+  {id:'serial_killer', title:'Serial Killer', cond:s=>s.stats.karma<=5 && s.murders>=3},
+  {id:'nobel_prize', title:'Nobel Prize Winner', cond:s=>s.stats.smarts>=98 && s.job && s.job.tier>=4 && s.stats.karma>=60},
+  {id:'olympic_gold', title:'Olympic Gold Medalist', cond:s=>s.sportsCareer && s.sportsCareer.stage>=6 && s.sportsCareer.skill>=99},
+  {id:'tech_billionaire', title:'Tech Billionaire', cond:s=>netWorth()>=1000000000 && (s.jobHistory.some(j=>j.title==='Software Engineer') || (s.job&&s.job.title==='Software Engineer'))},
+  {id:'mafia_don', title:'Mafia Don', cond:s=>s.drugEmpire.tier>=5 && s.criminalRecord.length>=5 && s.murders>=1},
+  {id:'monk', title:'Monk', cond:s=>s.stats.karma>=95 && s.faithLevel>=90 && netWorth()<=1000},
+  {id:'reality_tv_star', title:'Reality TV Star', cond:s=>s.influencer.followers>=200000 && s.stats.looks>=80},
+  {id:'influencer_politician', title:'Influencer-to-Politician', cond:s=>s.influencer.tier>=3 && !!s.politics.office},
+  {id:'died_broke_happy', title:'Died Broke But Happy', cond:s=>netWorth()<=500 && s.stats.happiness>=85},
+);
+
+/* ---------------------------------------------------------------------
+   16.9 BUCKET LIST — completing all 5 before death triggers a special ending
+   --------------------------------------------------------------------- */
+SECRET_ENDINGS.push(
+  {id:'bucket_list_legend', title:'Bucket List Legend', cond:s=>s.flags.bucketListComplete===true},
+);
+
+/* ---------------------------------------------------------------------
+   16.10 LEGACY SCORE — extended to weigh goals completed, office held,
+   business empire and recovery, on top of the base formula.
+   --------------------------------------------------------------------- */
+const _origCalcLegacyScore_P16 = calcLegacyScore;
+calcLegacyScore = function(){
+  let score = _origCalcLegacyScore_P16();
+  if(state.flags.bucketListComplete) score += 5;
+  if(state.flags.recoveredFromAddiction) score += 3;
+  if(state.politics.office) score += 5;
+  if(state.business.companies.length>0) score += 3;
+  if(state.illness===null && state.flags.illnessBucketUnlocked) score += 2; // beat a terminal illness
+  return clamp(Math.round(score),0,100);
+};
+
+/* ---------------------------------------------------------------------
+   MASTER AGE-UP HOOK — wires every Phase 16 system into the yearly loop
+   --------------------------------------------------------------------- */
+const _origAgeUp_P16 = ageUp;
+ageUp = function(){
+  _origAgeUp_P16();
+  if(!state || !state.alive) return;
+  rollWorldEventP16();
+  tickPoliticalTermP16();
+  tickBusinessEmpireP16();
+  tickAnniversaryP16();
+  tickHealingArcP16();
+  tickIllnessOnsetCheck();
+  if(state.illness && state.illness.diagnosedAge !== state.age) tickIllnessP16();
+  tickAddictionOnsetCheck();
+  tickAddictionRecoveryP16();
+  clampAllStats();
+  if(state.alive) checkAchievementsPassive();
+  render();
+};
+
+/* ---------------------------------------------------------------------
+   16.8 NEWSPAPER FRONT PAGE — sports draft & prison release also get covered
+   (arrest, election, lottery, marriage, birth, pro sports already emit one)
+   --------------------------------------------------------------------- */
+const _origTickSports_P16 = tickSports;
+tickSports = function(){
+  const beforeStage = state.sportsCareer ? state.sportsCareer.stage : -1;
+  _origTickSports_P16();
+  if(state.sportsCareer && state.sportsCareer.stage===6 && beforeStage!==6){
+    newspaper(`${state.name.toUpperCase()} GOES PRO`, `${state.name} signs a professional ${state.sportsCareer.sport} contract after years of hard work.`);
+  }
+};
+</script>
+</body>
+</html>
