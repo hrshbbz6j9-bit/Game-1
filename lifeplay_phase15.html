@@ -1326,6 +1326,507 @@ window.addEventListener('DOMContentLoaded', ()=>{
     $('loadbar-fill').style.width = p+'%';
   }, 120);
 });
+
+/* =========================================================================
+   ADDITIONAL BASE SYSTEMS — rival, mentor, gang territory wars.
+   Injected below existing code; existing functions are extended via the
+   const _orig = fn; fn = function(){...} override pattern.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   RIVAL SYSTEM
+   --------------------------------------------------------------------- */
+const RIVAL_FIELDS = ['school','career','sports','social'];
+function assignRivalP15(){
+  if(state.rival) return;
+  const field = pick(RIVAL_FIELDS);
+  const gender = pick(['Male','Female']);
+  state.rival = {name: randomFirstName(gender)+' '+pick(LAST_NAMES), field, rel:rand(-30,-5), wins:0, losses:0, gender};
+  log(`You've made a rival: ${state.rival.name}. Something about them just rubs you the wrong way.`,'neutral');
+}
+const RIVAL_EVENTS_P15 = [
+  {text:r=>`${r.name} bragged about beating your grades this semester.`, field:'school', bad:true},
+  {text:r=>`You outperformed ${r.name} on a big project.`, field:'school', bad:false},
+  {text:r=>`${r.name} got the promotion you were up for.`, field:'career', bad:true},
+  {text:r=>`You landed a deal that ${r.name} was chasing.`, field:'career', bad:false},
+  {text:r=>`${r.name} beat you in a head-to-head competition.`, field:'sports', bad:true},
+  {text:r=>`You crushed ${r.name} in a rematch.`, field:'sports', bad:false},
+  {text:r=>`${r.name} spread a rumor about you to your friends.`, field:'social', bad:true},
+  {text:r=>`You one-upped ${r.name} at a party and everyone noticed.`, field:'social', bad:false},
+];
+function rollRivalEventP15(){
+  if(!state.rival) return;
+  const r = state.rival;
+  const pool = RIVAL_EVENTS_P15.filter(e=>e.field===r.field);
+  const e = pick(pool.length?pool:RIVAL_EVENTS_P15);
+  if(e.bad){ r.losses++; state.stats.happiness=clamp(state.stats.happiness-3,0,100); }
+  else { r.wins++; state.stats.happiness=clamp(state.stats.happiness+3,0,100); }
+  log(e.text(r), e.bad?'bad':'good');
+}
+function confrontRivalP15(){
+  const r = state.rival; if(!r) return;
+  playScene({title:`Rival: ${r.name}`, text:`You run into ${r.name} again. How do you want to handle this rivalry?`, choices:[
+    {label:'Challenge them head-on, fair and square', run:()=>{ if(chance(50)){ r.wins++; r.rel=clamp(r.rel+3,-100,100); state.stats.happiness=clamp(state.stats.happiness+5,0,100); log(`You beat ${r.name} fair and square. Sweet victory.`,'good'); } else { r.losses++; state.stats.happiness=clamp(state.stats.happiness-4,0,100); log(`${r.name} got the better of you this time.`,'bad'); } }},
+    {label:'Sabotage them behind the scenes', run:()=>{ state.stats.karma=clamp(state.stats.karma-8,0,100); if(chance(60)){ r.rel=clamp(r.rel-10,-100,100); log(`Your sabotage worked, but it left a bad taste in your mouth.`,'neutral'); } else { state.stats.happiness=clamp(state.stats.happiness-6,0,100); log(`Your sabotage backfired publicly. Embarrassing.`,'bad'); } }},
+    {label:'Take the high road and be kind to them', run:()=>{ state.stats.karma=clamp(state.stats.karma+6,0,100); r.rel=clamp(r.rel+15,-100,100); if(r.rel>=40){ log(`You and ${r.name} actually became friends.`,'good'); state.rival=null; } else { log(`You extended an olive branch to ${r.name}.`,'good'); } }},
+  ]});
+}
+function openRivalPanelP15(){
+  let html = '';
+  if(!state.rival){ html += `<p style="color:var(--sub)">You have no rival right now — count yourself lucky.</p>`; openPanel('Rival', html); return; }
+  const r = state.rival;
+  html += `<div class="list-item"><div class="li-main"><b>${r.name}</b><span>Rivalry field: ${r.field} · Standing: ${r.rel}</span></div></div>`;
+  html += `<div class="list-item"><div class="li-main"><b>Record</b><span>${r.wins} wins - ${r.losses} losses</span></div></div>`;
+  html += `<button class="btn btn-block btn-danger" onclick="confrontRivalP15()">Confront Rival</button>`;
+  openPanel('Rival', html);
+}
+
+/* ---------------------------------------------------------------------
+   MENTOR SYSTEM
+   --------------------------------------------------------------------- */
+const MENTOR_FIELDS_P15 = ['academics','career','sports','life'];
+function assignMentorP15(){
+  if(state.mentor) return;
+  const field = pick(MENTOR_FIELDS_P15);
+  const gender = pick(['Male','Female']);
+  state.mentor = {name: randomFirstName(gender)+' '+pick(LAST_NAMES), field, bond:rand(40,60), gender, alive:true};
+  log(`You found a mentor in ${state.mentor.name}, who took you under their wing.`,'good');
+}
+function seekMentorAdviceP15(){
+  const m = state.mentor; if(!m || !m.alive) return;
+  const boosts = {academics:'smarts', career:'smarts', sports:'health', life:'happiness'};
+  const stat = boosts[m.field] || 'happiness';
+  state.stats[stat] = clamp(state.stats[stat] + rand(3,8), 0, 100);
+  m.bond = clamp(m.bond + rand(3,8), 0, 100);
+  log(`${m.name} gave you valuable advice. Your ${stat} improved.`,'good');
+  closePanel(); render();
+}
+function tickMentorP15(){
+  const m = state.mentor; if(!m || !m.alive) return;
+  if(chance(3)){
+    m.alive = false;
+    log(`Your mentor ${m.name} passed away. Their guidance shaped who you became.`,'bad');
+    state.stats.karma = clamp(state.stats.karma+3,0,100);
+  }
+}
+function openMentorPanelP15(){
+  let html = '';
+  const m = state.mentor;
+  if(!m || !m.alive){ html += `<p style="color:var(--sub)">You don't have a mentor right now.</p>`; openPanel('Mentor', html); return; }
+  html += `<div class="list-item"><div class="li-main"><b>${m.name}</b><span>Field: ${m.field} · Bond: ${m.bond}%</span></div></div>`;
+  html += `<button class="btn btn-block btn-accent" onclick="seekMentorAdviceP15()">Seek Advice</button>`;
+  openPanel('Mentor', html);
+}
+
+/* Surface Rival / Mentor entry points inside the People panel */
+const _origOpenRelationshipsPanel_P15 = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P15();
+  const body = $('panel-body');
+  const rivalBtn = document.createElement('button');
+  rivalBtn.className = 'btn btn-block' + (state.rival?' btn-danger':'');
+  rivalBtn.textContent = state.rival ? `😠 Rival: ${state.rival.name}` : '😠 Rival';
+  rivalBtn.onclick = openRivalPanelP15;
+  body.appendChild(rivalBtn);
+  const mentorBtn = document.createElement('button');
+  mentorBtn.className = 'btn btn-block' + (state.mentor && state.mentor.alive?' btn-accent':'');
+  mentorBtn.textContent = (state.mentor && state.mentor.alive) ? `🌟 Mentor: ${state.mentor.name}` : '🌟 Mentor';
+  mentorBtn.onclick = openMentorPanelP15;
+  body.appendChild(mentorBtn);
+};
+
+/* ---------------------------------------------------------------------
+   GANG TERRITORY WARS (distinct from the drug empire tree)
+   --------------------------------------------------------------------- */
+const GANG_RANKS_P15 = ['Recruit','Soldier','Enforcer','Lieutenant','Shot Caller','Boss'];
+const GANG_NAMES_P15 = ['The Serpents','Iron Wolves','Red Sabers','The Vultures','Concrete Kings','Night Hawks'];
+function joinGangP15(){
+  if(state.gang) return;
+  state.gang = {name: pick(GANG_NAMES_P15), rank:0, territory: rand(5,15), rep:0, rivalGang: pick(GANG_NAMES_P15)};
+  while(state.gang.rivalGang===state.gang.name) state.gang.rivalGang = pick(GANG_NAMES_P15);
+  state.stats.karma = clamp(state.stats.karma-10,0,100);
+  log(`You joined ${state.gang.name}. There's no easy way out now.`,'bad');
+  closePanel(); render();
+}
+function gangPutInWorkP15(){
+  const g = state.gang; if(!g) return;
+  if(chance(65)){
+    const gain = rand(200,1500);
+    state.money += gain; g.rep += rand(3,8);
+    log(`You put in work for ${g.name} and earned ${fmtMoney(gain)}.`,'neutral');
+  } else {
+    state.inPrison = true; state.prisonYearsLeft = rand(1,4);
+    state.criminalRecord.push('Gang Activity');
+    log(`You got caught doing gang work and were sent to prison.`,'bad');
+  }
+  if(g.rep >= (g.rank+1)*20 && g.rank<GANG_RANKS_P15.length-1){
+    g.rank++;
+    log(`You were promoted to ${GANG_RANKS_P15[g.rank]} in ${g.name}.`,'good');
+  }
+  closePanel(); render();
+}
+function gangTurfWarP15(){
+  const g = state.gang; if(!g) return;
+  const winChance = clamp(40 + g.rank*8, 10, 85);
+  if(chance(winChance)){
+    const gain = rand(3,10);
+    g.territory = clamp(g.territory+gain,0,100);
+    state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+    log(`${g.name} won a turf war against ${g.rivalGang}! Territory expanded to ${g.territory}%.`,'good');
+    checkAchievement('gang_member');
+  } else {
+    const loss = rand(3,10);
+    g.territory = clamp(g.territory-loss,0,100);
+    state.stats.health = clamp(state.stats.health-rand(5,20),0,100);
+    log(`${g.rivalGang} won the turf war. You got hurt and ${g.name} lost territory.`,'bad');
+    if(chance(20)){ die('gang violence'); }
+  }
+  closePanel(); render();
+}
+function gangLeaveP15(){
+  const g = state.gang; if(!g) return;
+  if(chance(60)){
+    log(`You managed to walk away from ${g.name} clean.`,'good');
+    state.gang = null;
+  } else {
+    state.stats.health = clamp(state.stats.health-rand(10,30),0,100);
+    log(`${g.name} didn't let you leave quietly. You took a beating on your way out.`,'bad');
+    state.gang = null;
+  }
+  closePanel(); render();
+}
+function openGangPanelP15(){
+  let html = '';
+  if(!state.gang){
+    html += `<p style="color:var(--sub)">You're not affiliated with any gang.</p>`;
+    html += `<button class="btn btn-block btn-danger" onclick="joinGangP15()">Join a Local Gang</button>`;
+  } else {
+    const g = state.gang;
+    html += `<div class="list-item"><div class="li-main"><b>${g.name}</b><span>Rank: ${GANG_RANKS_P15[g.rank]} · Territory: ${g.territory}%</span></div></div>`;
+    html += `<div class="list-item"><div class="li-main"><b>Rival Gang</b><span>${g.rivalGang}</span></div></div>`;
+    html += `<button class="btn btn-block" onclick="gangPutInWorkP15()">Put In Work</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick="gangTurfWarP15()">Fight for Territory</button>`;
+    html += `<button class="btn btn-block" onclick="gangLeaveP15()">Try to Leave the Gang</button>`;
+  }
+  openPanel('Gang', html);
+}
+const _origOpenActivitiesPanel_P15 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P15();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block' + (state.gang?' btn-danger':'');
+  btn.textContent = state.gang ? `🔫 Gang: ${state.gang.name}` : '🔫 Gang Territory';
+  btn.onclick = openGangPanelP15;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   Wire rival/mentor/gang into the yearly loop
+   --------------------------------------------------------------------- */
+const _origAgeUp_P15b = ageUp;
+ageUp = function(){
+  _origAgeUp_P15b();
+  if(!state || !state.alive) return;
+  if(state.age>=12 && state.age<=17 && !state.rival && chance(20)) assignRivalP15();
+  if(state.rival && chance(30)) rollRivalEventP15();
+  if(state.age>=14 && !state.mentor && (state.job || state.eduStage==='college' || state.eduStage==='highschool') && chance(12)) assignMentorP15();
+  tickMentorP15();
+  render();
+};
+
+/* ---------------------------------------------------------------------
+   SCHOOL CLUBS
+   --------------------------------------------------------------------- */
+const CLUB_OPTIONS_P15 = [
+  {name:'Debate Team', stat:'smarts'}, {name:'Drama Club', stat:'looks'}, {name:'Student Government', stat:'karma'},
+  {name:'Robotics Club', stat:'smarts'}, {name:'Music Band', stat:'happiness'}, {name:'Varsity Cheer', stat:'looks'},
+  {name:'Chess Club', stat:'smarts'}, {name:'Art Club', stat:'happiness'},
+];
+function joinClubP15(name){
+  const c = CLUB_OPTIONS_P15.find(x=>x.name===name);
+  if(!c || state.clubs.includes(name)) return;
+  state.clubs.push(name);
+  state.stats[c.stat] = clamp(state.stats[c.stat]+5,0,100);
+  log(`You joined ${name}.`,'good');
+  checkAchievement('club_member');
+  openClubsPanelP15();
+}
+function leaveClubP15(name){
+  state.clubs = state.clubs.filter(c=>c!==name);
+  log(`You left ${name}.`,'neutral');
+  openClubsPanelP15();
+}
+function tickClubsP15(){
+  if(!state.clubs.length) return;
+  state.clubs.forEach(name=>{
+    const c = CLUB_OPTIONS_P15.find(x=>x.name===name);
+    if(c) state.stats[c.stat] = clamp(state.stats[c.stat]+rand(1,3),0,100);
+  });
+}
+function openClubsPanelP15(){
+  let html = '';
+  if(state.clubs.length){
+    html += `<b>Your Clubs</b>`;
+    state.clubs.forEach(name=>{
+      html += `<div class="list-item"><div class="li-main"><b>${name}</b></div><button class="btn" onclick='leaveClubP15(${JSON.stringify(name)})'>Leave</button></div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Available Clubs</b>`;
+  CLUB_OPTIONS_P15.filter(c=>!state.clubs.includes(c.name)).forEach(c=>{
+    html += `<button class="btn btn-block" onclick='joinClubP15(${JSON.stringify(c.name)})'>Join ${c.name}</button>`;
+  });
+  openPanel('School Clubs', html);
+}
+const _origOpenCareerPanel_P15b = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P15b();
+  if(state.eduStage==='highschool' || state.eduStage==='college'){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = '🎭 School Clubs' + (state.clubs.length?(' ('+state.clubs.length+')'):'');
+    btn.onclick = openClubsPanelP15;
+    body.appendChild(btn);
+  }
+};
+
+/* ---------------------------------------------------------------------
+   COLLEGE-SPECIFIC LIFE EVENTS
+   --------------------------------------------------------------------- */
+const COLLEGE_EVENTS_P15 = [
+  {text:'Your roommate never does the dishes and it is driving you insane.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You pulled an all-nighter cramming for finals and aced the exam.', type:'good', fx:s=>{s.stats.smarts=clamp(s.stats.smarts+4,0,100); s.stats.health-=3;}},
+  {text:'You landed a competitive summer internship in your field.', type:'good', fx:s=>{s.money+=rand(1000,4000); s.stats.smarts=clamp(s.stats.smarts+2,0,100);}},
+  {text:'You went to a legendary frat party that got a little out of hand.', type:'neutral', fx:s=>{s.stats.happiness+=4; s.stats.health-=2;}},
+  {text:'You joined a study group that actually helped your grades.', type:'good', fx:s=>{s.gpa=clamp(s.gpa+0.2,0,4);}},
+  {text:'You racked up student loan debt this semester.', type:'bad', fx:s=>{s.money-=rand(2000,6000);}},
+  {text:'You had a falling out with your college roommate.', type:'bad', fx:s=>{s.stats.happiness-=4;}},
+  {text:'You presented research at a campus symposium.', type:'good', fx:s=>{s.stats.smarts=clamp(s.stats.smarts+3,0,100); s.stats.happiness+=2;}},
+  {text:'You overslept and missed a final exam.', type:'bad', fx:s=>{s.gpa=clamp(s.gpa-0.4,0,4);}},
+  {text:'You spent spring break on a budget road trip with friends.', type:'good', fx:s=>{s.stats.happiness+=6; s.money-=rand(300,900);}},
+];
+function rollCollegeEventP15(){
+  if(state.eduStage!=='college') return;
+  if(chance(45)){
+    const e = pick(COLLEGE_EVENTS_P15);
+    e.fx(state); clampAllStats();
+    log('🎓 '+e.text, e.type);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   WAR DRAFT
+   --------------------------------------------------------------------- */
+function tickWarStatusP15(){
+  if(!state.flags.warActive && chance(3)){
+    state.flags.warActive = true;
+    log(`📰 The nation has entered a military conflict overseas.`,'bad');
+    newspaper('NATION GOES TO WAR', 'Government officials confirm military deployment has begun.');
+  } else if(state.flags.warActive && chance(20)){
+    state.flags.warActive = false;
+    log(`📰 The war has officially ended. Troops are coming home.`,'good');
+    newspaper('WAR ENDS', 'A peace agreement brings the long conflict to a close.');
+  }
+}
+function tickDraftP15(){
+  if(!state.flags.warActive) return;
+  if(state.flags.drafted || state.flags.servedInWar) return;
+  if(state.age<18 || state.age>25) return;
+  if(!chance(15)) return;
+  state.flags.drafted = true;
+  playScene({title:'Draft Notice', text:'A draft notice arrives in the mail. You have been called to serve in the war.', choices:[
+    {label:'Report for duty', run:()=>{
+      state.flags.servedInWar = true;
+      if(chance(15)){ die('combat injuries sustained in the war'); return; }
+      if(chance(30)){ state.stats.health=clamp(state.stats.health-rand(15,35),0,100); log(`You were wounded in combat, but survived and came home.`,'bad'); }
+      else { state.stats.karma=clamp(state.stats.karma+8,0,100); log(`You served your tour and returned home a veteran.`,'good'); }
+      state.money += rand(5000,15000);
+      checkAchievement('veteran');
+    }},
+    {label:'Flee to another country', run:()=>{
+      state.flags.fugitive = true; state.stats.karma=clamp(state.stats.karma-5,0,100); state.stats.happiness=clamp(state.stats.happiness-8,0,100);
+      log(`You fled the country to avoid the draft. You can never go home the same way again.`,'bad');
+    }},
+    {label:'File as a conscientious objector', run:()=>{
+      if(chance(50)){ log(`Your objection was accepted. You served in a non-combat role instead.`,'neutral'); state.flags.servedInWar=true; }
+      else { state.inPrison=true; state.prisonYearsLeft=2; state.criminalRecord.push('Draft Evasion'); log(`Your objection was denied and you were imprisoned for draft evasion.`,'bad'); }
+    }},
+  ]});
+}
+
+/* ---------------------------------------------------------------------
+   AFFAIRS / INFIDELITY SYSTEM
+   --------------------------------------------------------------------- */
+function tickAffairP15(){
+  if(!state.spouseId || state.flags.affair) return;
+  if(!chance(4)) return;
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse) return;
+  playScene({title:'Temptation', text:`Someone new has been giving you a lot of attention lately, and your marriage with ${spouse.name} has felt distant. What do you do?`, choices:[
+    {label:'Stay faithful and recommit to your marriage', run:()=>{ spouse.rel=clamp(spouse.rel+8,0,100); state.stats.karma=clamp(state.stats.karma+3,0,100); log(`You chose to stay faithful to ${spouse.name}.`,'good'); }},
+    {label:'Have an affair', run:()=>{ state.flags.affair = true; state.stats.happiness=clamp(state.stats.happiness+6,0,100); state.stats.karma=clamp(state.stats.karma-10,0,100); log(`You gave in to temptation and started seeing someone behind ${spouse.name}'s back.`,'bad'); }},
+  ]});
+}
+function tickAffairDiscoveryP15(){
+  if(!state.flags.affair) return;
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse){ state.flags.affair=false; return; }
+  if(chance(35)){
+    spouse.rel = clamp(spouse.rel-50,0,100);
+    state.stats.happiness = clamp(state.stats.happiness-15,0,100);
+    state.flags.affair = false;
+    log(`💔 ${spouse.name} found out about your affair. Trust is shattered.`,'bad');
+    newspaper(`${state.name.toUpperCase()}'S MARRIAGE ROCKED BY SCANDAL`, `Sources close to the family confirm an affair has come to light.`);
+    if(spouse.rel<20 && chance(70)){ fileDivorce(); }
+  } else if(chance(15)){
+    state.flags.affair = false;
+    log(`The affair fizzled out on its own before anyone found out.`,'neutral');
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Wire clubs / college events / draft / affairs into the yearly loop
+   --------------------------------------------------------------------- */
+const _origAgeUp_P15c = ageUp;
+ageUp = function(){
+  _origAgeUp_P15c();
+  if(!state || !state.alive) return;
+  tickClubsP15();
+  rollCollegeEventP15();
+  tickWarStatusP15();
+  tickDraftP15();
+  tickAffairP15();
+  tickAffairDiscoveryP15();
+  clampAllStats();
+  render();
+};
+
+/* New achievement entries for the systems added above */
+Object.assign(ACHIEVEMENTS, {
+  veteran: 'Served your country in a war',
+  club_member: 'Joined a school club',
+});
+
+/* ---------------------------------------------------------------------
+   AI FAMILY CONVERSATIONS VIA THE CLAUDE API
+   API key + model are stored in this browser's localStorage only, never
+   in game state (so they aren't part of any save/export of a life).
+   --------------------------------------------------------------------- */
+function getApiKeyP15(){ return localStorage.getItem('lifeplay_api_key')||''; }
+function setApiKeyP15(k){ localStorage.setItem('lifeplay_api_key', k); }
+function getApiModelP15(){ return localStorage.getItem('lifeplay_api_model')||'claude-sonnet-4-5-20250929'; }
+function setApiModelP15(m){ localStorage.setItem('lifeplay_api_model', m); }
+
+function openApiSettingsPanelP15(){
+  const key = getApiKeyP15();
+  const model = getApiModelP15();
+  let html = `<p style="color:var(--sub)">Enter your Anthropic Claude API key to unlock AI-powered conversations with your in-game family and friends. Your key is stored only in this browser's local storage and is sent directly to Anthropic's API — never anywhere else.</p>`;
+  html += `<div class="field"><label>API Key</label><input id="api-key-input" type="password" value="${key.replace(/"/g,'&quot;')}" placeholder="sk-ant-..."></div>`;
+  html += `<div class="field"><label>Model</label><input id="api-model-input" type="text" value="${model.replace(/"/g,'&quot;')}"></div>`;
+  html += `<button class="btn btn-block btn-primary" onclick="saveApiSettingsP15()">Save</button>`;
+  openPanel('AI Chat Settings', html);
+}
+function saveApiSettingsP15(){
+  setApiKeyP15($('api-key-input').value.trim());
+  setApiModelP15($('api-model-input').value.trim() || 'claude-sonnet-4-5-20250929');
+  log(`Claude API settings saved.`,'neutral');
+  closePanel(); render();
+}
+
+function openFamilyChatP15(relId){
+  const r = state.relationships.find(x=>x.id===relId);
+  if(!r) return;
+  if(!r.chatHistory) r.chatHistory = [];
+  renderFamilyChatP15(r);
+}
+function renderFamilyChatP15(r){
+  const key = getApiKeyP15();
+  let html = `<h3>💬 ${r.name}</h3>`;
+  if(!key){
+    html += `<p style="color:var(--sub)">Set your Claude API key first to chat with ${r.name}.</p>`;
+    html += `<button class="btn btn-block" onclick="closeModal(); openApiSettingsPanelP15();">Open AI Chat Settings</button>`;
+    showModal(html);
+    return;
+  }
+  html += `<div id="chat-log" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:10px;">`;
+  r.chatHistory.forEach(m=>{
+    const mine = m.role==='user';
+    html += `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'var(--panel2)':'var(--panel)'};border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-width:80%;font-size:.85em;">${m.content}</div>`;
+  });
+  html += `</div>`;
+  html += `<div class="row"><input id="chat-input" type="text" placeholder="Say something..." style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);"><button class="btn btn-primary" id="chat-send-btn">Send</button></div>`;
+  html += `<button class="btn btn-block" style="margin-top:8px" onclick="closeModal()">Close</button>`;
+  showModal(html);
+  const logEl = document.getElementById('chat-log');
+  if(logEl) logEl.scrollTop = logEl.scrollHeight;
+  document.getElementById('chat-send-btn').onclick = ()=>sendFamilyChatP15(r);
+  document.getElementById('chat-input').addEventListener('keydown', e=>{ if(e.key==='Enter') sendFamilyChatP15(r); });
+}
+async function callClaudeApiP15(r){
+  const apiKey = getApiKeyP15();
+  const model = getApiModelP15();
+  const persona = `You are roleplaying as ${r.name}, the ${relLabel(r.type)} of ${state.name} in a life simulation game called LifePlay. ${r.name} is ${r.age} years old. Your relationship closeness with ${state.name} is ${Math.round(r.rel)}/100. Stay fully in character as ${r.name} — warm or distant depending on the relationship score, with a distinct personality. Keep replies conversational and under 60 words. Never break character or mention that you are an AI.`;
+  const messages = r.chatHistory.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role, content:m.content}));
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true',
+    },
+    body: JSON.stringify({ model, max_tokens:200, system:persona, messages })
+  });
+  if(!res.ok){
+    const errText = await res.text().catch(()=>res.statusText);
+    throw new Error('HTTP '+res.status+' '+errText.slice(0,150));
+  }
+  const data = await res.json();
+  const block = (data.content||[]).find(b=>b.type==='text');
+  return block ? block.text : '[No response]';
+}
+async function sendFamilyChatP15(r){
+  const input = document.getElementById('chat-input');
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  r.chatHistory.push({role:'user', content:text});
+  renderFamilyChatP15(r);
+  const logEl = document.getElementById('chat-log');
+  if(logEl){ logEl.innerHTML += `<div style="align-self:flex-start;color:var(--sub);font-size:.8em;">${r.name} is typing...</div>`; logEl.scrollTop = logEl.scrollHeight; }
+  try{
+    const reply = await callClaudeApiP15(r);
+    r.chatHistory.push({role:'assistant', content:reply});
+  } catch(err){
+    r.chatHistory.push({role:'assistant', content:'[Could not reach the API: '+err.message+']'});
+  }
+  renderFamilyChatP15(r);
+}
+
+const _origOpenRelationshipsPanel_P15chat = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P15chat();
+  const body = $('panel-body');
+  const living = state.relationships.filter(r=>r.alive);
+  if(living.length){
+    const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+    const label = document.createElement('b'); label.textContent='💬 AI Conversations'; body.appendChild(label);
+    living.forEach(r=>{
+      const btn = document.createElement('button');
+      btn.className='btn btn-block';
+      btn.textContent = `Chat with ${r.name}`;
+      btn.onclick = ()=>openFamilyChatP15(r.id);
+      body.appendChild(btn);
+    });
+  }
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className='btn btn-block btn-accent';
+  settingsBtn.textContent='🔑 AI Chat Settings';
+  settingsBtn.onclick = openApiSettingsPanelP15;
+  body.appendChild(settingsBtn);
+};
 </script>
 </body>
 </html>
