@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Looksmaxxing Dictionary</title>
+<style>
+  :root {
+    --bg-0: #07070b;
+    --bg-1: #0d0d14;
+    --bg-2: #14141d;
+    --card: #121219;
+    --card-border: rgba(255,255,255,0.08);
+    --gold: #d4af7a;
+    --gold-bright: #f2d9a8;
+    --text-0: #f5f3ee;
+    --text-1: #b7b4ac;
+    --text-2: #7a776f;
+    --accent: #8f7bff;
+    --danger: #ff6b6b;
+    --easy: #6bffb0;
+    --mid: #ffd86b;
+    --hard: #ff8a6b;
+    --extreme: #ff6b6b;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-0);
+    color: var(--text-0);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overscroll-behavior-y: none;
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(143,123,255,0.18), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(212,175,122,0.10), transparent 40%),
+      var(--bg-0);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--safe-top) + 14px);
+    padding-bottom: calc(var(--safe-bottom) + 24px);
+    position: relative;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 4px 20px 18px;
+    text-align: center;
+    position: relative;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 0.85;
+  }
+
+  h1.title {
+    margin: 0;
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #ffffff 10%, var(--gold-bright) 55%, #ffffff 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 24px rgba(212,175,122,0.35), 0 0 60px rgba(143,123,255,0.15);
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(212,175,122,0.25)); }
+    50% { filter: drop-shadow(0 0 18px rgba(212,175,122,0.55)); }
+  }
+
+  .subtitle {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    letter-spacing: 0.3px;
+  }
+
+  /* ---------- Term of the Day ---------- */
+  .totd-wrap {
+    padding: 4px 16px 6px;
+  }
+
+  .totd-card {
+    position: relative;
+    border-radius: 22px;
+    padding: 20px 20px 18px;
+    background: linear-gradient(160deg, #1a1626 0%, #14121c 55%, #0f0f16 100%);
+    border: 1px solid rgba(212,175,122,0.25);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+
+  .totd-card:active {
+    transform: scale(0.985);
+  }
+
+  .totd-card::before {
+    content: "";
+    position: absolute;
+    top: -60%;
+    right: -30%;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(143,123,255,0.28), transparent 70%);
+    pointer-events: none;
+  }
+
+  .totd-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .totd-label .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+    animation: dotBlink 1.8s ease-in-out infinite;
+  }
+
+  @keyframes dotBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .totd-term {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .totd-def {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-1);
+    position: relative;
+    z-index: 1;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
+  }
+
+  .totd-card.expanded .totd-def {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 10px;
+  }
+
+  .totd-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .totd-hint {
+    font-size: 11.5px;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .chev {
+    transition: transform 0.3s ease;
+    display: inline-block;
+  }
+  .totd-card.expanded .chev { transform: rotate(180deg); }
+
+  /* ---------- Search ---------- */
+  .search-wrap {
+    padding: 16px 16px 4px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(180deg, var(--bg-0) 70%, rgba(7,7,11,0));
+    padding-bottom: 14px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 13px 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .search-box:focus-within {
+    border-color: rgba(143,123,255,0.5);
+    box-shadow: 0 0 0 3px rgba(143,123,255,0.12);
+  }
+
+  .search-box svg { flex-shrink: 0; opacity: 0.5; }
+
+  .search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-0);
+    font-size: 15.5px;
+    font-family: inherit;
+    min-width: 0;
+  }
+
+  .search-box input::placeholder { color: var(--text-2); }
+
+  .clear-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text-1);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .clear-btn.show { display: flex; }
+
+  .result-count {
+    font-size: 11.5px;
+    color: var(--text-2);
+    padding: 10px 4px 0;
+    letter-spacing: 0.3px;
+  }
+
+  /* ---------- Index ---------- */
+  .index-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 16px 10px;
+    scrollbar-width: none;
+  }
+  .index-bar::-webkit-scrollbar { display: none; }
+
+  .index-chip {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-1);
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .index-chip.active {
+    color: #0a0a0f;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    border-color: transparent;
+  }
+
+  /* ---------- Term List ---------- */
+  .term-list {
+    padding: 4px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .term-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 16px 16px 14px;
+    animation: fadeIn 0.35s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .term-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .term-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .term-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-0);
+  }
+
+  .term-name mark {
+    background: rgba(212,175,122,0.35);
+    color: var(--gold-bright);
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+
+  .badge {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge.easy { color: var(--easy); background: rgba(107,255,176,0.12); }
+  .badge.mid { color: var(--mid); background: rgba(255,216,107,0.12); }
+  .badge.hard { color: var(--hard); background: rgba(255,138,107,0.12); }
+  .badge.extreme { color: var(--extreme); background: rgba(255,107,107,0.14); }
+
+  .term-idx {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 700;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .term-category {
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+
+  .term-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
+  }
+  .term-card.open .term-body {
+    max-height: 400px;
+    opacity: 1;
+    margin-top: 12px;
+  }
+
+  .term-def {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text-1);
+  }
+
+  .term-def mark {
+    background: rgba(212,175,122,0.35);
+    color: var(--gold-bright);
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+
+  .difficulty-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .difficulty-label {
+    font-size: 10.5px;
+    color: var(--text-2);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .dots { display: flex; gap: 4px; }
+  .dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+  }
+  .dots span.filled { background: var(--gold); box-shadow: 0 0 6px rgba(212,175,122,0.6); }
+
+  .gear-btn {
+    margin-top: 14px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(143,123,255,0.16), rgba(143,123,255,0.06));
+    border: 1px solid rgba(143,123,255,0.3);
+    color: #cfc6ff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 11px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  .gear-btn:active { transform: scale(0.97); background: rgba(143,123,255,0.22); }
+
+  .chevron-icon {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .term-card.open .chevron-icon { transform: rotate(180deg); }
+
+  /* ---------- Empty state ---------- */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-2);
+  }
+  .empty-state .glyph { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 13.5px; line-height: 1.5; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 24px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1c1a26;
+    border: 1px solid rgba(212,175,122,0.3);
+    color: var(--text-0);
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 85%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer {
+    text-align: center;
+    padding: 18px 20px 4px;
+    font-size: 10.5px;
+    color: var(--text-2);
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="eyebrow">Est. Aesthetics Codex</div>
+    <h1 class="title">LOOKSMAXXING<br>DICTIONARY</h1>
+    <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
+  </header>
+
+  <div class="totd-wrap">
+    <div class="totd-card" id="totdCard">
+      <div class="totd-label"><span class="dot"></span>Term of the Day</div>
+      <div class="totd-term" id="totdTerm">—</div>
+      <div class="totd-def" id="totdDef">—</div>
+      <div class="totd-meta">
+        <div class="totd-hint">Tap to expand</div>
+        <span class="chev">▾</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search terms, e.g. mewing..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="clear-btn" id="clearBtn" aria-label="Clear search">✕</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+
+  <div class="index-bar" id="indexBar"></div>
+
+  <div class="term-list" id="termList"></div>
+
+  <footer>184 terms &amp; growing · Definitions for educational reference only</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- Database ---------------- */
+  const TERMS = [
+    {
+      term: "Mewing",
+      category: "Tongue Posture",
+      difficulty: 2,
+      definition: "A tongue-posture technique where the entire tongue (including the back) rests flat against the roof of the mouth, developed by orthodontist Dr. John Mew. Proponents claim consistent practice over months or years can subtly influence jaw and palate development, particularly in growing individuals.",
+      gear: "Tongue Posture Trainer"
+    },
+    {
+      term: "Canthal Tilt",
+      category: "Eye Aesthetics",
+      difficulty: 4,
+      definition: "The angle formed by a line drawn from the inner corner (medial canthus) to the outer corner (lateral canthus) of the eye. A 'positive' canthal tilt (outer corner higher) is widely considered more aesthetically favorable, while a 'negative' tilt points downward.",
+      gear: "Canthal Tilt Tape Kit"
+    },
+    {
+      term: "Hunter Eyes",
+      category: "Eye Aesthetics",
+      difficulty: 3,
+      definition: "A colloquial term describing deep-set, hooded eyes with low, straight eyebrows and minimal visible sclera — an intense, predatory gaze aesthetic often referenced in facial rating communities as highly desirable.",
+      gear: "Brow Grooming Kit"
+    },
+    {
+      term: "Oneric",
+      category: "Skull Shape",
+      difficulty: 4,
+      definition: "Describing a forward-grown, well-projected facial structure with strong bizygomatic width and minimal recession — the opposite of a 'recessed' maxilla/mandible. Often used to describe an ideal, harmonious bone structure.",
+      gear: "Facial Structure Guide"
+    },
+    {
+      term: "Looksfading",
+      category: "General Aesthetics",
+      difficulty: 1,
+      definition: "The natural, gradual decline in facial and physical attractiveness that occurs with age, driven by collagen loss, bone remodeling, skin laxity, and volume shifts — often cited as motivation for early preventative skincare and structural maintenance.",
+      gear: "Anti-Aging Skincare Set"
+    },
+    {
+      term: "Bone Smashing",
+      category: "Skull Shape",
+      difficulty: 5,
+      definition: "A widely debunked and dangerous fringe practice claiming that repeatedly striking facial bones with blunt objects stimulates bone density growth (per Wolff's Law) to reshape the face. Medically unsupported and associated with serious injury risk.",
+      gear: "— Not Recommended —"
+    },
+    {
+      term: "Gonial Angle",
+      category: "Jaw & Chin",
+      difficulty: 4,
+      definition: "The angle of the mandible at the point where the horizontal body meets the vertical ramus (roughly below the ear). A more acute, well-defined gonial angle is associated with a stronger, squarer jawline silhouette.",
+      gear: "Jawline Contour Roller"
+    },
+    {
+      term: "Maxillary Recession",
+      category: "Jaw & Chin",
+      difficulty: 3,
+      definition: "An underdeveloped or posteriorly positioned upper jaw (maxilla) relative to the rest of the face, often contributing to a flatter midface, reduced cheekbone projection, and a less forward facial profile.",
+      gear: "Facial Massage Tool"
+    },
+    {
+      term: "PSL Rating",
+      category: "General Aesthetics",
+      difficulty: 2,
+      definition: "Short for 'Pretty Straight/Slightly Ugly' — an informal 1-to-10 facial attractiveness rating scale popularized in online communities, used to broadly self-assess or discuss physical appearance.",
+      gear: "Rating Reference Chart"
+    },
+    {
+      term: "Neotenous Features",
+      category: "General Aesthetics",
+      difficulty: 3,
+      definition: "Youthful facial characteristics retained into adulthood — large eyes, smooth skin, softer contours — that are frequently perceived as more approachable or attractive across cultures.",
+      gear: "Youthful Glow Serum"
+    },
+    {
+      term: "Zygomatic Projection",
+      category: "Cheekbones",
+      difficulty: 3,
+      definition: "The degree to which the cheekbones (zygomatic bones) extend outward and forward from the skull, contributing to a chiseled, three-dimensional midface appearance often emphasized in facial harmony discussions.",
+      gear: "Cheek Contour Kit"
+    },
+    {
+      term: "Buccal Fat Removal",
+      category: "Cheeks",
+      difficulty: 5,
+      definition: "A surgical procedure that removes the fat pads in the lower cheeks (buccal fat) to create a slimmer, more sculpted, hollowed-cheek appearance. A permanent cosmetic surgery with real recovery and risk considerations.",
+      gear: "Consult a Licensed Surgeon"
+    },
+    {
+      term: "Facial Thirds",
+      category: "Proportions",
+      difficulty: 2,
+      definition: "A classical framework dividing the face horizontally into three roughly equal sections (hairline-to-brow, brow-to-nose-base, nose-base-to-chin) used to assess overall facial balance and harmony.",
+      gear: "Proportion Measuring App"
+    },
+    {
+      term: "Ogee Curve",
+      category: "Cheekbones",
+      difficulty: 4,
+      definition: "An S-shaped curve running from the cheekbone down through the midface — a soft transition from convex to concave — considered a hallmark of youthful, aesthetically pleasing facial contour, especially in profile.",
+      gear: "Facial Yoga Guide"
+    },
+    {
+      term: "Under-Eye Hollowing",
+      category: "Eye Aesthetics",
+      difficulty: 2,
+      definition: "A sunken, shadowed appearance beneath the eyes caused by volume loss, thin skin, or bone structure, often addressed cosmetically with dermal fillers or topical treatments to restore a smoother tear-trough transition.",
+      gear: "Under-Eye Filler Alternative Cream"
+    }
+  ];
+
+  /* ---------------- State ---------------- */
+  let activeCategory = "All";
+  let openIndex = null;
+  let searchTerm = "";
+
+  const els = {
+    termList: document.getElementById("termList"),
+    indexBar: document.getElementById("indexBar"),
+    searchInput: document.getElementById("searchInput"),
+    clearBtn: document.getElementById("clearBtn"),
+    resultCount: document.getElementById("resultCount"),
+    totdCard: document.getElementById("totdCard"),
+    totdTerm: document.getElementById("totdTerm"),
+    totdDef: document.getElementById("totdDef"),
+    toast: document.getElementById("toast")
+  };
+
+  /* ---------------- Term of the Day ---------------- */
+  function pickTermOfDay() {
+    const dayIndex = Math.floor(Date.now() / 86400000);
+    return TERMS[dayIndex % TERMS.length];
+  }
+
+  function renderTotd() {
+    const t = pickTermOfDay();
+    els.totdTerm.textContent = t.term;
+    els.totdDef.textContent = t.definition;
+  }
+
+  els.totdCard.addEventListener("click", () => {
+    els.totdCard.classList.toggle("expanded");
+  });
+
+  /* ---------------- Index Bar ---------------- */
+  function renderIndexBar() {
+    const categories = ["All", ...new Set(TERMS.map(t => t.category))];
+    els.indexBar.innerHTML = "";
+    categories.forEach(cat => {
+      const chip = document.createElement("div");
+      chip.className = "index-chip" + (cat === activeCategory ? " active" : "");
+      chip.textContent = cat;
+      chip.addEventListener("click", () => {
+        activeCategory = cat;
+        openIndex = null;
+        renderIndexBar();
+        renderList();
+      });
+      els.indexBar.appendChild(chip);
+    });
+  }
+
+  /* ---------------- Difficulty helpers ---------------- */
+  function difficultyMeta(level) {
+    if (level <= 1) return { label: "Beginner", cls: "easy" };
+    if (level <= 2) return { label: "Easy", cls: "easy" };
+    if (level === 3) return { label: "Moderate", cls: "mid" };
+    if (level === 4) return { label: "Advanced", cls: "hard" };
+    return { label: "Extreme", cls: "extreme" };
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return text.slice(0, idx) + "<mark>" + text.slice(idx, idx + query.length) + "</mark>" + text.slice(idx + query.length);
+  }
+
+  /* ---------------- List Rendering ---------------- */
+  function getFiltered() {
+    const q = searchTerm.trim().toLowerCase();
+    return TERMS
+      .map((t, i) => ({ ...t, _idx: i }))
+      .filter(t => activeCategory === "All" || t.category === activeCategory)
+      .filter(t => !q || t.term.toLowerCase().includes(q) || t.definition.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
+  }
+
+  function renderList() {
+    const filtered = getFiltered();
+    els.resultCount.textContent = filtered.length === TERMS.length
+      ? `${TERMS.length} terms indexed`
+      : `${filtered.length} of ${TERMS.length} terms`;
+
+    if (filtered.length === 0) {
+      els.termList.innerHTML = `
+        <div class="empty-state">
+          <div class="glyph">◎</div>
+          <p>No terms match "<strong>${escapeHtml(searchTerm)}</strong>".<br>Try a different keyword.</p>
+        </div>`;
+      return;
+    }
+
+    els.termList.innerHTML = "";
+    filtered.forEach((t, renderPos) => {
+      const diff = difficultyMeta(t.difficulty);
+      const card = document.createElement("div");
+      card.className = "term-card" + (openIndex === t._idx ? " open" : "");
+      card.style.animationDelay = (renderPos * 0.03) + "s";
+
+      const dots = Array.from({ length: 5 }, (_, i) =>
+        `<span class="${i < t.difficulty ? "filled" : ""}"></span>`
+      ).join("");
+
+      card.innerHTML = `
+        <div class="term-top">
+          <div style="flex:1; min-width:0;">
+            <div class="term-name-row">
+              <span class="term-idx">#${String(t._idx + 1).padStart(2, "0")}</span>
+              <span class="term-name">${highlight(t.term, searchTerm)}</span>
+              <span class="badge ${diff.cls}">${diff.label}</span>
+            </div>
+            <div class="term-category">${t.category}</div>
+          </div>
+          <span class="chevron-icon">▾</span>
+        </div>
+        <div class="term-body">
+          <div class="term-def">${highlight(t.definition, searchTerm)}</div>
+          <div class="difficulty-row">
+            <span class="difficulty-label">Difficulty</span>
+            <div class="dots">${dots}</div>
+          </div>
+          <button class="gear-btn" data-term="${escapeHtml(t.term)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3.5a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Recommended Gear: ${escapeHtml(t.gear)}
+          </button>
+        </div>
+      `;
+
+      card.querySelector(".term-top").addEventListener("click", () => {
+        openIndex = (openIndex === t._idx) ? null : t._idx;
+        renderList();
+      });
+
+      card.querySelector(".gear-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        showToast(`"${t.gear}" — product page coming soon.`);
+      });
+
+      els.termList.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer = null;
+  function showToast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+  }
+
+  /* ---------------- Search ---------------- */
+  els.searchInput.addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    els.clearBtn.classList.toggle("show", searchTerm.length > 0);
+    openIndex = null;
+    renderList();
+  });
+
+  els.clearBtn.addEventListener("click", () => {
+    searchTerm = "";
+    els.searchInput.value = "";
+    els.clearBtn.classList.remove("show");
+    els.searchInput.focus();
+    renderList();
+  });
+
+  /* ---------------- Init ---------------- */
+  renderTotd();
+  renderIndexBar();
+  renderList();
+})();
+</script>
+</body>
+</html>
