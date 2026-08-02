@@ -1873,6 +1873,135 @@ openRelationshipsPanel = function(){
   settingsBtn.onclick = openApiSettingsPanelP15;
   body.appendChild(settingsBtn);
 };
+
+/* ---------------------------------------------------------------------
+   FULL PET SYSTEM — aging, care, vet visits, natural death
+   --------------------------------------------------------------------- */
+const PET_LIFESPANS_P15 = {Dog:14, Cat:16, Parrot:45, Hamster:3, Snake:18, Rabbit:10};
+
+const _origAdoptPet_P15 = adoptPet;
+adoptPet = function(type){
+  const before = state.pets.length;
+  _origAdoptPet_P15(type);
+  if(state.pets.length>before){
+    const p = state.pets[state.pets.length-1];
+    p.health = 100;
+  }
+};
+
+function careForPetP15(idx){
+  const p = state.pets[idx]; if(!p || !p.alive) return;
+  p.happiness = clamp(p.happiness+rand(8,15),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  log(`You spent time playing with ${p.name}.`,'good');
+  openPetCarePanelP15();
+}
+function vetVisitP15(idx){
+  const p = state.pets[idx]; if(!p || !p.alive) return;
+  const cost = 80;
+  if(state.money<cost){ log(`Not enough money for a vet visit.`,'bad'); openPetCarePanelP15(); return; }
+  state.money -= cost;
+  p.health = clamp(p.health+rand(20,40),0,100);
+  log(`You took ${p.name} to the vet for a checkup.`,'good');
+  openPetCarePanelP15();
+}
+function rehomePetP15(idx){
+  const p = state.pets[idx]; if(!p) return;
+  log(`You found ${p.name} a loving new home. It was hard to say goodbye.`,'neutral');
+  state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+  state.pets.splice(idx,1);
+  openPetCarePanelP15();
+}
+function tickPetsP15(){
+  state.pets.forEach(p=>{
+    if(!p.alive) return;
+    p.age++;
+    p.happiness = clamp(p.happiness - rand(2,6), 0, 100);
+    p.health = clamp((p.health==null?100:p.health) - rand(1,5), 0, 100);
+    const lifespan = PET_LIFESPANS_P15[p.type] || 12;
+    if(p.age>=15) checkAchievement('animal_whisperer');
+    let deathChance = 0;
+    if(p.age>=lifespan) deathChance += (p.age-lifespan+1)*10;
+    if(p.health<20) deathChance += 15;
+    if(p.happiness<15) deathChance += 5;
+    if(deathChance>0 && chance(deathChance)){
+      p.alive = false;
+      log(`💔 ${p.name} passed away. You'll miss your old friend.`,'bad');
+      state.stats.happiness = clamp(state.stats.happiness-10,0,100);
+    }
+  });
+}
+function openPetCarePanelP15(){
+  let html = '';
+  const living = state.pets.filter(p=>p.alive);
+  if(!living.length){
+    html += `<p style="color:var(--sub)">You have no pets right now.</p>`;
+  } else {
+    living.forEach(p=>{
+      const idx = state.pets.indexOf(p);
+      html += `<div class="list-item"><div class="li-main"><b>${p.name}</b><span>${p.type} · Age ${p.age} · Happiness ${p.happiness}% · Health ${p.health==null?100:p.health}%</span></div></div>`;
+      html += `<div class="row"><button class="btn" onclick='careForPetP15(${idx})'>Play & Feed</button><button class="btn" onclick='vetVisitP15(${idx})'>Vet Visit ($80)</button></div>`;
+      html += `<button class="btn btn-block" onclick='rehomePetP15(${idx})'>Rehome ${p.name}</button>`;
+    });
+  }
+  const deceased = state.pets.filter(p=>!p.alive);
+  if(deceased.length){
+    html += `<hr style="border-color:var(--border)"><b>In Memory</b>`;
+    deceased.forEach(p=>{ html += `<div class="list-item"><div class="li-main"><b>${p.name}</b><span>${p.type} · Lived to age ${p.age}</span></div></div>`; });
+  }
+  openPanel('Pet Care', html);
+}
+const _origOpenAssetsPanel_P15pets = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P15pets();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  const livingCount = state.pets.filter(p=>p.alive).length;
+  btn.textContent = '🐾 Pet Care' + (livingCount?(' ('+livingCount+')'):'');
+  btn.onclick = openPetCarePanelP15;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   COUPLES COUNSELING (distinct from individual therapy)
+   --------------------------------------------------------------------- */
+const COUPLES_COUNSELING_TOPICS_P15 = ['Communication Breakdown','Trust Issues','Financial Stress','Growing Apart','Intimacy'];
+function coupleCounselingP15(){
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse) return;
+  const cost = 200;
+  if(state.money<cost){ log(`Not enough money for couples counseling.`,'bad'); closePanel(); render(); return; }
+  state.money -= cost;
+  const topic = pick(COUPLES_COUNSELING_TOPICS_P15);
+  closePanel();
+  playScene({title:`Couples Counseling: ${topic}`, text:`You and ${spouse.name} sit down with a marriage counselor to work through ${topic.toLowerCase()}.`, choices:[
+    {label:'Both commit to real change', run:()=>{ spouse.rel=clamp(spouse.rel+15,0,100); state.stats.happiness=clamp(state.stats.happiness+6,0,100); log(`The session helped. You and ${spouse.name} feel closer.`,'good'); }},
+    {label:'Listen, but stay guarded', run:()=>{ spouse.rel=clamp(spouse.rel+4,0,100); log(`It was a start, but there's still distance between you and ${spouse.name}.`,'neutral'); }},
+    {label:'Argue through the whole session', run:()=>{ spouse.rel=clamp(spouse.rel-10,0,100); state.stats.happiness=clamp(state.stats.happiness-4,0,100); log(`The session devolved into an argument. Nothing was resolved.`,'bad'); }},
+  ]});
+}
+const _origOpenRelationshipsPanel_P15couples = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P15couples();
+  if(state.spouseId){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = '💑 Couples Counseling ($200)';
+    btn.onclick = coupleCounselingP15;
+    body.appendChild(btn);
+  }
+};
+
+/* Wire pet aging into the yearly loop */
+const _origAgeUp_P15d = ageUp;
+ageUp = function(){
+  _origAgeUp_P15d();
+  if(!state || !state.alive) return;
+  tickPetsP15();
+  render();
+};
 </script>
 </body>
 </html>
