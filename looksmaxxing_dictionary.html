@@ -42,12 +42,9 @@
 
   body {
     background-color: var(--paper);
-    background-image:
-      linear-gradient(var(--ink) 1px, transparent 1px),
-      linear-gradient(90deg, var(--ink) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-position: -1px -1px;
-    background-blend-mode: normal;
+    background-image: radial-gradient(rgba(20,18,15,0.16) 1.1px, transparent 1.3px);
+    background-size: 11px 11px;
+    background-position: -2px -2px;
     position: relative;
     min-height: 100vh;
     display: flex;
@@ -57,8 +54,9 @@
     content: "";
     position: fixed;
     inset: 0;
-    background: var(--paper);
-    opacity: 0.94;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    mix-blend-mode: multiply;
     pointer-events: none;
     z-index: -1;
   }
@@ -110,14 +108,18 @@
     line-height: 0.98;
     text-transform: uppercase;
     color: var(--ink);
+    text-shadow: 3px 3px 0 var(--coral);
   }
   h1.title::after {
     content: "";
     display: block;
-    width: 64px;
-    height: 6px;
-    background: var(--coral);
-    margin: 12px auto 0;
+    width: 74px;
+    height: 15px;
+    background: repeating-linear-gradient(45deg, var(--coral), var(--coral) 5px, #ff7a6f 5px, #ff7a6f 10px);
+    border: 1.5px solid var(--ink);
+    margin: 14px auto 0;
+    transform: rotate(-2deg);
+    opacity: 0.95;
   }
 
   .subtitle {
@@ -165,6 +167,19 @@
     box-shadow: 6px 6px 0 var(--ink);
     cursor: pointer;
   }
+  .totd-card::before {
+    content: "";
+    position: absolute;
+    top: -13px;
+    left: 26px;
+    width: 68px;
+    height: 24px;
+    background: repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 6px, #ffd875 6px, #ffd875 12px);
+    border: 1.5px solid var(--ink);
+    transform: rotate(-7deg);
+    opacity: 0.95;
+    z-index: 2;
+  }
 
   .totd-label {
     display: inline-flex;
@@ -198,6 +213,7 @@
     font-size: 26px;
     text-transform: uppercase;
     margin-bottom: 8px;
+    text-shadow: 2px 2px 0 var(--blue);
   }
 
   .totd-def {
@@ -332,7 +348,12 @@
     padding: 16px 16px 14px;
     box-shadow: 5px 5px 0 var(--ink);
     animation: fadeIn 0.3s ease both;
+    transition: transform 0.2s ease;
   }
+  .term-card:nth-child(3n) { transform: rotate(-0.6deg); }
+  .term-card:nth-child(3n+1) { transform: rotate(0.5deg); }
+  .term-card:nth-child(3n+2) { transform: rotate(-0.3deg); }
+  .term-card.open { transform: rotate(0deg); }
 
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
@@ -360,7 +381,7 @@
     font-size: 18px;
     color: var(--ink);
   }
-  .term-name mark { background: var(--yellow); color: var(--ink); padding: 0 2px; }
+  .term-name mark { background: var(--yellow); color: var(--ink); padding: 1px 4px; border-radius: 40% 60% 55% 45% / 55% 45% 65% 35%; transform: rotate(-1deg); display: inline-block; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
   .badge {
     font-family: var(--font-mono);
@@ -371,6 +392,7 @@
     padding: 3px 8px;
     border: 2px solid var(--ink);
     white-space: nowrap;
+    box-shadow: 0 0 0 2px var(--paper);
   }
   .badge.easy { color: var(--ink); background: var(--lime); }
   .badge.mid { color: var(--ink); background: var(--yellow); }
@@ -416,7 +438,7 @@
     line-height: 1.6;
     color: var(--ink-soft);
   }
-  .term-def mark { background: var(--yellow); color: var(--ink); padding: 0 2px; }
+  .term-def mark { background: var(--yellow); color: var(--ink); padding: 1px 4px; border-radius: 45% 55% 60% 40% / 50% 50% 55% 45%; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
   .difficulty-row {
     display: flex;
@@ -687,7 +709,7 @@
     position: absolute;
     top: -10px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) rotate(-3deg);
     background: var(--coral);
     color: #fff;
     font-family: var(--font-mono);
@@ -698,6 +720,7 @@
     padding: 3px 8px;
     border: 1.5px solid var(--ink);
     white-space: nowrap;
+    box-shadow: 0 0 0 2px var(--paper);
   }
 
   .plan-name {
@@ -837,10 +860,24 @@
   .profile-wrap { padding: 4px 16px 12px; }
 
   .profile-card {
+    position: relative;
     background: var(--card);
     border: 3px solid var(--ink);
     padding: 14px 15px;
     box-shadow: 5px 5px 0 var(--ink);
+  }
+  .profile-card::before {
+    content: "";
+    position: absolute;
+    top: -12px;
+    right: 30px;
+    width: 60px;
+    height: 22px;
+    background: repeating-linear-gradient(-45deg, var(--blue), var(--blue) 6px, #6b8bff 6px, #6b8bff 12px);
+    border: 1.5px solid var(--ink);
+    transform: rotate(6deg);
+    opacity: 0.95;
+    z-index: 2;
   }
 
   .profile-top {
@@ -877,6 +914,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
+    box-shadow: 0 0 0 2px var(--paper);
   }
   .tier-badge.vip { background: var(--yellow); color: var(--ink); }
 
@@ -955,7 +993,14 @@
     margin-right: 6px;
     vertical-align: middle;
   }
-  .avatar.large { width: 38px; height: 38px; font-size: 16px; border-width: 2px; }
+  .avatar.large {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    border-width: 2px;
+    box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ink);
+    margin-right: 3px;
+  }
 
   /* ---------- Like Button ---------- */
   .like-btn {
@@ -1017,7 +1062,12 @@
     cursor: pointer;
     box-shadow: 5px 5px 0 var(--ink);
     animation: fadeIn 0.3s ease both;
+    transition: transform 0.2s ease;
   }
+  .thread-card:nth-child(3n) { transform: rotate(0.6deg); }
+  .thread-card:nth-child(3n+1) { transform: rotate(-0.5deg); }
+  .thread-card:nth-child(3n+2) { transform: rotate(0.3deg); }
+  .thread-card.open { transform: rotate(0deg); }
 
   .thread-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 
@@ -1039,6 +1089,7 @@
     border: 1.5px solid var(--ink);
     white-space: nowrap;
     flex-shrink: 0;
+    box-shadow: 0 0 0 2px var(--paper);
   }
 
   .thread-meta {
@@ -1167,7 +1218,13 @@
     border: 3px solid var(--ink);
     box-shadow: 5px 5px 0 var(--ink);
     animation: fadeIn 0.3s ease both;
+    transition: transform 0.2s ease;
   }
+  .course-card:nth-child(4n) { transform: rotate(-0.7deg); }
+  .course-card:nth-child(4n+1) { transform: rotate(0.6deg); }
+  .course-card:nth-child(4n+2) { transform: rotate(-0.4deg); }
+  .course-card:nth-child(4n+3) { transform: rotate(0.5deg); }
+  .course-card:hover, .course-card:active { transform: rotate(0deg); }
 
   .course-thumb { height: 100px; position: relative; border-bottom: 3px solid var(--ink); }
 
@@ -4446,11 +4503,19 @@
     return AVATAR_COLORS[hash % AVATAR_COLORS.length];
   }
 
+  const AVATAR_ANGLES = [-8, -5, -2, 2, 5, 8];
+  function avatarRotation(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 17 + name.charCodeAt(i)) >>> 0;
+    return AVATAR_ANGLES[hash % AVATAR_ANGLES.length];
+  }
+
   function avatarHtml(name, large) {
     const color = avatarColor(name);
     const fg = AVATAR_LIGHT_BGS.has(color) ? "#14120F" : "#FFFFFF";
     const letter = escapeHtml((name[0] || "?").toUpperCase());
-    return `<span class="avatar${large ? " large" : ""}" style="background:${color};color:${fg};">${letter}</span>`;
+    const rot = avatarRotation(name);
+    return `<span class="avatar${large ? " large" : ""}" style="background:${color};color:${fg};transform:rotate(${rot}deg);">${letter}</span>`;
   }
 
   /* ---------------- Likes ---------------- */
