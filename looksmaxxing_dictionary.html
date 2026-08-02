@@ -1152,6 +1152,20 @@
   .reaction-btn.active { background: var(--ink); color: var(--card); }
   .reaction-btn:active { transform: scale(1.1); }
 
+  .watch-btn {
+    background: none;
+    border: none;
+    font-size: 17px;
+    line-height: 1;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+  .watch-btn.active { filter: none; }
+  .watch-btn:active { transform: scale(1.25); }
+
   .thread-tag {
     font-family: var(--font-mono);
     font-size: 9px;
@@ -1375,6 +1389,85 @@
     line-height: 1.7;
   }
   .revenue-breakdown b { color: var(--ink); background: var(--lime); padding: 0 3px; }
+
+  /* ---------- Course Reviews ---------- */
+  .reviews-toggle-btn {
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .course-reviews {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+  }
+  .course-reviews.open {
+    max-height: 900px;
+    opacity: 1;
+    margin-top: 10px;
+  }
+
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .review-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+  }
+
+  .review-item-body { flex: 1; min-width: 0; }
+
+  .review-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .review-item-head .author { font-family: var(--font-mono); font-size: 11px; color: var(--coral); font-weight: 800; }
+
+  .review-stars { font-size: 12px; color: var(--ink); letter-spacing: 1px; }
+
+  .review-item-text { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  .review-form {
+    padding: 12px;
+    border: 1.5px dashed var(--ink);
+  }
+
+  .star-picker { display: flex; gap: 4px; margin-bottom: 12px; }
+
+  .star-pick-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0;
+  }
+  .star-pick-btn.active { color: var(--ink); }
 
   .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 
@@ -5877,7 +5970,8 @@
   function renderForumTabs() {
     const wrap = document.getElementById("forumTabs");
     wrap.innerHTML = "";
-    FORUM_CATEGORIES.forEach(cat => {
+    const displayCats = ["All", "🔖 Watching", ...FORUM_CATEGORIES.filter(c => c !== "All")];
+    displayCats.forEach(cat => {
       const chip = document.createElement("div");
       chip.className = "index-chip" + (cat === activeForumCategory ? " active" : "");
       chip.textContent = cat;
@@ -5933,6 +6027,28 @@
     const letter = escapeHtml((name[0] || "?").toUpperCase());
     const rot = avatarRotation(name);
     return `<span class="avatar${large ? " large" : ""}" style="background:${color};color:${fg};transform:rotate(${rot}deg);">${letter}</span>`;
+  }
+
+  /* ---------------- Watch Thread ---------------- */
+  let watchedThreads = loadWatchedThreads();
+
+  function loadWatchedThreads() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_watched_threads"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveWatchedThreads() {
+    localStorage.setItem("looksmax_watched_threads", JSON.stringify([...watchedThreads]));
+  }
+
+  function toggleWatch(threadId) {
+    if (watchedThreads.has(threadId)) watchedThreads.delete(threadId);
+    else watchedThreads.add(threadId);
+    saveWatchedThreads();
+    renderThreads();
   }
 
   /* ---------------- Likes ---------------- */
@@ -6024,11 +6140,16 @@
     const list = document.getElementById("threadList");
     const q = forumSearchTerm.trim().toLowerCase();
     const filtered = threads
-      .filter(t => activeForumCategory === "All" || t.category === activeForumCategory)
+      .filter(t => {
+        if (activeForumCategory === "🔖 Watching") return watchedThreads.has(t.id);
+        return activeForumCategory === "All" || t.category === activeForumCategory;
+      })
       .filter(t => !q || t.title.toLowerCase().includes(q) || t.body.toLowerCase().includes(q) || t.author.toLowerCase().includes(q));
     if (!filtered.length) {
       list.innerHTML = q
         ? `<div class="empty-state"><div class="glyph">◎</div><p>No threads match "<strong>${escapeHtml(forumSearchTerm)}</strong>".<br>Try a different keyword.</p></div>`
+        : activeForumCategory === "🔖 Watching"
+        ? `<div class="empty-state"><div class="glyph">🔖</div><p>Not watching any threads yet.<br>Tap the bookmark icon on a thread to save it here.</p></div>`
         : `<div class="empty-state"><div class="glyph">💬</div><p>No threads in this category yet.<br>Start the first one.</p></div>`;
       return;
     }
@@ -6055,6 +6176,7 @@
       card.innerHTML = `
         <div class="thread-top">
           <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
+          <button class="watch-btn ${watchedThreads.has(t.id) ? "active" : ""}" data-watch="1" aria-label="Watch thread">${watchedThreads.has(t.id) ? "🔖" : "📑"}</button>
           <span class="thread-tag" style="${categoryTagStyle(t.category)}">${escapeHtml(t.category)}</span>
         </div>
         <div class="thread-meta">
@@ -6090,6 +6212,10 @@
         openThreadId = opening ? t.id : null;
         if (opening) registerView(t);
         renderThreads();
+      });
+      card.querySelector("[data-watch]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleWatch(t.id);
       });
       card.querySelector("[data-like]").addEventListener("click", (e) => {
         e.stopPropagation();
@@ -6167,7 +6293,11 @@
       sales: 340,
       rating: 4.7,
       gradient: "#0D0D0D",
-      desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking."
+      desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking.",
+      reviews: [
+        { author: "quietjawline", rating: 5, text: "Genuinely the most detailed mewing resource I've found. The breathing retraining section alone was worth it." },
+        { author: "newframe22", rating: 4, text: "Solid course, just wish there was more on troubleshooting when progress stalls." }
+      ]
     },
     {
       id: 2,
@@ -6177,7 +6307,12 @@
       sales: 512,
       rating: 4.8,
       gradient: "#FFFFFF",
-      desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type."
+      desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type.",
+      reviews: [
+        { author: "matte_or_bust", rating: 5, text: "Finally someone explaining WHY the layering order matters instead of just listing steps. Cleared up so much confusion." },
+        { author: "clearskinjourney", rating: 5, text: "Went from a chaotic 10-step routine to a focused 5-step one that actually works better." },
+        { author: "duneshadow", rating: 4, text: "Great content, a bit text-heavy in places but the info is solid." }
+      ]
     },
     {
       id: 3,
@@ -6395,6 +6530,31 @@
     localStorage.setItem("looksmax_courses", JSON.stringify(courses));
   }
 
+  let openCourseId = null;
+  let selectedReviewRating = 5;
+
+  function recalcRating(c) {
+    if (!c.reviews || !c.reviews.length) return;
+    const sum = c.reviews.reduce((s, r) => s + r.rating, 0);
+    c.rating = sum / c.reviews.length;
+  }
+
+  function submitReview(c, rating, text) {
+    if (!c.reviews) c.reviews = [];
+    c.reviews.push({ author: username, rating, text });
+    recalcRating(c);
+    saveCourses();
+    renderCourses();
+    showToast("Review posted.");
+  }
+
+  function stars(n, max) {
+    max = max || 5;
+    let out = "";
+    for (let i = 1; i <= max; i++) out += i <= Math.round(n) ? "★" : "☆";
+    return out;
+  }
+
   function renderCourses() {
     const grid = document.getElementById("courseGrid");
     grid.innerHTML = "";
@@ -6404,6 +6564,22 @@
       const platformCut = (c.price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
       const card = document.createElement("div");
       card.className = "course-card";
+      const reviews = c.reviews || [];
+      const isOpen = openCourseId === c.id;
+      const reviewsListHtml = reviews.length
+        ? reviews.map(r => `
+            <div class="review-item">
+              ${avatarHtml(r.author)}
+              <div class="review-item-body">
+                <div class="review-item-head"><span class="author">@${escapeHtml(r.author)}</span><span class="review-stars">${stars(r.rating)}</span></div>
+                <div class="review-item-text">${escapeHtml(r.text)}</div>
+              </div>
+            </div>`).join("")
+        : `<div class="review-item"><span class="reply-text">No reviews yet — be the first to enroll and review.</span></div>`;
+      const starPickerHtml = [1, 2, 3, 4, 5].map(n =>
+        `<button class="star-pick-btn ${n <= selectedReviewRating ? "active" : ""}" data-star="${n}">${n <= selectedReviewRating ? "★" : "☆"}</button>`
+      ).join("");
+
       card.innerHTML = `
         <div class="course-thumb" style="background:${c.gradient}">
           ${c.id === bestsellerId ? `<div class="bestseller-tag">🔥 Bestseller</div>` : ""}
@@ -6417,11 +6593,38 @@
             <div class="course-rating">⭐ ${c.rating.toFixed(1)} · ${c.sales} sold</div>
             <button class="buy-course-btn">Enroll</button>
           </div>
+          <button class="reviews-toggle-btn" data-reviews-toggle="1">💬 Reviews (${reviews.length}) ${isOpen ? "▲" : "▼"}</button>
+          <div class="course-reviews ${isOpen ? "open" : ""}">
+            <div class="review-list">${reviewsListHtml}</div>
+            <div class="review-form">
+              <label class="form-label">Your Rating</label>
+              <div class="star-picker">${starPickerHtml}</div>
+              <textarea class="form-textarea review-input" placeholder="Share your experience with this course..."></textarea>
+              <button class="cta-btn review-submit-btn" style="padding:11px;font-size:12px;">Post Review</button>
+            </div>
+          </div>
           <div class="revenue-breakdown">Creator keeps <b>$${yourCut}</b> (${100 - PLATFORM_CUT_PCT}%) · Platform fee <b>$${platformCut}</b> (${PLATFORM_CUT_PCT}%)</div>
         </div>
       `;
       card.querySelector(".buy-course-btn").addEventListener("click", () => {
         showToast(`Demo: "${c.title}" enrollment simulated, no real charge.`);
+      });
+      card.querySelector("[data-reviews-toggle]").addEventListener("click", () => {
+        openCourseId = isOpen ? null : c.id;
+        selectedReviewRating = 5;
+        renderCourses();
+      });
+      card.querySelectorAll("[data-star]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          selectedReviewRating = parseInt(btn.dataset.star, 10);
+          renderCourses();
+        });
+      });
+      const reviewInput = card.querySelector(".review-input");
+      card.querySelector(".review-submit-btn").addEventListener("click", () => {
+        const text = reviewInput.value.trim();
+        if (!text) { showToast("Write a few words before posting."); return; }
+        submitReview(c, selectedReviewRating, text);
       });
       grid.appendChild(card);
     });
