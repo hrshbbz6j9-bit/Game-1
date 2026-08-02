@@ -12,6 +12,8 @@
     --ink: #0D0D0D;
     --ink-soft: #4A4A4A;
     --ink-mute: #8A8A8A;
+    --ink-fixed: #0D0D0D;
+    --card-fixed: #FFFFFF;
     --lime: #EDEDED;
     --coral: #262626;
     --blue: #4A4A4A;
@@ -25,6 +27,14 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --ad-banner-h: 40px;
     --bottom-nav-h: 62px;
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #121212;
+    --card: #1C1C1C;
+    --ink: #F2F2F0;
+    --ink-soft: #C4C4C0;
+    --ink-mute: #8A8A86;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -133,8 +143,27 @@
   .premium-pill-wrap {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 8px;
     margin-top: 16px;
   }
+
+  .theme-toggle-btn {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .theme-toggle-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
   .premium-pill {
     display: inline-flex;
@@ -154,7 +183,7 @@
     text-transform: uppercase;
   }
   .premium-pill:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
-  .premium-pill.active { background: var(--lime); }
+  .premium-pill.active { background: var(--lime); color: var(--ink-fixed); }
 
   /* ---------- Term of the Day ---------- */
   .totd-wrap { padding: 4px 16px 6px; }
@@ -356,7 +385,7 @@
     cursor: pointer;
     text-transform: uppercase;
   }
-  .index-chip.active { background: var(--lime); box-shadow: 3px 3px 0 var(--ink); }
+  .index-chip.active { background: var(--lime); color: var(--ink-fixed); box-shadow: 3px 3px 0 var(--ink); }
 
   /* ---------- Term List ---------- */
   .term-list {
@@ -405,7 +434,7 @@
     font-size: 18px;
     color: var(--ink);
   }
-  .term-name mark { background: var(--yellow); color: var(--ink); padding: 1px 4px; border-radius: 40% 60% 55% 45% / 55% 45% 65% 35%; transform: rotate(-1deg); display: inline-block; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .term-name mark { background: var(--yellow); color: var(--ink-fixed); padding: 1px 4px; border-radius: 40% 60% 55% 45% / 55% 45% 65% 35%; transform: rotate(-1deg); display: inline-block; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
   .badge {
     font-family: var(--font-mono);
@@ -418,11 +447,11 @@
     white-space: nowrap;
     box-shadow: 0 0 0 2px var(--paper);
   }
-  .badge.easy { color: var(--ink); background: var(--lime); }
-  .badge.mid { color: var(--ink); background: var(--yellow); }
+  .badge.easy { color: var(--ink-fixed); background: var(--lime); }
+  .badge.mid { color: var(--ink-fixed); background: var(--yellow); }
   .badge.hard { color: #fff; background: var(--orange); }
   .badge.extreme { color: #fff; background: var(--coral); }
-  .badge.pro { color: #fff; background: var(--ink); display: inline-flex; align-items: center; gap: 3px; }
+  .badge.pro { color: #fff; background: var(--ink-fixed); display: inline-flex; align-items: center; gap: 3px; }
 
   .term-idx {
     font-family: var(--font-mono);
@@ -462,7 +491,7 @@
     line-height: 1.6;
     color: var(--ink-soft);
   }
-  .term-def mark { background: var(--yellow); color: var(--ink); padding: 1px 4px; border-radius: 45% 55% 60% 40% / 50% 50% 55% 45%; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .term-def mark { background: var(--yellow); color: var(--ink-fixed); padding: 1px 4px; border-radius: 45% 55% 60% 40% / 50% 50% 55% 45%; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
   .difficulty-row {
     display: flex;
@@ -571,7 +600,7 @@
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--ink-fixed);
   }
 
   .technique-steps {
@@ -612,7 +641,7 @@
     align-items: center;
     gap: 6px;
     background: var(--yellow);
-    color: var(--ink);
+    color: var(--ink-fixed);
     border: 2px solid var(--ink);
     font-family: var(--font-mono);
     font-size: 12px;
@@ -733,7 +762,7 @@
     width: 20px;
     height: 20px;
     background: var(--lime);
-    color: var(--ink);
+    color: var(--ink-fixed);
     border: 1.5px solid var(--ink);
     flex-shrink: 0;
     display: flex;
@@ -755,6 +784,7 @@
     position: relative;
   }
   .plan-card.selected { background: var(--lime); box-shadow: 3px 3px 0 var(--ink); }
+  .plan-card.selected .plan-name, .plan-card.selected .plan-price { color: var(--ink-fixed); }
 
   .plan-tag {
     position: absolute;
@@ -817,8 +847,8 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 150;
-    background: var(--ink);
-    border-bottom: 3px solid var(--ink);
+    background: var(--ink-fixed);
+    border-bottom: 3px solid var(--ink-fixed);
     padding-top: var(--safe-top);
   }
   .ad-banner.hidden { display: none; }
@@ -839,7 +869,7 @@
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--ink-fixed);
     background: var(--yellow);
     padding: 2px 6px;
     border: 1.5px solid var(--card);
@@ -850,7 +880,7 @@
     min-width: 0;
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--card);
+    color: var(--card-fixed);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -861,7 +891,7 @@
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 800;
-    color: var(--ink);
+    color: var(--ink-fixed);
     background: var(--lime);
     border: 1.5px solid var(--card);
     padding: 5px 9px;
@@ -875,8 +905,8 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 150;
-    background: var(--ink);
-    border-top: 3px solid var(--ink);
+    background: var(--ink-fixed);
+    border-top: 3px solid var(--ink-fixed);
     padding-bottom: var(--safe-bottom);
   }
 
@@ -1364,7 +1394,7 @@
     box-shadow: 3px 3px 0 var(--ink);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .sell-course-btn { background: var(--lime); }
+  .sell-course-btn { background: var(--lime); color: var(--ink-fixed); }
   .sell-course-btn:active, .dashboard-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
   .course-grid { padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -1388,7 +1418,7 @@
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: var(--ink);
+    background: var(--ink-fixed);
     color: #fff;
     font-family: var(--font-mono);
     font-size: 13px;
@@ -1415,7 +1445,7 @@
 
   .buy-course-btn {
     background: var(--yellow);
-    color: var(--ink);
+    color: var(--ink-fixed);
     border: 2px solid var(--ink);
     font-family: var(--font-mono);
     font-size: 11.5px;
@@ -1438,7 +1468,7 @@
     color: var(--ink-soft);
     line-height: 1.7;
   }
-  .revenue-breakdown b { color: var(--ink); background: var(--lime); padding: 0 3px; }
+  .revenue-breakdown b { color: var(--ink-fixed); background: var(--lime); padding: 0 3px; }
 
   /* ---------- Course Reviews ---------- */
   .reviews-toggle-btn {
@@ -1531,8 +1561,8 @@
     font-weight: 800;
   }
   .stat-tile-value { font-family: var(--font-display); font-size: 21px; font-weight: 900; margin-top: 4px; color: var(--ink); }
-  .stat-tile-value.gold { color: var(--ink); background: var(--yellow); display: inline-block; padding: 0 4px; }
-  .stat-tile-value.green { color: var(--ink); background: var(--lime); display: inline-block; padding: 0 4px; }
+  .stat-tile-value.gold { color: var(--ink-fixed); background: var(--yellow); display: inline-block; padding: 0 4px; }
+  .stat-tile-value.green { color: var(--ink-fixed); background: var(--lime); display: inline-block; padding: 0 4px; }
 
   .dashboard-list { display: flex; flex-direction: column; gap: 8px; }
   .dashboard-row {
@@ -1546,7 +1576,7 @@
     border: 1.5px solid var(--ink);
   }
   .dashboard-row .name { color: var(--ink); font-weight: 700; }
-  .dashboard-row .cut { color: var(--ink); font-weight: 800; background: var(--lime); padding: 1px 5px; }
+  .dashboard-row .cut { color: var(--ink-fixed); font-weight: 800; background: var(--lime); padding: 1px 5px; }
 
   /* ---------- Leaderboard ---------- */
   .leaderboard-list {
@@ -1566,6 +1596,7 @@
     border: 1.5px solid var(--ink);
   }
   .leaderboard-row.is-you { background: var(--lime); }
+  .leaderboard-row.is-you .leaderboard-name, .leaderboard-row.is-you .leaderboard-score { color: var(--ink-fixed); }
 
   .leaderboard-rank {
     font-family: var(--font-display);
@@ -1636,7 +1667,7 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     color: #fff;
-    background: var(--ink);
+    background: var(--ink-fixed);
     display: inline-block;
     padding: 3px 8px;
     margin-bottom: 12px;
@@ -1701,6 +1732,14 @@
 </style>
 </head>
 <body>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("looksmax_theme");
+      if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    } catch (e) {}
+  })();
+</script>
 
 <div class="ad-banner" id="adBanner">
   <div class="ad-banner-inner">
@@ -1720,6 +1759,7 @@
       <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
       <div class="premium-pill-wrap">
         <div class="premium-pill" id="premiumPill"></div>
+        <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">🌙</button>
       </div>
     </header>
 
@@ -5283,6 +5323,28 @@
       els.premiumPill.innerHTML = "✨ Unlock Technique Guides";
     }
   }
+
+  /* ---------------- Theme Toggle ---------------- */
+  let isDarkMode = document.documentElement.getAttribute("data-theme") === "dark";
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+  function applyTheme() {
+    if (isDarkMode) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      themeToggleBtn.textContent = "☀️";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      themeToggleBtn.textContent = "🌙";
+    }
+  }
+
+  themeToggleBtn.addEventListener("click", () => {
+    isDarkMode = !isDarkMode;
+    localStorage.setItem("looksmax_theme", isDarkMode ? "dark" : "light");
+    applyTheme();
+  });
+
+  applyTheme();
 
   function openPaywall() {
     els.paywallOverlay.classList.add("show");
