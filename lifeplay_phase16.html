@@ -1719,20 +1719,81 @@ function setApiKeyP15(k){ localStorage.setItem('lifeplay_api_key', k); }
 function getApiModelP15(){ return localStorage.getItem('lifeplay_api_model')||'claude-sonnet-4-5-20250929'; }
 function setApiModelP15(m){ localStorage.setItem('lifeplay_api_model', m); }
 
+function escapeHtmlP15(str){
+  return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+/* Parses an Anthropic API error response body into a clear, specific message.
+   Kept separate from the network-failure path (TypeError from fetch itself,
+   almost always CORS/offline/DNS) so users can tell "bad key" from "can't connect". */
+async function parseApiErrorP15(res){
+  let bodyText = '';
+  try{ bodyText = await res.text(); }catch(e){ /* ignore */ }
+  let msg = null;
+  try{ const j = JSON.parse(bodyText); msg = j && j.error && j.error.message; }catch(e){ /* not JSON */ }
+  if(res.status===401) return 'Invalid API key (401). Double-check the key in AI Chat Settings.';
+  if(res.status===403) return 'Access denied (403). ' + (msg || 'This key may not have permission for direct browser access.');
+  if(res.status===404) return `Model not found (404). "${getApiModelP15()}" may be misspelled or unavailable to your account — try a different model in AI Chat Settings.`;
+  if(res.status===429) return 'Rate limited (429). You are sending messages too quickly, or are out of quota — wait a moment and try again.';
+  if(res.status>=500) return `Anthropic's servers had an issue (${res.status}). Try again shortly.`;
+  return `HTTP ${res.status}${msg ? ': '+msg : (bodyText ? ': '+bodyText.slice(0,150) : '')}`;
+}
+async function callClaudeApiP15(messages, systemPrompt, maxTokens){
+  const apiKey = getApiKeyP15();
+  const model = getApiModelP15();
+  if(!apiKey) throw new Error('No API key set.');
+  let res;
+  try{
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body: JSON.stringify({ model, max_tokens:maxTokens||200, system:systemPrompt, messages })
+    });
+  } catch(networkErr){
+    throw new Error('Could not reach api.anthropic.com. This is usually a network problem, an ad/privacy blocker, or the browser blocking the cross-origin request — not necessarily a bad key.');
+  }
+  if(!res.ok) throw new Error(await parseApiErrorP15(res));
+  const data = await res.json();
+  const block = (data.content||[]).find(b=>b.type==='text');
+  return block ? block.text : '[The model returned an empty response.]';
+}
+
 function openApiSettingsPanelP15(){
   const key = getApiKeyP15();
   const model = getApiModelP15();
   let html = `<p style="color:var(--sub)">Enter your Anthropic Claude API key to unlock AI-powered conversations with your in-game family and friends. Your key is stored only in this browser's local storage and is sent directly to Anthropic's API — never anywhere else.</p>`;
-  html += `<div class="field"><label>API Key</label><input id="api-key-input" type="password" value="${key.replace(/"/g,'&quot;')}" placeholder="sk-ant-..."></div>`;
-  html += `<div class="field"><label>Model</label><input id="api-model-input" type="text" value="${model.replace(/"/g,'&quot;')}"></div>`;
+  html += `<div class="field"><label>API Key</label><input id="api-key-input" type="password" value="${escapeHtmlP15(key)}" placeholder="sk-ant-..."></div>`;
+  html += `<div class="field"><label>Model</label><input id="api-model-input" type="text" value="${escapeHtmlP15(model)}"></div>`;
   html += `<button class="btn btn-block btn-primary" onclick="saveApiSettingsP15()">Save</button>`;
+  html += `<button class="btn btn-block btn-accent" id="api-test-btn" onclick="testApiConnectionP15()">Test Connection</button>`;
+  html += `<div id="api-test-result" style="font-size:.85em;color:var(--sub);margin-top:4px;"></div>`;
   openPanel('AI Chat Settings', html);
 }
 function saveApiSettingsP15(){
   setApiKeyP15($('api-key-input').value.trim());
   setApiModelP15($('api-model-input').value.trim() || 'claude-sonnet-4-5-20250929');
   log(`Claude API settings saved.`,'neutral');
-  closePanel(); render();
+  const resultEl = document.getElementById('api-test-result');
+  if(resultEl) resultEl.textContent = 'Saved. Click "Test Connection" to verify it works.';
+}
+async function testApiConnectionP15(){
+  saveApiSettingsP15();
+  const btn = document.getElementById('api-test-btn');
+  const resultEl = document.getElementById('api-test-result');
+  if(!getApiKeyP15()){ if(resultEl){ resultEl.textContent = '⚠️ Enter an API key first.'; resultEl.style.color='var(--danger)'; } return; }
+  if(btn) btn.textContent = 'Testing...';
+  if(resultEl){ resultEl.textContent = 'Contacting api.anthropic.com...'; resultEl.style.color='var(--sub)'; }
+  try{
+    const reply = await callClaudeApiP15([{role:'user', content:'Reply with just the single word: OK'}], 'You are a connection test. Reply with exactly one word.', 10);
+    if(resultEl){ resultEl.textContent = '✅ Connected! Model replied: "'+reply.trim()+'"'; resultEl.style.color='var(--accent)'; }
+  } catch(err){
+    if(resultEl){ resultEl.textContent = '❌ '+err.message; resultEl.style.color='var(--danger)'; }
+  }
+  if(btn) btn.textContent = 'Test Connection';
 }
 
 function openFamilyChatP15(relId){
@@ -1743,9 +1804,9 @@ function openFamilyChatP15(relId){
 }
 function renderFamilyChatP15(r){
   const key = getApiKeyP15();
-  let html = `<h3>💬 ${r.name}</h3>`;
+  let html = `<h3>💬 ${escapeHtmlP15(r.name)}</h3>`;
   if(!key){
-    html += `<p style="color:var(--sub)">Set your Claude API key first to chat with ${r.name}.</p>`;
+    html += `<p style="color:var(--sub)">Set your Claude API key first to chat with ${escapeHtmlP15(r.name)}.</p>`;
     html += `<button class="btn btn-block" onclick="closeModal(); openApiSettingsPanelP15();">Open AI Chat Settings</button>`;
     showModal(html);
     return;
@@ -1753,7 +1814,7 @@ function renderFamilyChatP15(r){
   html += `<div id="chat-log" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:10px;">`;
   r.chatHistory.forEach(m=>{
     const mine = m.role==='user';
-    html += `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'var(--panel2)':'var(--panel)'};border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-width:80%;font-size:.85em;">${m.content}</div>`;
+    html += `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'var(--panel2)':'var(--panel)'};border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-width:80%;font-size:.85em;white-space:pre-wrap;">${escapeHtmlP15(m.content)}</div>`;
   });
   html += `</div>`;
   html += `<div class="row"><input id="chat-input" type="text" placeholder="Say something..." style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);"><button class="btn btn-primary" id="chat-send-btn">Send</button></div>`;
@@ -1764,29 +1825,6 @@ function renderFamilyChatP15(r){
   document.getElementById('chat-send-btn').onclick = ()=>sendFamilyChatP15(r);
   document.getElementById('chat-input').addEventListener('keydown', e=>{ if(e.key==='Enter') sendFamilyChatP15(r); });
 }
-async function callClaudeApiP15(r){
-  const apiKey = getApiKeyP15();
-  const model = getApiModelP15();
-  const persona = `You are roleplaying as ${r.name}, the ${relLabel(r.type)} of ${state.name} in a life simulation game called LifePlay. ${r.name} is ${r.age} years old. Your relationship closeness with ${state.name} is ${Math.round(r.rel)}/100. Stay fully in character as ${r.name} — warm or distant depending on the relationship score, with a distinct personality. Keep replies conversational and under 60 words. Never break character or mention that you are an AI.`;
-  const messages = r.chatHistory.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role, content:m.content}));
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{
-      'content-type':'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true',
-    },
-    body: JSON.stringify({ model, max_tokens:200, system:persona, messages })
-  });
-  if(!res.ok){
-    const errText = await res.text().catch(()=>res.statusText);
-    throw new Error('HTTP '+res.status+' '+errText.slice(0,150));
-  }
-  const data = await res.json();
-  const block = (data.content||[]).find(b=>b.type==='text');
-  return block ? block.text : '[No response]';
-}
 async function sendFamilyChatP15(r){
   const input = document.getElementById('chat-input');
   if(!input) return;
@@ -1795,12 +1833,20 @@ async function sendFamilyChatP15(r){
   r.chatHistory.push({role:'user', content:text});
   renderFamilyChatP15(r);
   const logEl = document.getElementById('chat-log');
-  if(logEl){ logEl.innerHTML += `<div style="align-self:flex-start;color:var(--sub);font-size:.8em;">${r.name} is typing...</div>`; logEl.scrollTop = logEl.scrollHeight; }
+  if(logEl){
+    const typingEl = document.createElement('div');
+    typingEl.style.cssText = 'align-self:flex-start;color:var(--sub);font-size:.8em;';
+    typingEl.textContent = `${r.name} is typing...`;
+    logEl.appendChild(typingEl);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  const persona = `You are roleplaying as ${r.name}, the ${relLabel(r.type)} of ${state.name} in a life simulation game called LifePlay. ${r.name} is ${r.age} years old. Your relationship closeness with ${state.name} is ${Math.round(r.rel)}/100. Stay fully in character as ${r.name} — warm or distant depending on the relationship score, with a distinct personality. Keep replies conversational and under 60 words. Never break character or mention that you are an AI.`;
   try{
-    const reply = await callClaudeApiP15(r);
+    const messages = r.chatHistory.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role, content:m.content}));
+    const reply = await callClaudeApiP15(messages, persona, 200);
     r.chatHistory.push({role:'assistant', content:reply});
   } catch(err){
-    r.chatHistory.push({role:'assistant', content:'[Could not reach the API: '+err.message+']'});
+    r.chatHistory.push({role:'assistant', content:'⚠️ '+err.message});
   }
   renderFamilyChatP15(r);
 }
