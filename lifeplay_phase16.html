@@ -6,126 +6,137 @@
 <title>LifePlay</title>
 <style>
   /* ==========================================================================
-     LifePlay visual identity — a warm cream "scrapbook" world, in the spirit
-     of BitLife's paper-and-gold look, built as our own take rather than a
-     copy: rounded system type, a mustard-gold accent, and life-stat colors
-     (red/green/blue/pink/gold) standing in for the icon-badge row.
-     This is a deliberate single-theme (light/paper) design — see note below
-     the token block — so there is no separate dark-mode palette to keep in
-     sync.
-     All existing JS renders through these same custom property NAMES
+     LifePlay visual identity, take three: "THE GAZETTE" — your life told as
+     a personal daily broadsheet. Grounded in a mechanic the game already
+     had (the newspaper() front-page cards for big moments) and pushed
+     across the whole interface: a masthead, an almanac box in place of
+     stat bars/rings, life events set as newspaper column copy instead of
+     app cards, section-tab navigation, and an Obituaries page at death.
+     Deliberately single-theme (aged newsprint + one spot ink color) rather
+     than a light/dark pair — a printed page doesn't have a dark mode.
+     All existing JS still renders through the same custom property NAMES
      (--bg, --panel, --panel2, --accent, --accent2, --danger, --text, --sub,
-     --border), so only the values change here; nothing downstream breaks.
+     --border, plus the --gold/--ink-line/--life-* tokens this project
+     introduced), so only values change here; nothing downstream breaks.
      ========================================================================== */
   :root{
-    --bg:#EADFBC;          /* desk behind the page */
-    --panel:#FFFBF1;       /* card / panel surface (was dark panel) */
-    --panel2:#F4E9CB;      /* secondary surface, inputs, chips */
-    --accent:#3F9142;      /* "good" green, also karma */
-    --accent2:#2F72A8;     /* "info" blue */
-    --danger:#D6503A;      /* "bad" red */
-    --warn:#C97F0E;        /* amber warn */
-    --text:#241B10;        /* ink */
-    --sub:#8A7856;         /* soft ink / labels */
-    --border:#E4D3A4;      /* hairline on cream */
-    --gold:#EFA722;        /* signature accent — Age Up, primary actions */
-    --gold-deep:#B9740A;
-    --ink-line:#241B10;    /* bold outline used sparingly, sticker-style */
-    --life-red:#D6503A; --life-green:#3F9142; --life-blue:#2F72A8; --life-pink:#C4507F; --life-gold:#C9840E;
-    --font-display: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
-    --font-body: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
+    --bg:#DBD4BC;           /* the desk the paper sits on */
+    --panel:#F3EEDE;        /* newsprint page color */
+    --panel2:#E7DFC5;       /* secondary surface — byline boxes, inputs */
+    --accent:#3C6140;       /* "good" ink-green */
+    --accent2:#2A4566;      /* "info" ink-blue */
+    --danger:#9C231C;       /* "bad" ink-red */
+    --warn:#8A6A1E;         /* amber ink */
+    --text:#1C1A16;         /* warm black ink */
+    --sub:#69614F;          /* byline grey */
+    --border:#C6BC9C;       /* hairline rule on paper */
+    --gold:#9C231C;         /* the one spot color — masthead, Age Up, seals */
+    --gold-deep:#6E190F;
+    --ink-line:#1C1A16;
+    --life-red:#9C231C; --life-green:#3C6140; --life-blue:#2A4566; --life-pink:#6C3450; --life-gold:#8A6A1E;
+    --font-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --font-body: Georgia, 'Times New Roman', serif;
+    --font-caption: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;height:100%;background:var(--bg);font-family:var(--font-body);color:var(--text);}
-  #phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--panel);display:flex;flex-direction:column;position:relative;overflow-x:hidden;box-shadow:0 0 0 1px var(--border);}
+  #phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--panel);display:flex;flex-direction:column;position:relative;overflow-x:hidden;box-shadow:0 0 0 1px var(--border);
+    background-image:repeating-linear-gradient(0deg, rgba(0,0,0,.015) 0px, rgba(0,0,0,.015) 1px, transparent 1px, transparent 3px);}
   .hidden{display:none !important;}
   h1,h2,h3{font-family:var(--font-display); text-wrap:balance;}
   button, input, select{font-family:inherit;}
   button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--gold-deep); outline-offset:2px;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+  .masthead{text-align:center;padding:14px 14px 8px;background:var(--panel);}
+  .masthead-title{font-family:var(--font-display);font-weight:700;font-size:1.7em;letter-spacing:.03em;text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;}
+  .masthead-sub{font-family:var(--font-caption);font-size:.62em;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:5px;font-weight:600;}
   /* Loading */
-  #screen-loading{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:
-      radial-gradient(circle at 30% 20%, #FBEFCE 0%, var(--bg) 70%);}
-  #screen-loading h1{font-size:2.6em;letter-spacing:1px;margin-bottom:2px;font-weight:800;color:var(--text);}
-  #screen-loading p{color:var(--sub);margin-top:0;font-weight:600;}
-  .loadbar-track{width:70%;height:12px;background:var(--panel2);border:2px solid var(--ink-line);border-radius:8px;overflow:hidden;margin-top:30px;}
-  .loadbar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width .1s linear;}
-  #loading-tip{margin-top:14px;font-size:.85em;color:var(--sub);text-align:center;padding:0 20px;font-weight:600;}
+  #screen-loading{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);}
+  #screen-loading h1{font-family:var(--font-display);font-size:2.5em;letter-spacing:.02em;margin-bottom:2px;font-weight:700;color:var(--text);text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:8px 14px;}
+  #screen-loading p{color:var(--sub);margin-top:10px;font-family:var(--font-caption);font-size:.75em;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+  .loadbar-track{width:70%;height:3px;background:var(--panel2);overflow:hidden;margin-top:30px;}
+  .loadbar-fill{height:100%;width:0%;background:var(--gold);transition:width .1s linear;}
+  #loading-tip{margin-top:14px;font-size:.85em;color:var(--sub);text-align:center;padding:0 20px;font-style:italic;}
   /* New life */
   #screen-newlife{padding:24px 20px;display:flex;flex-direction:column;gap:14px;min-height:100vh;background:var(--bg);}
-  #screen-newlife h2{text-align:center;margin-bottom:0;font-weight:800;}
-  .field label{display:block;font-size:.78em;color:var(--sub);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
-  .field input, .field select{width:100%;padding:11px;border-radius:12px;border:2px solid var(--border);background:var(--panel);color:var(--text);font-size:1em;font-weight:600;}
-  .btn{padding:12px 16px;border-radius:14px;border:2px solid var(--ink-line);background:var(--panel2);color:var(--text);font-size:1em;font-weight:700;cursor:pointer;text-align:center;box-shadow:0 3px 0 var(--ink-line);transition:transform .08s, box-shadow .08s;}
-  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink-line);}
-  .btn-primary{background:linear-gradient(180deg,var(--gold),var(--gold-deep));color:#2B1B02;}
-  .btn-danger{background:linear-gradient(180deg,#E96952,var(--danger));color:#fff;}
-  .btn-accent{background:linear-gradient(180deg,#4C93C9,var(--accent2));color:#fff;}
+  #screen-newlife h2{text-align:center;margin-bottom:0;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:8px 0;}
+  .field label{display:block;font-size:.72em;color:var(--sub);margin-bottom:4px;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.08em;}
+  .field input, .field select{width:100%;padding:11px;border-radius:2px;border:1px solid var(--ink-line);background:var(--panel);color:var(--text);font-size:1em;font-family:var(--font-body);}
+  .btn{padding:12px 16px;border-radius:2px;border:1.5px solid var(--ink-line);background:var(--panel2);color:var(--text);font-size:.92em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.05em;cursor:pointer;text-align:center;transition:transform .08s, box-shadow .08s;box-shadow:2px 2px 0 var(--ink-line);}
+  .btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line);}
+  .btn-primary{background:var(--gold);color:#F3EEDE;border-color:var(--gold-deep);}
+  .btn-danger{background:var(--danger);color:#F3EEDE;}
+  .btn-accent{background:var(--accent2);color:#F3EEDE;}
   .btn-block{width:100%;}
   .row{display:flex;gap:10px;}
   .row > *{flex:1;}
   /* Game screen */
   #screen-game{display:flex;flex-direction:column;height:100vh;background:var(--bg);}
-  #header{padding:12px 14px;background:var(--panel);border-bottom:2px solid var(--ink-line);}
+  #header{padding:10px 14px 12px;background:var(--panel);border-bottom:2px solid var(--ink-line);}
   #header .who{display:flex;align-items:center;gap:10px;}
-  .avatar-ring{width:52px;height:52px;border-radius:50%;background:var(--panel2);border:2px solid var(--ink-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  #header .avatar{font-size:1.9em;line-height:1;}
+  .avatar-ring{width:46px;height:46px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--ink-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  #header .avatar{font-size:1.6em;line-height:1;filter:grayscale(35%);}
   #header .who-info{flex:1;min-width:0;}
-  #header .who-info b{font-size:1.08em;font-family:var(--font-display);font-weight:800;display:block;}
-  #header .who-info span{display:block;font-size:.75em;color:var(--sub);font-weight:600;}
-  .cash-pill{font-weight:800;color:#2B1B02;background:linear-gradient(180deg,var(--gold),var(--gold-deep));border:2px solid var(--ink-line);border-radius:20px;padding:4px 10px;font-size:.85em;white-space:nowrap;font-variant-numeric:tabular-nums;}
-  .stats{display:flex;justify-content:space-between;gap:6px;margin-top:10px;}
-  .stat-badge{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;animation:statPop .28s ease;}
-  .stat-ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;}
-  .stat-ring::before{content:'';position:absolute;inset:3px;background:var(--panel);border-radius:50%;}
-  .stat-ring .stat-ic{position:relative;z-index:1;font-size:1em;line-height:1;}
-  .stat-badge .stat-num{font-size:.72em;font-weight:800;font-variant-numeric:tabular-nums;}
-  @keyframes statPop{ from{transform:scale(.75); opacity:.4;} to{transform:scale(1); opacity:1;} }
-  #log{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column-reverse;gap:9px;}
-  .logline{background:var(--panel);border:1.5px solid var(--ink-line);border-radius:12px;padding:9px 12px;font-size:.88em;line-height:1.4;box-shadow:2px 3px 0 var(--border);}
-  .logline:nth-child(odd){transform:rotate(-0.4deg);}
-  .logline:nth-child(even){transform:rotate(0.4deg);}
-  .logline .age{color:var(--sub);font-size:.72em;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px;}
-  .logline.good{border-left:5px solid var(--life-green);}
-  .logline.bad{border-left:5px solid var(--danger);}
-  .logline.neutral{border-left:5px solid var(--accent2);}
-  .newspaper{background:#FBF6E7;color:#241B10;border:2px solid var(--ink-line);border-radius:4px;padding:12px 14px;font-family:Georgia,'Times New Roman',serif;transform:rotate(0deg);box-shadow:2px 3px 0 var(--border);}
-  .newspaper .np-name{font-size:.65em;letter-spacing:3px;text-transform:uppercase;text-align:center;border-bottom:2px solid var(--ink-line);border-top:2px solid var(--ink-line);padding:3px 0;margin-bottom:6px;font-family:var(--font-display);font-weight:800;}
-  .newspaper h3{margin:0 0 4px;font-size:1.15em;text-align:center;line-height:1.2;}
-  .newspaper p{margin:0;font-size:.78em;text-align:center;font-style:italic;}
-  #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:2px solid var(--ink-line);gap:1px;padding:6px 4px;}
-  #bottomnav button{background:var(--tile-color, var(--panel2));border:1.5px solid var(--ink-line);border-radius:12px;color:var(--text);padding:7px 2px;font-size:.62em;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;margin:2px;}
-  #bottomnav button .ic{font-size:1.3em;}
-  #bottomnav button:nth-child(1){--tile-color:#FBE0B0;}
-  #bottomnav button:nth-child(2){--tile-color:#D9EFC7;}
-  #bottomnav button:nth-child(3){--tile-color:#F6CFDC;}
-  #bottomnav button:nth-child(4){--tile-color:#CFE3F5;}
-  #bottomnav button:nth-child(5){--tile-color:#E4D6F5;}
-  #bottomnav button:nth-child(6){--tile-color:#F5E2B8;}
-  #ageup-btn{position:sticky;bottom:0;margin:8px;width:calc(100% - 16px);border-radius:16px;padding:15px;font-size:1.05em;letter-spacing:.02em;}
+  #header .who-info b{font-size:1.05em;font-family:var(--font-display);font-weight:700;display:block;}
+  #header .who-info span{display:block;font-size:.68em;color:var(--sub);font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .cash-pill{font-weight:700;color:var(--text);background:var(--panel2);border:1.5px solid var(--ink-line);border-radius:2px;padding:4px 8px;font-size:.78em;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:var(--font-caption);}
+  .almanac{margin-top:10px;border:1px solid var(--ink-line);border-radius:2px;}
+  .almanac-label{font-family:var(--font-caption);font-size:.58em;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);text-align:center;padding:3px 0;border-bottom:1px solid var(--border);font-weight:700;}
+  .stats{display:flex;}
+  .stat-badge{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 5px;border-right:1px solid var(--border);animation:statPop .28s ease;}
+  .stat-badge:last-child{border-right:none;}
+  .stat-badge .stat-ic{font-family:var(--font-caption);font-size:.56em;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);font-weight:700;}
+  .stat-badge .stat-num{font-size:1.05em;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--font-display);border-bottom:2px solid var(--stat-color, var(--ink-line));padding:0 3px 1px;}
+  @keyframes statPop{ from{opacity:.3;} to{opacity:1;} }
+  #log{flex:1;overflow-y:auto;padding:6px 16px 12px;display:flex;flex-direction:column-reverse;}
+  .logline{padding:9px 0;font-size:.92em;line-height:1.45;border-bottom:1px solid var(--border);font-family:var(--font-body);}
+  .logline .age{color:var(--text);font-family:var(--font-caption);font-size:.68em;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-right:6px;}
+  .logline.good .age{color:var(--accent);}
+  .logline.bad .age{color:var(--danger);}
+  .logline.neutral .age{color:var(--accent2);}
+  .newspaper{background:var(--panel);color:var(--text);border-top:4px double var(--ink-line);border-bottom:4px double var(--ink-line);padding:14px 4px;margin:6px 0;}
+  .newspaper .np-name{font-family:var(--font-caption);font-size:.6em;letter-spacing:.25em;text-transform:uppercase;text-align:center;color:var(--gold);font-weight:800;margin-bottom:4px;}
+  .newspaper h3{margin:0 0 6px;font-size:1.3em;text-align:center;line-height:1.15;font-weight:700;text-wrap:balance;}
+  .newspaper p{margin:0;font-size:.82em;text-align:center;font-style:italic;color:var(--sub);}
+  #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:2px solid var(--ink-line);}
+  #bottomnav button{background:none;border:none;border-right:1px solid var(--border);color:var(--text);padding:8px 2px 7px;font-family:var(--font-caption);font-size:.58em;font-weight:700;text-transform:uppercase;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+  #bottomnav button:last-child{border-right:none;}
+  #bottomnav button .ic{font-size:1.15em;filter:grayscale(55%);}
+  #ageup-btn{position:sticky;bottom:0;margin:10px;width:calc(100% - 20px);border-radius:2px;padding:14px;font-size:.95em;letter-spacing:.08em;border:2px solid var(--gold-deep);position:relative;}
   /* Panel / modal */
-  #panel-overlay{position:absolute;inset:0;background:rgba(36,27,16,.55);display:flex;align-items:flex-end;z-index:50;}
-  #panel{background:var(--bg);width:100%;max-height:82vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;border-top:2px solid var(--ink-line);}
-  #panel-head{padding:14px 16px;border-bottom:2px solid var(--ink-line);display:flex;justify-content:space-between;align-items:center;background:var(--panel);}
-  #panel-head h3{margin:0;font-weight:800;}
-  #panel-body{padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
-  .close-x{background:var(--panel2);border:1.5px solid var(--ink-line);border-radius:50%;width:28px;height:28px;color:var(--text);font-size:1.1em;cursor:pointer;line-height:1;}
-  .list-item{background:var(--panel);border:1.5px solid var(--ink-line);border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:2px 2px 0 var(--border);}
-  .list-item .li-main b{display:block;font-family:var(--font-display);}
-  .list-item .li-main span{font-size:.78em;color:var(--sub);font-weight:600;}
-  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68em;font-weight:700;background:var(--panel2);color:var(--sub);border:1px solid var(--border);}
-  #modal-overlay{position:absolute;inset:0;background:rgba(36,27,16,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
-  #modal-card{background:var(--panel);border:2px solid var(--ink-line);border-radius:18px;padding:20px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:4px 5px 0 var(--border);}
-  #modal-card h3{margin-top:0;font-weight:800;}
+  #panel-overlay{position:absolute;inset:0;background:rgba(28,26,22,.55);display:flex;align-items:flex-end;z-index:50;}
+  #panel{background:var(--panel);width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;border-top:3px double var(--ink-line);}
+  #panel-head{padding:12px 16px;border-bottom:1px solid var(--ink-line);display:flex;justify-content:space-between;align-items:center;background:var(--panel);}
+  #panel-head h3{margin:0;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:1em;}
+  #panel-body{padding:6px 16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:0;}
+  .close-x{background:none;border:1px solid var(--ink-line);border-radius:50%;width:24px;height:24px;color:var(--text);font-size:1em;cursor:pointer;line-height:1;}
+  .list-item{background:none;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:none;}
+  .list-item .li-main b{display:block;font-family:var(--font-display);font-weight:700;}
+  .list-item .li-main span{font-size:.75em;color:var(--sub);font-family:var(--font-caption);}
+  #panel-body > .btn{margin:5px 0;}
+  .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
+  #modal-overlay{position:absolute;inset:0;background:rgba(28,26,22,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
+  #modal-card{background:var(--panel);border:3px double var(--ink-line);border-radius:0;padding:20px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;}
+  #modal-card h3{margin-top:0;font-weight:700;text-transform:uppercase;letter-spacing:.03em;text-align:center;border-bottom:1px solid var(--border);padding-bottom:8px;}
   #modal-card .choices{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
-  /* Death screen */
-  #screen-dead{padding:28px 20px;text-align:center;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:12px;}
-  #screen-dead h1{color:var(--text);font-size:1.5em;}
-  .tombstone{background:#DCD3B9;border:2px solid var(--ink-line);border-radius:50% 50% 10px 10px / 30% 30% 10px 10px;padding:34px 20px 18px;width:78%;max-width:260px;box-shadow:3px 4px 0 var(--border);}
-  .tombstone .rip{font-family:var(--font-display);font-weight:800;font-size:1.3em;letter-spacing:.08em;color:var(--sub);}
-  .death-cause{color:var(--sub);font-weight:600;font-size:.95em;max-width:320px;}
-  .legacy-badge{font-size:3em;font-weight:800;margin:6px 0 0;font-family:var(--font-display);color:var(--gold-deep);}
-  .legacy-grade{font-size:1em;color:var(--sub);font-weight:700;}
+  /* Death screen — the Obituaries page */
+  #screen-dead{padding:0 0 28px;text-align:center;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;}
+  .obit-masthead{width:100%;background:var(--panel);padding:16px 14px 10px;border-bottom:3px double var(--ink-line);}
+  .obit-masthead .section{font-family:var(--font-caption);font-size:.62em;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:800;}
+  .obit-masthead h1{font-size:1.8em;margin:4px 0 0;text-transform:uppercase;letter-spacing:.02em;font-weight:700;}
+  .obit-photo{width:64px;height:64px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--ink-line);display:flex;align-items:center;justify-content:center;font-size:2em;margin:16px auto 4px;filter:grayscale(45%);}
+  .obit-photo-cap{font-family:var(--font-caption);font-size:.56em;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:10px;}
+  .obit-name{font-size:1.3em;font-weight:700;margin:0 0 2px;}
+  .obit-years{color:var(--sub);font-family:var(--font-caption);font-size:.78em;margin-bottom:12px;}
+  .obit-body{max-width:320px;padding:0 22px;font-size:.92em;line-height:1.6;text-align:left;color:var(--text);}
+  .obit-body p{margin:0 0 10px;}
+  .almanac-death{margin:16px 22px 0;border:1px solid var(--ink-line);width:calc(100% - 44px);max-width:320px;}
+  .almanac-death .almanac-label{background:var(--panel2);}
+  .almanac-death-row{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border);font-size:.82em;font-family:var(--font-caption);}
+  .almanac-death-row:last-child{border-bottom:none;}
+  .almanac-death-row b{font-family:var(--font-display);}
+  .legacy-badge{font-size:2.6em;font-weight:700;margin:2px 0 0;font-family:var(--font-display);color:var(--gold);}
+  .legacy-grade{font-size:.85em;color:var(--sub);font-weight:600;font-family:var(--font-caption);}
   ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
 </style>
 </head>
@@ -165,6 +176,10 @@
   </div>
 
   <div id="screen-game" class="hidden">
+    <div class="masthead">
+      <div class="masthead-title" id="masthead-title">The Gazette</div>
+      <div class="masthead-sub">Chronicling One Life, Daily</div>
+    </div>
     <div id="header">
       <div class="who">
         <div class="avatar-ring"><div class="avatar" id="hd-avatar">👶</div></div>
@@ -174,10 +189,13 @@
         </div>
         <div class="cash-pill">💵 <span id="hd-money">$0</span></div>
       </div>
-      <div class="stats" id="hd-stats"></div>
+      <div class="almanac">
+        <div class="almanac-label">Today's Almanac</div>
+        <div class="stats" id="hd-stats"></div>
+      </div>
     </div>
     <div id="log"></div>
-    <button class="btn btn-primary" id="ageup-btn">🎂 Age Up</button>
+    <button class="btn btn-primary" id="ageup-btn">📰 Next Edition</button>
     <div id="bottomnav">
       <button data-panel="career"><span class="ic">💼</span>Career</button>
       <button data-panel="assets"><span class="ic">💰</span>Assets</button>
@@ -297,9 +315,9 @@ function showScreen(name){
   });
 }
 const STAT_BADGES = {
-  health:{ic:'❤️', color:'var(--life-red)'}, happiness:{ic:'😀', color:'var(--life-gold)'},
-  smarts:{ic:'🧠', color:'var(--life-blue)'}, looks:{ic:'✨', color:'var(--life-pink)'},
-  karma:{ic:'☯️', color:'var(--life-green)'},
+  health:{ic:'Hlth', color:'var(--life-red)'}, happiness:{ic:'Happy', color:'var(--life-gold)'},
+  smarts:{ic:'Smart', color:'var(--life-blue)'}, looks:{ic:'Looks', color:'var(--life-pink)'},
+  karma:{ic:'Karma', color:'var(--life-green)'},
 };
 
 function avatarFor(){
@@ -326,10 +344,9 @@ function render(){
   const statsHtml = ['health','happiness','smarts','looks','karma'].map(k=>{
     const v = clamp(Math.round(state.stats[k]),0,100);
     const b = STAT_BADGES[k];
-    const ring = `conic-gradient(${b.color} ${v*3.6}deg, var(--panel2) 0)`;
     return `<div class="stat-badge" title="${k[0].toUpperCase()+k.slice(1)}">
-      <div class="stat-ring" style="background:${ring}"><span class="stat-ic">${b.ic}</span></div>
-      <span class="stat-num" style="color:${b.color}">${v}</span></div>`;
+      <span class="stat-ic">${b.ic}</span>
+      <span class="stat-num" style="--stat-color:${b.color}">${v}</span></div>`;
   }).join('');
   $('hd-stats').innerHTML = statsHtml;
   renderLog();
@@ -420,6 +437,7 @@ function startNewLife(){
     state.relationships.push(sib);
   }
   state.eduStage='none';
+  $('masthead-title').textContent = 'The ' + state.last + ' Gazette';
   log(`You were born in ${state.city} to ${mom.name} and ${dad.name}.`,'good',0);
   render();
   showScreen('game');
@@ -1334,23 +1352,30 @@ function legacyGrade(score){
   return {grade:'F', title:'Wasted Potential'};
 }
 
-/* ============================ DEATH SCREEN ====================================== */
+/* ============================ DEATH SCREEN — THE OBITUARIES PAGE ================ */
 function renderDeathScreen(){
   showScreen('dead');
   const score = calcLegacyScore();
   const lg = legacyGrade(score);
   const endings = checkSecretEndings();
-  let html = `<h1>Game Over</h1>`;
-  html += `<div class="tombstone"><div class="rip">R.I.P.</div><div style="font-weight:800;margin-top:4px;">${state.name}</div>
-    <div style="color:var(--sub);font-weight:600;font-size:.85em;margin-top:2px;">${state.age===undefined?'':'Age '+state.age}</div></div>`;
-  html += `<p class="death-cause">${state.name} died at age ${state.age}${state.lastCause?(' of '+state.lastCause):''}.</p>`;
+  const livingFamily = state.relationships.filter(r=>r.alive).length;
+  let html = `<div class="obit-masthead"><div class="section">Obituaries</div><h1>In Memoriam</h1></div>`;
+  html += `<div class="obit-photo">💐</div><div class="obit-photo-cap">Archive Photo</div>`;
+  html += `<div class="obit-name">${state.name}</div>`;
+  html += `<div class="obit-years">${state.birthYear} – ${state.birthYear + state.age} · Age ${state.age}</div>`;
+  html += `<div class="obit-body"><p>${state.name}, of ${state.city}, passed away${state.lastCause?(' of '+state.lastCause):''} at age ${state.age}.</p>`;
+  html += `<p>${livingFamily>0 ? `${state.name} is survived by ${livingFamily} loving family member${livingFamily===1?'':'s'}.` : `${state.name} leaves behind a life fully lived, chronicled here in full.`}</p></div>`;
+  html += `<div class="almanac-death"><div class="almanac-label">By The Numbers</div>`;
+  html += `<div class="almanac-death-row"><span>Legacy Score</span><b style="color:var(--gold)">${score}/100</b></div>`;
+  html += `<div class="almanac-death-row"><span>Net Worth</span><b>${fmtMoney(netWorth())}</b></div>`;
+  html += `<div class="almanac-death-row"><span>Achievements</span><b>${state.achievements.size}</b></div>`;
+  html += `<div class="almanac-death-row"><span>Children</span><b>${state.kids.length}</b></div></div>`;
   html += `<div class="legacy-badge">${lg.grade}</div>`;
-  html += `<div class="legacy-grade">Legacy Score: ${score}/100 — "${lg.title}"</div>`;
+  html += `<div class="legacy-grade">"${lg.title}"</div>`;
   if(endings.length){
-    html += `<div style="margin-top:10px;"><b>🏅 Secret Endings Unlocked:</b><br>` + endings.map(e=>`<span class="pill">${e.title}</span>`).join(' ') + `</div>`;
+    html += `<div style="margin-top:12px;padding:0 22px;"><div class="masthead-sub" style="margin-bottom:6px;">Special Notices</div>` + endings.map(e=>`<span class="pill" style="margin:2px;">${e.title}</span>`).join(' ') + `</div>`;
   }
-  html += `<div style="margin-top:10px;color:var(--sub);font-size:.85em;font-weight:600;">Net Worth: ${fmtMoney(netWorth())} · Achievements: ${state.achievements.size} · Kids: ${state.kids.length}</div>`;
-  html += `<button class="btn btn-primary btn-block" style="margin-top:16px" onclick="restartGame()">Start New Life</button>`;
+  html += `<button class="btn btn-primary btn-block" style="margin-top:20px;max-width:280px;width:calc(100% - 44px);" onclick="restartGame()">📰 Begin a New Volume</button>`;
   $('screen-dead').innerHTML = html;
 }
 function restartGame(){
