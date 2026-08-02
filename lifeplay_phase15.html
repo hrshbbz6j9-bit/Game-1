@@ -1571,7 +1571,7 @@ ageUp = function(){
   _origAgeUp_P15b();
   if(!state || !state.alive) return;
   if(state.age>=12 && state.age<=17 && !state.rival && chance(20)) assignRivalP15();
-  if(state.rival && chance(30)) rollRivalEventP15();
+  if(state.rival && chance(16)) rollRivalEventP15();
   if(state.age>=14 && !state.mentor && (state.job || state.eduStage==='college' || state.eduStage==='highschool') && chance(12)) assignMentorP15();
   tickMentorP15();
   render();
@@ -2044,6 +2044,200 @@ ageUp = function(){
   tickPetsP15();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   EXPANDED LIFE-STAGE EVENT POOLS — the original pools were only 8/8/8/4
+   events per bracket, which repeats constantly over a full life. Extending
+   the existing arrays in place (push, no reassignment) so nothing above is
+   rewritten.
+   --------------------------------------------------------------------- */
+CHILD_EVENTS.push(
+  {text:'You built an epic blanket fort in the living room.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You lost your first tooth!', type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:'You got scared during a thunderstorm.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You won first place in the school science fair.', type:'good', fx:s=>{s.stats.smarts+=4; s.stats.happiness+=2;}},
+  {text:'You accidentally broke a window playing catch.', type:'bad', fx:s=>{s.money-=rand(20,80);}},
+  {text:'You learned to swim at the community pool.', type:'good', fx:s=>{s.stats.health+=3;}},
+  {text:'You got your first library card and fell in love with reading.', type:'good', fx:s=>{s.stats.smarts+=3;}},
+  {text:'You had a memorable birthday party with all your friends.', type:'good', fx:s=>{s.stats.happiness+=5;}},
+  {text:'You caught a nasty cold going around school.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You started taking piano lessons.', type:'good', fx:s=>{s.stats.smarts+=2; s.stats.happiness+=1;}},
+  {text:'You got lost at the mall for a scary ten minutes.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You won a goldfish at the county fair.', type:'neutral', fx:s=>{s.stats.happiness+=2;}},
+  {text:'You had a nightmare about monsters under the bed.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You were the star of the school play.', type:'good', fx:s=>{s.stats.happiness+=4; s.stats.looks+=1;}},
+  {text:'You got glasses for the first time.', type:'neutral', fx:s=>{s.stats.looks-=1; s.stats.smarts+=1;}},
+  {text:'You built a killer sandcastle at the beach.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You got in a shouting match with your sibling over a toy.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You learned to whistle after weeks of trying.', type:'neutral', fx:s=>{s.stats.happiness+=1;}},
+  {text:'You went trick-or-treating and scored a mountain of candy.', type:'good', fx:s=>{s.stats.happiness+=4; s.stats.health-=1;}},
+  {text:'You fell off your skateboard and scraped your knee.', type:'bad', fx:s=>{s.stats.health-=3;}},
+  {text:'You made the honor roll.', type:'good', fx:s=>{s.stats.smarts+=3; s.stats.happiness+=2;}},
+  {text:'You got in trouble for drawing on the walls.', type:'bad', fx:s=>{s.stats.karma-=1;}},
+  {text:'You aced your multiplication tables test.', type:'good', fx:s=>{s.stats.smarts+=3;}},
+  {text:'You cried when the ice cream truck drove past without stopping.', type:'neutral', fx:s=>{s.stats.happiness-=1;}},
+  {text:'You helped an elderly neighbor carry groceries.', type:'good', fx:s=>{s.stats.karma+=3; s.stats.happiness+=2;}},
+  {text:'You got picked last for kickball and it stung.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You discovered you\'re allergic to something the hard way.', type:'bad', fx:s=>{s.stats.health-=5;}},
+  {text:'You won the class spelling contest two years running.', type:'good', fx:s=>{s.stats.smarts+=2; s.stats.happiness+=2;}},
+  {text:'You had your first sleepover.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You broke a family heirloom while playing indoors.', type:'bad', fx:s=>{s.stats.karma-=1; s.stats.happiness-=2;}},
+  {text:'You started collecting rocks and became a mini geologist.', type:'neutral', fx:s=>{s.stats.smarts+=1; s.stats.happiness+=1;}},
+  {text:'You cried at the dentist but got a sticker for being brave.', type:'neutral', fx:s=>{s.stats.happiness+=1;}},
+  {text:'You learned to ride without training wheels.', type:'good', fx:s=>{s.stats.happiness+=3; s.stats.health+=1;}},
+  {text:'You got the wind knocked out of you falling from the monkey bars.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You won an art contest at the county fair.', type:'good', fx:s=>{s.stats.happiness+=3; s.stats.looks+=1;}}
+);
+TEEN_EVENTS.push(
+  {text:'You got braces and hated every second of the fitting.', type:'bad', fx:s=>{s.stats.looks-=2; s.stats.happiness-=2;}},
+  {text:'You made the varsity team as an underclassman.', type:'good', fx:s=>{s.stats.health+=3; s.stats.happiness+=3;}},
+  {text:'Your group chat blew up over pointless drama.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You aced your driving test on the first try.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You bombed your driving test and had to retake it.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You went to prom and had the time of your life.', type:'good', fx:s=>{s.stats.happiness+=5; s.money-=rand(100,300);}},
+  {text:'You got grounded for missing curfew.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You started a small side hustle reselling sneakers online.', type:'good', fx:s=>{s.money+=rand(100,600);}},
+  {text:'You got caught passing notes in class.', type:'neutral', fx:s=>{s.stats.karma-=1;}},
+  {text:'You joined the debate team and won your first match.', type:'good', fx:s=>{s.stats.smarts+=3; s.stats.happiness+=2;}},
+  {text:'A rumor spread about you at school.', type:'bad', fx:s=>{s.stats.happiness-=4;}},
+  {text:'You pulled an all-nighter studying and it paid off.', type:'good', fx:s=>{s.stats.smarts+=3; s.stats.health-=2;}},
+  {text:'You got your wisdom teeth out.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You won a talent show performing your own song.', type:'good', fx:s=>{s.stats.happiness+=5; s.stats.looks+=1;}},
+  {text:'You backed the family car into a mailbox.', type:'bad', fx:s=>{s.money-=rand(300,1500);}},
+  {text:'You got a part in the school musical.', type:'good', fx:s=>{s.stats.happiness+=3; s.stats.looks+=1;}},
+  {text:'You skipped school to go to a concert.', type:'neutral', fx:s=>{s.stats.happiness+=4; s.stats.karma-=2;}},
+  {text:'You had an awkward growth spurt and tripped over your own feet constantly.', type:'neutral', fx:s=>{s.stats.happiness-=1;}},
+  {text:'You started working out and saw real gains.', type:'good', fx:s=>{s.stats.health+=4;}},
+  {text:'You got suspended for fighting.', type:'bad', fx:s=>{s.stats.karma-=6; s.stats.happiness-=3;}},
+  {text:'You aced your college entrance exams.', type:'good', fx:s=>{s.stats.smarts+=4; s.stats.happiness+=2;}},
+  {text:'You bombed your college entrance exams and had to retake them.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'Your crush actually texted you back.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You got ghosted by your crush.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You threw the best house party of the year.', type:'good', fx:s=>{s.stats.happiness+=4; s.stats.karma-=2;}},
+  {text:'The house party got busted by the cops.', type:'bad', fx:s=>{s.stats.karma-=4; s.stats.happiness-=3;}},
+  {text:'You picked up a part-time job at the mall.', type:'neutral', fx:s=>{s.money+=rand(300,900);}},
+  {text:'You got your ears pierced.', type:'neutral', fx:s=>{s.stats.looks+=1;}},
+  {text:'You dyed your hair a wild color and don\'t regret it.', type:'neutral', fx:s=>{s.stats.looks+=2; s.stats.happiness+=1;}},
+  {text:'You stayed up too late gaming on a school night, again.', type:'bad', fx:s=>{s.stats.health-=2;}},
+  {text:'You won a regional academic competition.', type:'good', fx:s=>{s.stats.smarts+=4; s.stats.happiness+=3;}},
+  {text:'You got a tattoo you\'re not 100% sure about yet.', type:'neutral', fx:s=>{s.stats.looks+=1; s.money-=rand(80,300);}},
+  {text:'You crashed your bike doing a stunt for social media.', type:'bad', fx:s=>{s.stats.health-=5;}},
+  {text:'You started a club at school that actually took off.', type:'good', fx:s=>{s.stats.smarts+=2; s.stats.karma+=2; s.stats.happiness+=2;}},
+  {text:'You got caught cheating on a test.', type:'bad', fx:s=>{s.stats.karma-=5; s.gpa=clamp(s.gpa-0.3,0,4);}}
+);
+ADULT_EVENTS.push(
+  {text:'You got a flat tire on the highway during rush hour.', type:'bad', fx:s=>{s.money-=rand(80,300); s.stats.happiness-=2;}},
+  {text:'A stranger paid for your coffee order.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You finally paid off a nagging credit card balance.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'Your apartment flooded from an upstairs pipe burst.', type:'bad', fx:s=>{s.money-=rand(500,3000);}},
+  {text:'You ran a 5K and actually finished.', type:'good', fx:s=>{s.stats.health+=4; s.stats.happiness+=3;}},
+  {text:'You got food poisoning from a sketchy food truck.', type:'bad', fx:s=>{s.stats.health-=5;}},
+  {text:'You won a raffle at a work event.', type:'good', fx:s=>{s.money+=rand(100,1000);}},
+  {text:'Your landlord raised the rent unexpectedly.', type:'bad', fx:s=>{s.money-=rand(200,900);}},
+  {text:'You took an impromptu solo road trip.', type:'good', fx:s=>{s.stats.happiness+=5; s.money-=rand(200,700);}},
+  {text:'You got a nasty sunburn on vacation.', type:'bad', fx:s=>{s.stats.health-=3;}},
+  {text:'You finally decluttered your entire apartment.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'Your phone screen shattered and repairs weren\'t cheap.', type:'bad', fx:s=>{s.money-=rand(100,400);}},
+  {text:'You picked up a new hobby that\'s actually sticking.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You got into a fender bender in a parking lot.', type:'bad', fx:s=>{s.money-=rand(200,1000);}},
+  {text:'A close friend\'s wedding reminded you what matters.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You caught a great deal on flights and booked a trip.', type:'good', fx:s=>{s.stats.happiness+=3; s.money-=rand(200,600);}},
+  {text:'Your gym membership auto-renewed and you forgot to cancel.', type:'bad', fx:s=>{s.money-=rand(200,500);}},
+  {text:'You helped a coworker meet a deadline and they owe you one.', type:'good', fx:s=>{s.stats.karma+=2;}},
+  {text:'You got audited and it was more stressful than costly.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You reconnected with a sibling after a long silence.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You tried a new restaurant that blew your expectations away.', type:'good', fx:s=>{s.stats.happiness+=3; s.money-=rand(50,150);}},
+  {text:'You threw your back out moving furniture.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You donated blood for the first time.', type:'good', fx:s=>{s.stats.karma+=4; s.stats.happiness+=1;}},
+  {text:'Your credit score took a hit you didn\'t see coming.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You picked up a great side gig on weekends.', type:'good', fx:s=>{s.money+=rand(500,2000);}},
+  {text:'You got stuck in an elevator for twenty stressful minutes.', type:'bad', fx:s=>{s.stats.happiness-=3;}},
+  {text:'You finally learned to cook a proper meal from scratch.', type:'good', fx:s=>{s.stats.happiness+=2; s.stats.health+=1;}},
+  {text:'Your neighbor\'s dog somehow became your best friend.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You lost your wallet and had to cancel every card.', type:'bad', fx:s=>{s.money-=rand(50,200); s.stats.happiness-=3;}},
+  {text:'You got a glowing performance review.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You slipped on ice and bruised more than your ego.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You binge-watched an entire series in one weekend.', type:'neutral', fx:s=>{s.stats.happiness+=2; s.stats.health-=1;}},
+  {text:'You mediated a huge argument between two friends.', type:'good', fx:s=>{s.stats.karma+=3;}},
+  {text:'Your car got towed and getting it back was a whole ordeal.', type:'bad', fx:s=>{s.money-=rand(150,400); s.stats.happiness-=3;}},
+  {text:'You started meditating and it\'s actually helping.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You got recognized by a stranger for something kind you did years ago.', type:'neutral', fx:s=>{s.stats.happiness+=2;}},
+  {text:'You caught up on years of missed dental care in one brutal appointment.', type:'bad', fx:s=>{s.money-=rand(300,1200); s.stats.health+=2;}},
+  {text:'You finally started a retirement fund.', type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:'A pipe burst under your sink and you learned some new vocabulary.', type:'bad', fx:s=>{s.money-=rand(200,900);}}
+);
+ELDER_EVENTS.push(
+  {text:'You took up watercolor painting and found real joy in it.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You started a weekly card game night with old friends.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You had trouble remembering where you put your glasses. Again.', type:'bad', fx:s=>{s.stats.happiness-=1;}},
+  {text:'You finally wrote your memoirs, just for the family.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You got a hip replacement and it changed everything.', type:'good', fx:s=>{s.stats.health+=8; s.money-=rand(1000,5000);}},
+  {text:'You went on a cruise you\'d been putting off for years.', type:'good', fx:s=>{s.stats.happiness+=5; s.money-=rand(1000,4000);}},
+  {text:'Your eyesight is not what it used to be.', type:'bad', fx:s=>{s.stats.health-=2;}},
+  {text:'You taught a grandchild how to fish.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You had a health scare that turned out to be nothing.', type:'neutral', fx:s=>{s.stats.happiness-=1; s.stats.health-=1;}},
+  {text:'You reconnected with an old flame from decades ago.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You started volunteering at the local library.', type:'good', fx:s=>{s.stats.karma+=3; s.stats.happiness+=2;}},
+  {text:'You caught a flu that took longer to shake than it used to.', type:'bad', fx:s=>{s.stats.health-=5;}},
+  {text:'You finally beat your grandkid at chess.', type:'good', fx:s=>{s.stats.happiness+=3;}},
+  {text:'You had a wonderful, quiet holiday with the whole family.', type:'good', fx:s=>{s.stats.happiness+=5;}},
+  {text:'You misplaced your keys three times in one week.', type:'neutral', fx:s=>{s.stats.happiness-=1;}},
+  {text:'You attended a dear old friend\'s funeral.', type:'bad', fx:s=>{s.stats.happiness-=5;}},
+  {text:'You took up tai chi at the community center.', type:'good', fx:s=>{s.stats.health+=3;}},
+  {text:'You finally beat that crossword puzzle that stumped you for a month.', type:'good', fx:s=>{s.stats.happiness+=2; s.stats.smarts+=1;}},
+  {text:'You had a lovely, slow Sunday morning with coffee and the paper.', type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:'Your hearing isn\'t quite what it used to be.', type:'bad', fx:s=>{s.stats.health-=2;}},
+  {text:'You passed down a treasured family recipe to the next generation.', type:'good', fx:s=>{s.stats.karma+=3; s.stats.happiness+=3;}},
+  {text:'You had a fall in the bathroom that shook you up more than it hurt.', type:'bad', fx:s=>{s.stats.health-=6; s.stats.happiness-=2;}},
+  {text:'You spent the afternoon feeding the ducks at the park.', type:'good', fx:s=>{s.stats.happiness+=2;}},
+  {text:'You forgot an important appointment entirely.', type:'bad', fx:s=>{s.stats.happiness-=1;}},
+  {text:'You started a small vegetable garden and it thrived.', type:'good', fx:s=>{s.stats.happiness+=3; s.stats.health+=1;}}
+);
+COLLEGE_EVENTS_P15.push(
+  {text:'Your dorm hosted a talent show and you finally used that guitar you brought.', type:'good', fx:s=>{s.stats.happiness+=4;}},
+  {text:'You bombed a group project because your teammates flaked.', type:'bad', fx:s=>{s.gpa=clamp(s.gpa-0.2,0,4); s.stats.happiness-=3;}},
+  {text:'You got a work-study job in the campus library.', type:'good', fx:s=>{s.money+=rand(400,1200);}},
+  {text:'You survived on ramen for a week to make rent.', type:'bad', fx:s=>{s.stats.health-=2;}},
+  {text:'You made the dean\'s list.', type:'good', fx:s=>{s.gpa=clamp(s.gpa+0.3,0,4); s.stats.happiness+=3;}},
+  {text:'You accidentally registered for a class two levels too advanced.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You went to your first real college party and it was a lot.', type:'neutral', fx:s=>{s.stats.happiness+=3; s.stats.health-=2;}},
+  {text:'Your professor became an unexpected mentor.', type:'good', fx:s=>{s.stats.smarts+=3;}},
+  {text:'You got food poisoning from the dining hall.', type:'bad', fx:s=>{s.stats.health-=4;}},
+  {text:'You aced a presentation you were dreading for weeks.', type:'good', fx:s=>{s.stats.happiness+=4; s.stats.smarts+=1;}},
+  {text:'You pulled three all-nighters in a row during finals week.', type:'bad', fx:s=>{s.stats.health-=6;}},
+  {text:'You studied abroad for a semester.', type:'good', fx:s=>{s.stats.happiness+=6; s.stats.smarts+=2; s.money-=rand(1000,3000);}},
+  {text:'You got locked out of your dorm at 2am.', type:'bad', fx:s=>{s.stats.happiness-=2;}},
+  {text:'You joined a Greek life organization.', type:'neutral', fx:s=>{s.stats.happiness+=2; s.money-=rand(300,900);}},
+  {text:'You published a paper with a professor as a co-author.', type:'good', fx:s=>{s.stats.smarts+=4; s.stats.happiness+=2;}}
+);
+RIVAL_EVENTS_P15.push(
+  {text:r=>`${r.name} called you out publicly and it stung.`, field:'social', bad:true},
+  {text:r=>`You embarrassed ${r.name} in front of everyone without even trying.`, field:'social', bad:false},
+  {text:r=>`${r.name} got a better internship than you.`, field:'career', bad:true},
+  {text:r=>`You outshined ${r.name} in a big meeting.`, field:'career', bad:false},
+  {text:r=>`${r.name} out-studied you for a huge exam.`, field:'school', bad:true},
+  {text:r=>`You proved ${r.name} wrong in front of the whole class.`, field:'school', bad:false},
+  {text:r=>`${r.name} won the championship that should've been yours.`, field:'sports', bad:true},
+  {text:r=>`You dominated ${r.name} in the playoffs.`, field:'sports', bad:false}
+);
+RIVAL_EVENTS_P15.push(
+  {text:r=>`${r.name} got a perfect score you couldn't touch.`, field:'school', bad:true},
+  {text:r=>`${r.name} got into a better college than you.`, field:'school', bad:true},
+  {text:r=>`You got into your dream school over ${r.name}.`, field:'school', bad:false},
+  {text:r=>`You beat ${r.name} for valedictorian.`, field:'school', bad:false},
+  {text:r=>`${r.name} landed the client you'd been chasing for months.`, field:'career', bad:true},
+  {text:r=>`${r.name} got featured in an industry magazine.`, field:'career', bad:true},
+  {text:r=>`You closed the deal ${r.name} couldn't.`, field:'career', bad:false},
+  {text:r=>`You got picked to lead the big project instead of ${r.name}.`, field:'career', bad:false},
+  {text:r=>`${r.name} broke a record you'd held for years.`, field:'sports', bad:true},
+  {text:r=>`${r.name} made the all-star team over you.`, field:'sports', bad:true},
+  {text:r=>`You broke ${r.name}'s personal best.`, field:'sports', bad:false},
+  {text:r=>`You got scouted right in front of ${r.name}.`, field:'sports', bad:false},
+  {text:r=>`${r.name} threw a bigger party than you and everyone went.`, field:'social', bad:true},
+  {text:r=>`${r.name} started a rumor that actually stuck this time.`, field:'social', bad:true},
+  {text:r=>`Your party was the one everyone talked about, not ${r.name}'s.`, field:'social', bad:false},
+  {text:r=>`You won everyone over at the reunion, leaving ${r.name} in the dust.`, field:'social', bad:false}
+);
 </script>
 </body>
 </html>
