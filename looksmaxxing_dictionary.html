@@ -926,6 +926,71 @@
   .forum-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; }
   .forum-tabs::-webkit-scrollbar { display: none; }
 
+  .sort-row { display: flex; gap: 8px; padding: 0 16px 12px; }
+  .sort-btn {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    padding: 6px 11px;
+    cursor: pointer;
+    color: var(--ink-mute);
+  }
+  .sort-btn.active { background: var(--ink); color: var(--card); }
+
+  /* ---------- Avatars ---------- */
+  .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    border: 1.5px solid var(--ink);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .avatar.large { width: 38px; height: 38px; font-size: 16px; border-width: 2px; }
+
+  /* ---------- Like Button ---------- */
+  .like-btn {
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.15s ease;
+  }
+  .like-btn.liked { color: var(--coral); font-weight: 800; }
+  .like-btn:active { transform: scale(1.2); }
+
+  /* ---------- Bestseller Badge ---------- */
+  .bestseller-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--coral);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1.5px solid var(--ink);
+  }
+
   .new-thread-btn {
     flex-shrink: 0;
     background: var(--coral);
@@ -1356,6 +1421,11 @@
     <div class="forum-toolbar">
       <div class="forum-tabs" id="forumTabs"></div>
       <button class="new-thread-btn" id="newThreadBtn">+ New Thread</button>
+    </div>
+
+    <div class="sort-row" id="sortRow">
+      <button class="sort-btn active" data-sort="newest">🕐 Newest</button>
+      <button class="sort-btn" data-sort="top">🔥 Top</button>
     </div>
 
     <div class="thread-list" id="threadList"></div>
@@ -3607,6 +3677,64 @@
       difficulty: 1,
       definition: "A member's standing on a forum, usually earned through post count and activity — Newcomer, Regular, Veteran, Elite, Legend — displayed next to their username as a badge of tenure.",
       gear: "Community Glossary"
+    },
+    {
+      term: "Vitamin C + Niacinamide",
+      category: "Skin",
+      difficulty: 2,
+      definition: "A pairing once thought to cancel each other out, now understood to work fine together for most people when properly formulated — brightening and barrier support in one routine.",
+      gear: "Vitamin C + Niacinamide Duo"
+    },
+    {
+      term: "Comedogenic Rating",
+      category: "Skin",
+      difficulty: 2,
+      definition: "A 0-5 scale estimating how likely an ingredient is to clog pores, used as a rough guide when choosing products for acne-prone skin — though individual reactions vary widely.",
+      gear: "Non-Comedogenic Moisturizer"
+    },
+    {
+      term: "Scalp Massage",
+      category: "Hair",
+      difficulty: 1,
+      definition: "Manually massaging the scalp to boost blood flow to hair follicles, done with fingers or a handheld tool for a few minutes daily as a low-effort addition to a hair routine.",
+      gear: "Scalp Massager Tool",
+      premium: true,
+      technique: "1) Use fingertips or a silicone massager in small circular motions. 2) Cover the entire scalp, spending extra time on thinning areas. 3) Apply light-to-medium pressure for 5 minutes. 4) Do it daily, ideally paired with a growth serum or oil."
+    },
+    {
+      term: "Muscle Symmetry",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Training both sides of the body evenly, including unilateral (single-limb) work, to correct strength imbalances that can show up visually over time.",
+      gear: "Unilateral Training Program"
+    },
+    {
+      term: "Vascularity Training",
+      category: "Body & Frame",
+      difficulty: 3,
+      definition: "A combination of low body fat, high training pump, and targeted forearm/arm work used to increase visible vein prominence, most noticeable in the forearms and biceps.",
+      gear: "Pump Training Program"
+    },
+    {
+      term: "Recovery Nutrition",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "Eating adequate protein and carbohydrates in the hours after training to support muscle repair and glycogen replenishment, rather than leaving recovery entirely to supplements.",
+      gear: "Post-Workout Nutrition Guide"
+    },
+    {
+      term: "Skinimalism",
+      category: "Skin",
+      difficulty: 1,
+      definition: "A minimalist approach to skincare using fewer, higher-quality products done consistently, as a reaction against overly complex 10-step routines.",
+      gear: "Minimalist Skincare Set"
+    },
+    {
+      term: "Consistency Streak",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for tracking how many consecutive days a habit — skincare, gym, mewing — has been kept up, used as motivation to avoid breaking the chain.",
+      gear: "Habit Streak Tracker"
     }
   ];
 
@@ -4231,11 +4359,14 @@
       : `<div class="profile-progress-label">Max tier reached</div>`;
     document.getElementById("profileCard").innerHTML = `
       <div class="profile-top">
-        <div>
-          <div class="profile-name">@${escapeHtml(username)}</div>
-          <div class="profile-badges">
-            <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
-            ${vipHtml}
+        <div style="display:flex; align-items:center; gap:12px;">
+          ${avatarHtml(username, true)}
+          <div>
+            <div class="profile-name">@${escapeHtml(username)}</div>
+            <div class="profile-badges">
+              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+              ${vipHtml}
+            </div>
           </div>
         </div>
         <button class="edit-profile-btn" id="editProfileBtn">Edit</button>
@@ -4305,6 +4436,61 @@
     return `background:${c.bg};color:${c.fg};`;
   }
 
+  /* ---------------- Avatars ---------------- */
+  const AVATAR_COLORS = ["#2F5AFF", "#FF4B3E", "#2EC4B6", "#FFC53D", "#FF8A3D", "#E83D8A", "#C6F135"];
+  const AVATAR_LIGHT_BGS = new Set(["#FFC53D", "#C6F135"]);
+
+  function avatarColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  }
+
+  function avatarHtml(name, large) {
+    const color = avatarColor(name);
+    const fg = AVATAR_LIGHT_BGS.has(color) ? "#14120F" : "#FFFFFF";
+    const letter = escapeHtml((name[0] || "?").toUpperCase());
+    return `<span class="avatar${large ? " large" : ""}" style="background:${color};color:${fg};">${letter}</span>`;
+  }
+
+  /* ---------------- Likes ---------------- */
+  let likedThreads = loadLikedThreads();
+
+  function loadLikedThreads() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_liked_threads"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveLikedThreads() {
+    localStorage.setItem("looksmax_liked_threads", JSON.stringify([...likedThreads]));
+  }
+
+  function toggleLike(t) {
+    if (likedThreads.has(t.id)) {
+      likedThreads.delete(t.id);
+      t.likes = Math.max(0, t.likes - 1);
+    } else {
+      likedThreads.add(t.id);
+      t.likes += 1;
+    }
+    saveLikedThreads();
+    saveThreads();
+    renderThreads();
+  }
+
+  /* ---------------- Sort ---------------- */
+  let threadSort = "newest";
+  document.querySelectorAll(".sort-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      threadSort = btn.dataset.sort;
+      document.querySelectorAll(".sort-btn").forEach(b => b.classList.toggle("active", b === btn));
+      renderThreads();
+    });
+  });
+
   function renderThreads() {
     const list = document.getElementById("threadList");
     const filtered = activeForumCategory === "All" ? threads : threads.filter(t => t.category === activeForumCategory);
@@ -4313,11 +4499,15 @@
       return;
     }
     list.innerHTML = "";
-    filtered.slice().reverse().forEach(t => {
+    const ordered = filtered.slice();
+    if (threadSort === "top") ordered.sort((a, b) => b.likes - a.likes);
+    else ordered.reverse();
+
+    ordered.forEach(t => {
       const card = document.createElement("div");
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "");
       const repliesHtml = t.replies.length
-        ? t.replies.map(r => `<div class="reply-item"><span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
+        ? t.replies.map(r => `<div class="reply-item">${avatarHtml(r.author)}<span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
       card.innerHTML = `
         <div class="thread-top">
@@ -4325,6 +4515,7 @@
           <span class="thread-tag" style="${categoryTagStyle(t.category)}">${escapeHtml(t.category)}</span>
         </div>
         <div class="thread-meta">
+          ${avatarHtml(t.author)}
           <span class="author">@${escapeHtml(t.author)}</span>
           ${tierBadgeHtml(t.author)}
           <span>·</span>
@@ -4332,7 +4523,7 @@
         </div>
         <div class="thread-stats">
           <span>💬 ${t.replies.length} replies</span>
-          <span>❤️ ${t.likes}</span>
+          <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
         </div>
         <div class="thread-body">
           <div class="thread-preview">${escapeHtml(t.body)}</div>
@@ -4346,6 +4537,10 @@
       card.querySelector(".thread-top").addEventListener("click", () => {
         openThreadId = (openThreadId === t.id) ? null : t.id;
         renderThreads();
+      });
+      card.querySelector("[data-like]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLike(t);
       });
       const input = card.querySelector(".reply-input");
       const sendBtn = card.querySelector(".reply-send-btn");
@@ -4544,6 +4739,7 @@
   function renderCourses() {
     const grid = document.getElementById("courseGrid");
     grid.innerHTML = "";
+    const bestsellerId = courses.reduce((best, c) => (c.sales > (best ? best.sales : -1) ? c : best), null)?.id;
     courses.slice().reverse().forEach(c => {
       const yourCut = (c.price * (1 - PLATFORM_CUT_PCT / 100)).toFixed(2);
       const platformCut = (c.price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
@@ -4551,6 +4747,7 @@
       card.className = "course-card";
       card.innerHTML = `
         <div class="course-thumb" style="background:${c.gradient}">
+          ${c.id === bestsellerId ? `<div class="bestseller-tag">🔥 Bestseller</div>` : ""}
           <div class="course-price-tag">$${c.price}</div>
         </div>
         <div class="course-body">
