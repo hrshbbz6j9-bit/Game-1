@@ -293,12 +293,6 @@ function showScreen(name){
     $('screen-'+s).classList.toggle('hidden', s!==name);
   });
 }
-
-function statColor(v){
-  if(v>=70) return '#3fb950';
-  if(v>=40) return '#d29922';
-  return '#f85149';
-}
 const STAT_BADGES = {
   health:{ic:'❤️', color:'var(--life-red)'}, happiness:{ic:'😀', color:'var(--life-gold)'},
   smarts:{ic:'🧠', color:'var(--life-blue)'}, looks:{ic:'✨', color:'var(--life-pink)'},
