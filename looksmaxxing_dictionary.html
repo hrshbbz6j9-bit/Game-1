@@ -7,17 +7,17 @@
 <title>Looksmaxxing Dictionary</title>
 <style>
   :root {
-    --paper: #F2EEE1;
+    --paper: #FAFAF8;
     --card: #FFFFFF;
-    --ink: #14120F;
-    --ink-soft: #4A463D;
-    --ink-mute: #8A8572;
-    --lime: #C6F135;
-    --coral: #FF4B3E;
-    --blue: #2F5AFF;
-    --yellow: #FFC53D;
-    --orange: #FF8A3D;
-    --teal: #2EC4B6;
+    --ink: #0D0D0D;
+    --ink-soft: #4A4A4A;
+    --ink-mute: #8A8A8A;
+    --lime: #EDEDED;
+    --coral: #262626;
+    --blue: #4A4A4A;
+    --yellow: #C7C7C7;
+    --orange: #5A5A5A;
+    --teal: #7A7A7A;
     --font-display: Georgia, 'Times New Roman', serif;
     --font-mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -115,7 +115,7 @@
     display: block;
     width: 74px;
     height: 15px;
-    background: repeating-linear-gradient(45deg, var(--coral), var(--coral) 5px, #ff7a6f 5px, #ff7a6f 10px);
+    background: repeating-linear-gradient(45deg, var(--coral), var(--coral) 5px, #7A7A7A 5px, #7A7A7A 10px);
     border: 1.5px solid var(--ink);
     margin: 14px auto 0;
     transform: rotate(-2deg);
@@ -174,7 +174,7 @@
     left: 26px;
     width: 68px;
     height: 24px;
-    background: repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 6px, #ffd875 6px, #ffd875 12px);
+    background: repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 6px, #E8E8E8 6px, #E8E8E8 12px);
     border: 1.5px solid var(--ink);
     transform: rotate(-7deg);
     opacity: 0.95;
@@ -396,7 +396,7 @@
   }
   .badge.easy { color: var(--ink); background: var(--lime); }
   .badge.mid { color: var(--ink); background: var(--yellow); }
-  .badge.hard { color: var(--ink); background: var(--orange); }
+  .badge.hard { color: #fff; background: var(--orange); }
   .badge.extreme { color: #fff; background: var(--coral); }
   .badge.pro { color: #fff; background: var(--ink); display: inline-flex; align-items: center; gap: 3px; }
 
@@ -873,7 +873,7 @@
     right: 30px;
     width: 60px;
     height: 22px;
-    background: repeating-linear-gradient(-45deg, var(--blue), var(--blue) 6px, #6b8bff 6px, #6b8bff 12px);
+    background: repeating-linear-gradient(-45deg, var(--blue), var(--blue) 6px, #8A8A8A 6px, #8A8A8A 12px);
     border: 1.5px solid var(--ink);
     transform: rotate(6deg);
     opacity: 0.95;
@@ -916,7 +916,11 @@
     gap: 3px;
     box-shadow: 0 0 0 2px var(--paper);
   }
-  .tier-badge.vip { background: var(--yellow); color: var(--ink); }
+  .tier-badge.vip {
+    background: repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 3px, #FFFFFF 3px, #FFFFFF 6px);
+    color: #0D0D0D;
+    text-shadow: 0 0 3px #FFFFFF, 0 0 3px #FFFFFF;
+  }
 
   .edit-profile-btn {
     flex-shrink: 0;
@@ -1554,8 +1558,8 @@
 <div class="paywall-overlay" id="removeAdsOverlay">
   <div class="paywall-sheet">
     <button class="paywall-close" id="removeAdsClose" aria-label="Close">✕</button>
-    <div class="paywall-crown" style="background:#2F5AFF;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2EEE1" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <div class="paywall-crown" style="background:#262626;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAFAF8" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </div>
     <div class="paywall-title">Remove Ads</div>
     <div class="paywall-sub">One-time payment. No more top banner, no more sponsored popups — ever, on this device.</div>
@@ -4373,11 +4377,11 @@
   }
 
   const TIERS = [
-    { name: "Newcomer", min: 0, color: "#8A8572", fg: "#FFFFFF" },
-    { name: "Regular", min: 3, color: "#2F5AFF", fg: "#FFFFFF" },
-    { name: "Veteran", min: 8, color: "#2EC4B6", fg: "#14120F" },
-    { name: "Elite", min: 16, color: "#FF8A3D", fg: "#14120F" },
-    { name: "Legend", min: 30, color: "#E83D8A", fg: "#FFFFFF" }
+    { name: "Newcomer", min: 0, color: "#EAEAEA", fg: "#0D0D0D" },
+    { name: "Regular", min: 3, color: "#C4C4C4", fg: "#0D0D0D" },
+    { name: "Veteran", min: 8, color: "#8A8A8A", fg: "#FFFFFF" },
+    { name: "Elite", min: 16, color: "#4A4A4A", fg: "#FFFFFF" },
+    { name: "Legend", min: 30, color: "#0D0D0D", fg: "#FFFFFF" }
   ];
 
   function authorStats(name) {
@@ -4479,23 +4483,22 @@
     return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
   }
 
-  const CATEGORY_COLORS = {
-    "Skincare": { bg: "#2EC4B6", fg: "#14120F" },
-    "Mewing & Jaw": { bg: "#2F5AFF", fg: "#FFFFFF" },
-    "Fitness": { bg: "#FF8A3D", fg: "#14120F" },
-    "Grooming": { bg: "#FFC53D", fg: "#14120F" },
-    "Progress Logs": { bg: "#C6F135", fg: "#14120F" },
-    "Questions": { bg: "#FF4B3E", fg: "#FFFFFF" }
-  };
+  const CATEGORY_TONES = [
+    { bg: "#0D0D0D", fg: "#FFFFFF" },
+    { bg: "#FFFFFF", fg: "#0D0D0D" },
+    { bg: "#8A8A8A", fg: "#FFFFFF" }
+  ];
 
   function categoryTagStyle(category) {
-    const c = CATEGORY_COLORS[category] || { bg: "#2F5AFF", fg: "#FFFFFF" };
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) hash = (hash * 13 + category.charCodeAt(i)) >>> 0;
+    const c = CATEGORY_TONES[hash % CATEGORY_TONES.length];
     return `background:${c.bg};color:${c.fg};`;
   }
 
   /* ---------------- Avatars ---------------- */
-  const AVATAR_COLORS = ["#2F5AFF", "#FF4B3E", "#2EC4B6", "#FFC53D", "#FF8A3D", "#E83D8A", "#C6F135"];
-  const AVATAR_LIGHT_BGS = new Set(["#FFC53D", "#C6F135"]);
+  const AVATAR_COLORS = ["#0D0D0D", "#4A4A4A", "#FFFFFF", "#8A8A8A", "#D0D0D0"];
+  const AVATAR_LIGHT_BGS = new Set(["#FFFFFF", "#D0D0D0"]);
 
   function avatarColor(name) {
     let hash = 0;
@@ -4672,7 +4675,7 @@
       price: 79,
       sales: 340,
       rating: 4.7,
-      gradient: "#2F5AFF",
+      gradient: "#0D0D0D",
       desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking."
     },
     {
@@ -4682,7 +4685,7 @@
       price: 39,
       sales: 512,
       rating: 4.8,
-      gradient: "#FFC53D",
+      gradient: "#FFFFFF",
       desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type."
     },
     {
@@ -4692,7 +4695,7 @@
       price: 59,
       sales: 208,
       rating: 4.6,
-      gradient: "#C6F135",
+      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
       desc: "A 16-week compound-lift program built around deltoid, trap, and lat development for a stronger V-taper."
     },
     {
@@ -4702,7 +4705,7 @@
       price: 29,
       sales: 176,
       rating: 4.5,
-      gradient: "#FF8A3D",
+      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
       desc: "Fit, fragrance, grooming routines, and color analysis basics — the fundamentals most guys skip."
     },
     {
@@ -4712,7 +4715,7 @@
       price: 25,
       sales: 94,
       rating: 4.9,
-      gradient: "#2EC4B6",
+      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
       desc: "A no-fluff sleep and stress-management protocol — the cheapest, highest-leverage habit most routines skip entirely."
     },
     {
@@ -4722,7 +4725,7 @@
       price: 45,
       sales: 131,
       rating: 4.7,
-      gradient: "#FF4B3E",
+      gradient: "#8A8A8A",
       desc: "A 10-week posture and mobility program addressing forward head posture — often mistaken for weak jaw structure."
     },
     {
@@ -4732,7 +4735,7 @@
       price: 35,
       sales: 87,
       rating: 4.6,
-      gradient: "#2F5AFF",
+      gradient: "#0D0D0D",
       desc: "A structured low-intensity cardio and recovery protocol built to support strength training instead of competing with it."
     },
     {
@@ -4742,7 +4745,7 @@
       price: 45,
       sales: 143,
       rating: 4.8,
-      gradient: "#C6F135",
+      gradient: "#FFFFFF",
       desc: "A no-nonsense breakdown of every major active — retinoids, acids, vitamin C — and exactly how to layer them without irritation."
     },
     {
@@ -4752,7 +4755,7 @@
       price: 19,
       sales: 265,
       rating: 4.7,
-      gradient: "#FFC53D",
+      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
       desc: "Cuts through supplement marketing to cover the handful of products with real research behind them, and how to actually use them."
     },
     {
@@ -4762,7 +4765,7 @@
       price: 32,
       sales: 118,
       rating: 4.6,
-      gradient: "#FF8A3D",
+      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
       desc: "Toner, essence, serum, moisturizer — the correct order, timing, and product weights so multi-step routines actually absorb properly."
     },
     {
@@ -4772,7 +4775,7 @@
       price: 29,
       sales: 172,
       rating: 4.7,
-      gradient: "#E83D8A",
+      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
       desc: "A decision framework for choosing between bulking and cutting based on your current body fat, training age, and goals — no more guessing."
     },
     {
@@ -4782,7 +4785,7 @@
       price: 39,
       sales: 201,
       rating: 4.5,
-      gradient: "#2EC4B6",
+      gradient: "#8A8A8A",
       desc: "Practical conversation frameworks, body language, and confidence habits — because presence matters as much as any single feature."
     }
   ];
@@ -4860,7 +4863,14 @@
   }
   document.getElementById("sellCoursePrice").addEventListener("input", updateSellCourseBreakdown);
 
-  const courseGradients = ["#2F5AFF", "#FFC53D", "#C6F135", "#FF8A3D", "#2EC4B6", "#FF4B3E"];
+  const courseGradients = [
+    "#0D0D0D",
+    "#FFFFFF",
+    "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+    "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
+    "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+    "#8A8A8A"
+  ];
 
   document.getElementById("sellCourseSubmit").addEventListener("click", () => {
     const titleInput = document.getElementById("sellCourseTitle");
