@@ -1672,6 +1672,64 @@
     line-height: 1.4;
   }
 
+  /* ---------- My Activity ---------- */
+  .activity-section { margin-bottom: 18px; }
+  .activity-section:last-child { margin-bottom: 0; }
+
+  .activity-section-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px dashed var(--ink);
+  }
+
+  .activity-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .activity-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+  }
+  .activity-row:active { transform: scale(0.98); }
+
+  .activity-row-text { flex: 1; min-width: 0; }
+
+  .activity-row-title {
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activity-row-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 2px;
+  }
+
+  .activity-empty {
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--ink-mute);
+    padding: 8px 0;
+  }
+
   /* ---------- Popup Ad ---------- */
   .popup-ad-overlay {
     position: fixed;
@@ -2032,6 +2090,26 @@
     <div class="paywall-title" style="text-align:left;">🏅 Achievements</div>
     <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;" id="achievementsProgress"></div>
     <div class="achievements-grid" id="achievementsGrid"></div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="myActivityOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="myActivityClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">📋 My Activity</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Everything you've posted, replied to, and reviewed, in one place.</div>
+    <div class="activity-section">
+      <div class="activity-section-label" id="activityThreadsLabel">Threads</div>
+      <div class="activity-list" id="activityThreadsList"></div>
+    </div>
+    <div class="activity-section">
+      <div class="activity-section-label" id="activityRepliesLabel">Replies</div>
+      <div class="activity-list" id="activityRepliesList"></div>
+    </div>
+    <div class="activity-section">
+      <div class="activity-section-label" id="activityReviewsLabel">Course Reviews</div>
+      <div class="activity-list" id="activityReviewsList"></div>
+    </div>
   </div>
 </div>
 
@@ -6220,6 +6298,106 @@
     }).join("");
   }
 
+  /* ---------------- My Activity ---------------- */
+  function jumpToThread(threadId) {
+    closeMyActivity();
+    switchView("forum");
+    activeForumCategory = "All";
+    forumSearchTerm = "";
+    document.getElementById("forumSearchInput").value = "";
+    document.getElementById("forumClearBtn").classList.remove("show");
+    renderForumTabs();
+    openThreadId = threadId;
+    renderThreads();
+    setTimeout(() => {
+      const el = document.querySelector(`.thread-card[data-thread-id="${threadId}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
+
+  function jumpToCourse(courseId) {
+    closeMyActivity();
+    switchView("courses");
+    openCourseId = courseId;
+    selectedReviewRating = 5;
+    renderCourses();
+    setTimeout(() => {
+      const el = document.querySelector(`.course-card[data-course-id="${courseId}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
+
+  function openMyActivity() {
+    renderMyActivity();
+    document.getElementById("myActivityOverlay").classList.add("show");
+  }
+  function closeMyActivity() {
+    document.getElementById("myActivityOverlay").classList.remove("show");
+  }
+  document.getElementById("myActivityClose").addEventListener("click", closeMyActivity);
+  document.getElementById("myActivityOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "myActivityOverlay") closeMyActivity();
+  });
+
+  function renderMyActivity() {
+    const myThreads = threads.filter(t => t.author === username);
+    const myReplies = [];
+    threads.forEach(t => {
+      t.replies.forEach(r => {
+        if (r.author === username) myReplies.push({ thread: t, text: r.text });
+      });
+    });
+    const myReviews = [];
+    courses.forEach(c => {
+      (c.reviews || []).forEach(r => {
+        if (r.author === username) myReviews.push({ course: c, rating: r.rating, text: r.text });
+      });
+    });
+
+    document.getElementById("activityThreadsLabel").textContent = `Threads (${myThreads.length})`;
+    document.getElementById("activityThreadsList").innerHTML = myThreads.length
+      ? myThreads.map(t => `
+          <button class="activity-row" data-jump-thread="${t.id}">
+            <div class="activity-row-text">
+              <div class="activity-row-title">${escapeHtml(t.title)}</div>
+              <div class="activity-row-meta">${escapeHtml(t.category)} · 💬 ${t.replies.length} · ❤️ ${t.likes}</div>
+            </div>
+          </button>
+        `).join("")
+      : `<div class="activity-empty">No threads posted yet.</div>`;
+
+    document.getElementById("activityRepliesLabel").textContent = `Replies (${myReplies.length})`;
+    document.getElementById("activityRepliesList").innerHTML = myReplies.length
+      ? myReplies.map(item => `
+          <button class="activity-row" data-jump-thread="${item.thread.id}">
+            <div class="activity-row-text">
+              <div class="activity-row-title">${escapeHtml(item.text)}</div>
+              <div class="activity-row-meta">in: ${escapeHtml(item.thread.title)}</div>
+            </div>
+          </button>
+        `).join("")
+      : `<div class="activity-empty">No replies posted yet.</div>`;
+
+    document.getElementById("activityReviewsLabel").textContent = `Course Reviews (${myReviews.length})`;
+    document.getElementById("activityReviewsList").innerHTML = myReviews.length
+      ? myReviews.map(item => `
+          <button class="activity-row" data-jump-course="${item.course.id}">
+            <div class="activity-row-text">
+              <div class="activity-row-title">${stars(item.rating)} ${escapeHtml(item.text)}</div>
+              <div class="activity-row-meta">${escapeHtml(item.course.title)}</div>
+            </div>
+          </button>
+        `).join("")
+      : `<div class="activity-empty">No course reviews yet.</div>`;
+
+    document.querySelectorAll("[data-jump-thread]").forEach(btn => {
+      btn.addEventListener("click", () => jumpToThread(parseInt(btn.dataset.jumpThread, 10)));
+    });
+    document.querySelectorAll("[data-jump-course]").forEach(btn => {
+      btn.addEventListener("click", () => jumpToCourse(parseInt(btn.dataset.jumpCourse, 10)));
+    });
+  }
+
   function tierBadgeHtml(name) {
     const { score } = authorStats(name);
     const { current } = tierForScore(score);
@@ -6271,10 +6449,14 @@
         <button class="leaderboard-btn" id="leaderboardBtn">🏆 Leaderboard</button>
         <button class="leaderboard-btn" id="achievementsBtn">🏅 Achievements</button>
       </div>
+      <div class="profile-action-row">
+        <button class="leaderboard-btn" id="myActivityBtn" style="flex:1;">📋 My Activity</button>
+      </div>
     `;
     document.getElementById("editProfileBtn").addEventListener("click", openProfileModal);
     document.getElementById("leaderboardBtn").addEventListener("click", openLeaderboard);
     document.getElementById("achievementsBtn").addEventListener("click", openAchievements);
+    document.getElementById("myActivityBtn").addEventListener("click", openMyActivity);
   }
 
   const profileOverlay = document.getElementById("profileOverlay");
@@ -6506,6 +6688,7 @@
     ordered.forEach(t => {
       const card = document.createElement("div");
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
+      card.dataset.threadId = t.id;
       const repliesHtml = t.replies.length
         ? t.replies.map(r => `<div class="reply-item">${avatarHtml(r.author)}<span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
@@ -6907,6 +7090,7 @@
       const platformCut = (c.price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
       const card = document.createElement("div");
       card.className = "course-card";
+      card.dataset.courseId = c.id;
       const reviews = c.reviews || [];
       const isOpen = openCourseId === c.id;
       const reviewsListHtml = reviews.length
