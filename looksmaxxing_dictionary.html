@@ -506,6 +506,33 @@
   }
   .gear-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
+  .related-terms { margin-top: 14px; }
+
+  .related-terms-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+  }
+
+  .related-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .related-chip {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .related-chip:active { transform: scale(0.95); }
+
   .chevron-icon { transition: transform 0.3s ease; flex-shrink: 0; font-weight: 900; }
   .term-card.open .chevron-icon { transform: rotate(180deg); }
 
@@ -983,13 +1010,36 @@
     color: var(--ink-soft);
   }
 
-  .profile-progress-label {
+  .profile-progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     margin-top: 6px;
+  }
+
+  .profile-progress-label {
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--ink-mute);
   }
   .profile-progress-label b { color: var(--ink); }
+
+  .leaderboard-btn {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 5px 9px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .leaderboard-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
 
   .forum-toolbar {
     display: flex;
@@ -1498,6 +1548,58 @@
   .dashboard-row .name { color: var(--ink); font-weight: 700; }
   .dashboard-row .cut { color: var(--ink); font-weight: 800; background: var(--lime); padding: 1px 5px; }
 
+  /* ---------- Leaderboard ---------- */
+  .leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+  }
+  .leaderboard-row.is-you { background: var(--lime); }
+
+  .leaderboard-rank {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--ink-mute);
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .leaderboard-rank.top3 { color: var(--ink); }
+
+  .leaderboard-name-wrap { flex: 1; min-width: 0; }
+
+  .leaderboard-name {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .leaderboard-score {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .leaderboard-score span { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--ink-mute); display: block; text-align: right; }
+
   /* ---------- Popup Ad ---------- */
   .popup-ad-overlay {
     position: fixed;
@@ -1831,6 +1933,15 @@
     <label class="form-label">Username</label>
     <input type="text" class="form-input" id="profileUsernameInput" placeholder="e.g. jawline_journey" maxlength="24">
     <button class="cta-btn" id="profileSave">Save Profile</button>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="leaderboardOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="leaderboardClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">🏆 Leaderboard</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Ranked by activity score across the whole forum — 3 points per thread, 1 per reply.</div>
+    <div class="leaderboard-list" id="leaderboardList"></div>
   </div>
 </div>
 
@@ -5329,6 +5440,16 @@
         </div>
       `;
 
+      const related = TERMS.filter(x => x.category === t.category && x.term !== t.term).slice(0, 3);
+      const relatedHtml = !related.length ? "" : `
+        <div class="related-terms">
+          <div class="related-terms-label">Related Terms</div>
+          <div class="related-chips">
+            ${related.map(r => `<button class="related-chip" data-related="${escapeHtml(r.term)}">${escapeHtml(r.term)}</button>`).join("")}
+          </div>
+        </div>
+      `;
+
       card.innerHTML = `
         <div class="term-top">
           <div style="flex:1; min-width:0;">
@@ -5350,6 +5471,7 @@
             <div class="dots">${dots}</div>
           </div>
           ${techniqueHtml}
+          ${relatedHtml}
           <button class="gear-btn" data-term="${escapeHtml(t.term)}">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3.5a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             Recommended Gear: ${escapeHtml(t.gear)}
@@ -5379,6 +5501,13 @@
           openPaywall();
         });
       }
+
+      card.querySelectorAll("[data-related]").forEach(chip => {
+        chip.addEventListener("click", (e) => {
+          e.stopPropagation();
+          jumpToTerm(chip.dataset.related);
+        });
+      });
 
       els.termList.appendChild(card);
     });
@@ -5423,17 +5552,23 @@
     renderList();
   });
 
-  document.getElementById("randomTermBtn").addEventListener("click", () => {
-    const pick = TERMS[Math.floor(Math.random() * TERMS.length)];
+  function jumpToTerm(termName, toastPrefix) {
+    const target = TERMS.find(x => x.term === termName);
+    if (!target) return;
     activeCategory = "All";
-    searchTerm = pick.term;
-    els.searchInput.value = pick.term;
+    searchTerm = termName;
+    els.searchInput.value = termName;
     els.clearBtn.classList.add("show");
-    openIndex = TERMS.indexOf(pick);
+    openIndex = TERMS.indexOf(target);
     renderIndexBar();
     renderList();
     els.termList.scrollIntoView({ behavior: "smooth", block: "start" });
-    showToast(`Discovered: ${pick.term}`);
+    if (toastPrefix) showToast(`${toastPrefix}: ${termName}`);
+  }
+
+  document.getElementById("randomTermBtn").addEventListener("click", () => {
+    const pick = TERMS[Math.floor(Math.random() * TERMS.length)];
+    jumpToTerm(pick.term, "Discovered");
   });
 
   /* ---------------- Tab Navigation ---------------- */
@@ -5885,6 +6020,52 @@
     return { current, next };
   }
 
+  function getAllAuthors() {
+    const names = new Set([username]);
+    threads.forEach(t => {
+      names.add(t.author);
+      t.replies.forEach(r => names.add(r.author));
+    });
+    return [...names]
+      .map(name => ({ name, ...authorStats(name) }))
+      .filter(a => a.score > 0 || a.name === username)
+      .sort((a, b) => b.score - a.score);
+  }
+
+  function openLeaderboard() {
+    renderLeaderboard();
+    document.getElementById("leaderboardOverlay").classList.add("show");
+  }
+  function closeLeaderboard() {
+    document.getElementById("leaderboardOverlay").classList.remove("show");
+  }
+  document.getElementById("leaderboardClose").addEventListener("click", closeLeaderboard);
+  document.getElementById("leaderboardOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "leaderboardOverlay") closeLeaderboard();
+  });
+
+  function renderLeaderboard() {
+    const ranked = getAllAuthors();
+    document.getElementById("leaderboardList").innerHTML = ranked.map((a, i) => {
+      const rank = i + 1;
+      const { current } = tierForScore(a.score);
+      return `
+        <div class="leaderboard-row ${a.name === username ? "is-you" : ""}">
+          <div class="leaderboard-rank ${rank <= 3 ? "top3" : ""}">${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : "#" + rank}</div>
+          ${avatarHtml(a.name)}
+          <div class="leaderboard-name-wrap">
+            <div class="leaderboard-name">
+              @${escapeHtml(a.name)}
+              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+              ${staffBadgeHtml(a.name)}
+            </div>
+          </div>
+          <div class="leaderboard-score">${a.score}<span>PTS</span></div>
+        </div>
+      `;
+    }).join("");
+  }
+
   function tierBadgeHtml(name) {
     const { score } = authorStats(name);
     const { current } = tierForScore(score);
@@ -5929,9 +6110,13 @@
         <span>·</span>
         <span>${score} pts</span>
       </div>
-      ${progressHtml}
+      <div class="profile-progress-row">
+        ${progressHtml}
+        <button class="leaderboard-btn" id="leaderboardBtn">🏆 Leaderboard</button>
+      </div>
     `;
     document.getElementById("editProfileBtn").addEventListener("click", openProfileModal);
+    document.getElementById("leaderboardBtn").addEventListener("click", openLeaderboard);
   }
 
   const profileOverlay = document.getElementById("profileOverlay");
