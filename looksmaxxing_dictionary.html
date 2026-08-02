@@ -367,6 +367,14 @@
   .badge.hard { color: var(--hard); background: rgba(255,138,107,0.12); }
   .badge.extreme { color: var(--extreme); background: rgba(255,107,107,0.14); }
 
+  .badge.pro {
+    color: #1a1408;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
   .term-idx {
     font-size: 11px;
     color: var(--text-2);
@@ -386,10 +394,10 @@
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.35s ease;
   }
   .term-card.open .term-body {
-    max-height: 400px;
+    max-height: 900px;
     opacity: 1;
     margin-top: 12px;
   }
@@ -451,6 +459,305 @@
   }
   .gear-btn:active { transform: scale(0.97); background: rgba(143,123,255,0.22); }
 
+  /* ---------- Technique Guide (Premium) ---------- */
+  .technique-section {
+    margin-top: 14px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(212,175,122,0.22);
+  }
+
+  .technique-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 13px;
+    background: rgba(212,175,122,0.08);
+  }
+
+  .technique-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gold-bright);
+  }
+
+  .technique-steps {
+    padding: 13px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-1);
+  }
+
+  .technique-locked {
+    position: relative;
+    padding: 20px 16px 22px;
+    text-align: center;
+  }
+
+  .technique-locked .blur-preview {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--text-2);
+    filter: blur(4px);
+    user-select: none;
+    pointer-events: none;
+    max-height: 54px;
+    overflow: hidden;
+  }
+
+  .lock-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px auto 10px;
+    box-shadow: 0 4px 16px rgba(212,175,122,0.35);
+  }
+
+  .unlock-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color: #1a1408;
+    border: none;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    padding: 10px 18px;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .unlock-btn:active { transform: scale(0.96); }
+
+  .unlock-caption {
+    margin-top: 8px;
+    font-size: 10.5px;
+    color: var(--text-2);
+  }
+
+  /* ---------- Premium Pill (Header) ---------- */
+  .premium-pill-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  .premium-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid rgba(212,175,122,0.35);
+    background: rgba(212,175,122,0.08);
+    color: var(--gold-bright);
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  .premium-pill:active { transform: scale(0.96); }
+  .premium-pill.active {
+    background: linear-gradient(135deg, rgba(107,255,176,0.14), rgba(107,255,176,0.05));
+    border-color: rgba(107,255,176,0.35);
+    color: var(--easy);
+  }
+
+  /* ---------- Paywall Modal ---------- */
+  .paywall-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4,4,7,0.72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .paywall-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .paywall-sheet {
+    width: 100%;
+    max-width: 480px;
+    background: linear-gradient(170deg, #17131f 0%, #100e16 60%, #0b0a10 100%);
+    border: 1px solid rgba(212,175,122,0.25);
+    border-bottom: none;
+    border-radius: 26px 26px 0 0;
+    padding: 26px 22px calc(env(safe-area-inset-bottom, 0px) + 26px);
+    transform: translateY(24px);
+    transition: transform 0.3s ease;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .paywall-overlay.show .paywall-sheet { transform: translateY(0); }
+
+  .paywall-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text-1);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  .paywall-crown {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px auto 16px;
+    box-shadow: 0 8px 24px rgba(212,175,122,0.3);
+  }
+
+  .paywall-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .paywall-sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-1);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+
+  .paywall-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .paywall-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-0);
+  }
+
+  .paywall-feature .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(107,255,176,0.14);
+    color: var(--easy);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .plan-options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .plan-card {
+    flex: 1;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .plan-card.selected {
+    border-color: var(--gold);
+    background: rgba(212,175,122,0.08);
+  }
+
+  .plan-tag {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #1a1408;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .plan-name {
+    font-size: 12px;
+    color: var(--text-1);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .plan-price {
+    font-size: 18px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+
+  .plan-price span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+
+  .cta-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color: #1a1408;
+    border: none;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 15px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .cta-btn:active { transform: scale(0.98); }
+
+  .paywall-disclaimer {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-2);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
   .chevron-icon {
     transition: transform 0.3s ease;
     flex-shrink: 0;
@@ -509,6 +816,9 @@
     <div class="eyebrow">Est. Aesthetics Codex</div>
     <h1 class="title">LOOKSMAXXING<br>DICTIONARY</h1>
     <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
+    <div class="premium-pill-wrap">
+      <div class="premium-pill" id="premiumPill"></div>
+    </div>
   </header>
 
   <div class="totd-wrap">
@@ -539,6 +849,35 @@
   <footer id="footerText">Definitions for educational reference only</footer>
 </div>
 
+<div class="paywall-overlay" id="paywallOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="paywallClose" aria-label="Close">✕</button>
+    <div class="paywall-crown">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#1a1408"><path d="M2.5 19h19l-1.2-6.5-4.3 3-4-6-4 6-4.3-3L2.5 19z"/></svg>
+    </div>
+    <div class="paywall-title">Unlock Technique Guides</div>
+    <div class="paywall-sub">Definitions stay free forever. Go Premium for step-by-step how-to guides on every actionable method in the dictionary.</div>
+    <div class="paywall-features">
+      <div class="paywall-feature"><span class="check">✓</span>Step-by-step technique guides on 35+ methods</div>
+      <div class="paywall-feature"><span class="check">✓</span>All future technique guides included</div>
+      <div class="paywall-feature"><span class="check">✓</span>Dictionary definitions always free</div>
+    </div>
+    <div class="plan-options" id="planOptions">
+      <div class="plan-card" data-plan="monthly">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">$4.99<span>/mo</span></div>
+      </div>
+      <div class="plan-card selected" data-plan="yearly">
+        <div class="plan-tag">Best Value</div>
+        <div class="plan-name">Yearly</div>
+        <div class="plan-price">$29.99<span>/yr</span></div>
+      </div>
+    </div>
+    <button class="cta-btn" id="unlockCta">Unlock All Techniques</button>
+    <div class="paywall-disclaimer">Demo preview — no payment is collected. Unlocking stores a local preference on this device only.</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -552,7 +891,9 @@
       category: "Tongue Posture",
       difficulty: 2,
       definition: "A tongue-posture technique where the entire tongue (including the back) rests flat against the roof of the mouth, developed by orthodontist Dr. John Mew. Proponents claim consistent practice over months or years can subtly influence jaw and palate development, particularly in growing individuals.",
-      gear: "Tongue Posture Trainer"
+      gear: "Tongue Posture Trainer",
+      premium: true,
+      technique: "1) Rest your entire tongue — tip, mid-tongue, and back — flat against the roof of your mouth. 2) Keep lips gently closed and teeth lightly touching, not clenched. 3) Breathe only through your nose while holding the posture. 4) Practice until it becomes your unconscious resting position throughout the day."
     },
     {
       term: "Canthal Tilt",
@@ -657,7 +998,9 @@
       category: "Tongue Posture",
       difficulty: 4,
       definition: "An intensified variant of mewing involving firm, sustained tongue pressure against the palate combined with light forward jaw thrust, aiming to accelerate maxillary and jaw remodeling. More physically demanding and controversial than standard mewing.",
-      gear: "Orofacial Myofunctional Guide"
+      gear: "Orofacial Myofunctional Guide",
+      premium: true,
+      technique: "1) Establish standard mewing posture first. 2) Add firm, sustained upward pressure of the tongue against the palate. 3) Introduce a light forward jaw thrust while swallowing. 4) Limit sessions to a few minutes at a time and stop if you feel jaw strain or TMJ discomfort."
     },
     {
       term: "Orthotropics",
@@ -671,14 +1014,18 @@
       category: "Tongue Posture",
       difficulty: 3,
       definition: "A structured set of oral and facial muscle exercises administered by trained therapists to correct tongue posture, swallowing patterns, and breathing habits — an evidence-supported cousin of casual mewing practice.",
-      gear: "Myofunctional Exercise Set"
+      gear: "Myofunctional Exercise Set",
+      premium: true,
+      technique: "1) Get evaluated by a certified myofunctional therapist. 2) Follow a prescribed set of tongue, lip, and cheek exercises, usually 10-15 minutes daily. 3) Track progress over 3-6 months, since muscle retraining is gradual. 4) Combine with nasal breathing and correct swallowing practice for best results."
     },
     {
       term: "Nasal Breathing",
       category: "Tongue Posture",
       difficulty: 1,
       definition: "Consistently breathing through the nose rather than the mouth, which helps maintain proper resting tongue posture, supports nitric oxide production, and is believed to reduce the long-term facial elongation associated with chronic mouth-breathing.",
-      gear: "Mouth Tape (Sleep)"
+      gear: "Mouth Tape (Sleep)",
+      premium: true,
+      technique: "1) Practice conscious nasal breathing during the day, keeping lips sealed. 2) Use mouth tape at night if you tend to sleep with your mouth open, stopping immediately if breathing feels restricted. 3) Address any nasal congestion or deviated septum with a doctor if nasal breathing feels physically difficult."
     },
     {
       term: "Hooded Eyes",
@@ -762,7 +1109,9 @@
       category: "Jaw & Chin",
       difficulty: 1,
       definition: "Chewing dense, resistant gum (such as mastic or specialty jaw-training gum) as a form of resistance exercise for the masseter and temporalis muscles, marketed as a way to build a more defined jawline over time.",
-      gear: "Jaw Training Gum"
+      gear: "Jaw Training Gum",
+      premium: true,
+      technique: "1) Start with 10-15 minutes per side per day to build up jaw tolerance. 2) Chew slowly and evenly, alternating sides. 3) Gradually increase duration over several weeks. 4) Stop immediately if you notice jaw pain, clicking, or TMJ symptoms."
     },
     {
       term: "Orthognathic Surgery",
@@ -811,7 +1160,9 @@
       category: "Skin",
       difficulty: 2,
       definition: "Regular topical use of vitamin-A derivatives (like tretinoin or adapalene) to accelerate cell turnover, boost collagen production, and reduce fine lines, texture, and acne — a cornerstone of evidence-based skincare.",
-      gear: "Tretinoin Starter Kit"
+      gear: "Tretinoin Starter Kit",
+      premium: true,
+      technique: "1) Start with a pea-sized amount 2-3 nights per week to build tolerance. 2) Apply to fully dry skin after cleansing, avoiding the eye area. 3) Always follow with a moisturizer to offset dryness. 4) Increase frequency gradually over several weeks, and always pair with daily SPF."
     },
     {
       term: "Microneedling",
@@ -839,28 +1190,36 @@
       category: "Skin",
       difficulty: 1,
       definition: "Consistent, daily use of broad-spectrum sunscreen to prevent UV-driven collagen breakdown, hyperpigmentation, and premature aging — widely regarded as the single highest-impact habit for slowing looksfading.",
-      gear: "Broad-Spectrum SPF 50"
+      gear: "Broad-Spectrum SPF 50",
+      premium: true,
+      technique: "1) Apply a nickel-sized amount of broad-spectrum SPF 30+ every morning, rain or shine. 2) Reapply every 2 hours if outdoors for extended periods. 3) Don't forget the ears, neck, and hairline. 4) Layer it as the last step of your morning skincare, before makeup."
     },
     {
       term: "Gua Sha",
       category: "Skin",
       difficulty: 1,
       definition: "A traditional facial massage technique using a smooth stone tool to stroke the skin, temporarily reducing puffiness, promoting lymphatic drainage, and giving the face a more sculpted appearance short-term.",
-      gear: "Rose Quartz Gua Sha Tool"
+      gear: "Rose Quartz Gua Sha Tool",
+      premium: true,
+      technique: "1) Apply a facial oil so the tool glides smoothly. 2) Hold the stone at a 15-degree angle against the skin. 3) Stroke outward and upward from the center of the face — jaw to ear, cheek to temple. 4) Use light-to-medium pressure for 5-10 minutes, always moving toward the lymph nodes."
     },
     {
       term: "Ice Rolling",
       category: "Skin",
       difficulty: 1,
       definition: "Applying a chilled roller to the face to constrict blood vessels, temporarily reduce puffiness and redness, and tighten the appearance of pores before an event or photo.",
-      gear: "Cryo Facial Ice Roller"
+      gear: "Cryo Facial Ice Roller",
+      premium: true,
+      technique: "1) Chill the roller in the freezer for at least 30 minutes. 2) Roll it gently over the face in upward, outward strokes. 3) Focus on puffy areas like under the eyes and jawline. 4) Limit to 2-3 minutes per session to avoid skin irritation from prolonged cold exposure."
     },
     {
       term: "Minoxidil",
       category: "Hair",
       difficulty: 2,
       definition: "An FDA-approved topical treatment that widens blood vessels in the scalp to prolong the hair growth cycle, commonly used to slow hair thinning and stimulate regrowth in androgenic alopecia.",
-      gear: "Minoxidil 5% Solution"
+      gear: "Minoxidil 5% Solution",
+      premium: true,
+      technique: "1) Apply the prescribed amount directly to a dry scalp, not wet hair. 2) Massage in gently and avoid washing for at least 4 hours. 3) Apply consistently twice daily — results depend entirely on consistency. 4) Expect an initial shedding phase in the first few weeks; a doctor can help set expectations."
     },
     {
       term: "Finasteride",
@@ -916,14 +1275,18 @@
       category: "Body & Frame",
       difficulty: 2,
       definition: "Deliberately maintaining a low body-fat percentage to maximize muscle definition, jawline sharpness, and facial structure visibility — since excess facial fat can obscure bone structure and cheekbone projection.",
-      gear: "Body Composition Scale"
+      gear: "Body Composition Scale",
+      premium: true,
+      technique: "1) Track your intake and hold a small, consistent calorie deficit. 2) Prioritize protein at every meal to preserve muscle while losing fat. 3) Maintain resistance training 3-4x per week during the cut. 4) Reassess weekly and slow the deficit if energy or performance drops sharply."
     },
     {
       term: "Posture Maxxing",
       category: "Body & Frame",
       difficulty: 2,
       definition: "Actively correcting forward head posture, rounded shoulders, and spinal alignment through stretching and strengthening — improves both perceived height and overall silhouette in photos and in person.",
-      gear: "Posture Corrector Brace"
+      gear: "Posture Corrector Brace",
+      premium: true,
+      technique: "1) Set an hourly reminder to check your head, shoulder, and spine alignment. 2) Stretch the chest and strengthen the upper back to counter forward-shoulder rounding. 3) Adjust your screen to eye level to reduce forward head posture. 4) Reassess your posture in a mirror or photo weekly to track change."
     },
     {
       term: "Limb Lengthening Surgery",
@@ -1042,7 +1405,9 @@
       category: "Skin",
       difficulty: 1,
       definition: "A two-step cleansing method using an oil-based cleanser first to dissolve sunscreen, makeup, and sebum, followed by a water-based cleanser to remove any residual dirt and sweat.",
-      gear: "Oil & Foam Cleanser Duo"
+      gear: "Oil & Foam Cleanser Duo",
+      premium: true,
+      technique: "1) Massage an oil-based cleanser onto dry skin to dissolve sunscreen and sebum. 2) Rinse with lukewarm water. 3) Follow with a gentle water-based cleanser to remove any residue. 4) Pat skin dry and move directly into the rest of your routine."
     },
     {
       term: "Face Mapping",
@@ -1063,7 +1428,9 @@
       category: "Hair",
       difficulty: 3,
       definition: "Applying fine needles to the scalp to create micro-channels that improve topical treatment absorption and stimulate localized blood flow, often paired with minoxidil for enhanced regrowth results.",
-      gear: "Scalp Derma Roller"
+      gear: "Scalp Derma Roller",
+      premium: true,
+      technique: "1) Cleanse the scalp thoroughly before starting. 2) Roll a fine-gauge scalp roller in multiple directions over thinning areas. 3) Apply minoxidil or a growth serum immediately after while pores are open. 4) Limit to 1-2 sessions per week to avoid overstimulating the scalp."
     },
     {
       term: "Low-Level Laser Therapy",
@@ -1133,14 +1500,18 @@
       category: "Jaw & Chin",
       difficulty: 1,
       definition: "A series of targeted facial muscle exercises claimed to tone facial muscles and improve definition, though clinical evidence for lasting structural change remains limited.",
-      gear: "Facial Yoga Guide"
+      gear: "Facial Yoga Guide",
+      premium: true,
+      technique: "1) Warm up with gentle neck rolls and a relaxed jaw. 2) Perform targeted holds — cheek puffs, jaw releases, brow lifts — for 5-10 reps each. 3) Practice consistently 5-10 minutes daily. 4) Pair with a facial massage oil to reduce friction on the skin."
     },
     {
       term: "Chin Strap",
       category: "Jaw & Chin",
       difficulty: 1,
       definition: "A wearable compression band marketed to define the jawline or reduce a double chin through passive support; effects are largely temporary and not backed by strong clinical evidence.",
-      gear: "Jawline Compression Strap"
+      gear: "Jawline Compression Strap",
+      premium: true,
+      technique: "1) Wear the strap snugly but not painfully tight around the jaw and chin. 2) Start with short 20-30 minute sessions. 3) Use consistently, such as during a home workout or downtime. 4) Treat as a comfort/support tool rather than a guaranteed structural change."
     },
     {
       term: "Lip Filler",
@@ -1168,7 +1539,9 @@
       category: "Body & Frame",
       difficulty: 2,
       definition: "Training focused on forearm and hand strength, which indirectly improves vascularity, forearm definition, and overall frame presence in addition to its functional benefits.",
-      gear: "Grip Strengthener Set"
+      gear: "Grip Strengthener Set",
+      premium: true,
+      technique: "1) Add farmer's carries or dead hangs to your weekly routine. 2) Use a hand gripper for short, high-effort sets. 3) Train grip 2-3x per week, since it recovers quickly. 4) Progress by increasing hang time, carry distance, or gripper resistance."
     },
     {
       term: "Wrist Size",
@@ -1196,7 +1569,9 @@
       category: "Body & Frame",
       difficulty: 1,
       definition: "Optimizing sleep quality and duration to support hormone regulation, skin repair, muscle recovery, and under-eye appearance — often cited as one of the highest-leverage, lowest-cost aesthetic habits.",
-      gear: "Sleep Tracking Device"
+      gear: "Sleep Tracking Device",
+      premium: true,
+      technique: "1) Keep a consistent sleep and wake time, even on weekends. 2) Cut caffeine after early afternoon and screens 30-60 minutes before bed. 3) Keep the bedroom cool, dark, and quiet. 4) Aim for 7-9 hours consistently rather than chasing one perfect night."
     },
     {
       term: "Testosterone Optimization",
@@ -1294,21 +1669,27 @@
       category: "Skin",
       difficulty: 1,
       definition: "A potent antioxidant serum, commonly L-ascorbic acid, that brightens skin tone, fades hyperpigmentation, and helps neutralize free-radical damage from UV and pollution exposure when used in the morning under sunscreen.",
-      gear: "Vitamin C Serum"
+      gear: "Vitamin C Serum",
+      premium: true,
+      technique: "1) Apply a few drops to clean, dry skin each morning. 2) Let it fully absorb, about a minute, before layering moisturizer. 3) Always follow with SPF, since vitamin C can increase light sensitivity. 4) Store in a cool, dark place — it degrades faster in light and heat."
     },
     {
       term: "Skin Cycling",
       category: "Skin",
       difficulty: 2,
       definition: "A rotating nightly skincare schedule that alternates active-ingredient nights (retinoid, exfoliant) with recovery nights (moisturizer only) to maximize results while minimizing irritation and barrier damage.",
-      gear: "Skin Cycling Routine Kit"
+      gear: "Skin Cycling Routine Kit",
+      premium: true,
+      technique: "1) Night 1: use a retinoid. 2) Night 2: use a chemical exfoliant (AHA/BHA). 3) Nights 3-4: recovery nights with only moisturizer and no actives. 4) Repeat the four-night cycle, adjusting frequency if skin looks irritated."
     },
     {
       term: "Slugging",
       category: "Skin",
       difficulty: 1,
       definition: "Sealing in a nighttime skincare routine with a thin layer of occlusive ointment, like petroleum jelly, to lock in moisture and prevent water loss overnight — especially useful for dry or compromised skin.",
-      gear: "Occlusive Balm"
+      gear: "Occlusive Balm",
+      premium: true,
+      technique: "1) Complete your full nighttime skincare routine as usual. 2) As the final step, apply a thin layer of an occlusive balm over the entire face. 3) Use a clean pillowcase, since the balm can transfer. 4) Reserve for dry or low-humidity nights — skip if you're prone to clogged pores."
     },
     {
       term: "Under-Eye Patches",
@@ -1357,7 +1738,9 @@
       category: "Hair",
       difficulty: 1,
       definition: "Maintaining a clean, balanced, well-circulated scalp environment through gentle cleansing and exfoliation, since a healthy scalp is considered a foundation for supporting stronger hair growth.",
-      gear: "Scalp Exfoliating Scrub"
+      gear: "Scalp Exfoliating Scrub",
+      premium: true,
+      technique: "1) Use a clarifying shampoo weekly to remove product buildup. 2) Exfoliate the scalp gently every 1-2 weeks. 3) Massage the scalp daily for a minute to stimulate circulation. 4) Avoid excessive heat styling directly at the roots."
     },
     {
       term: "Hair Systems",
@@ -1448,14 +1831,18 @@
       category: "Body & Frame",
       difficulty: 2,
       definition: "Targeted resistance exercises for the neck muscles, aiming to build thickness that balances a developed upper body and reduces the appearance of a thin or elongated neck.",
-      gear: "Neck Harness Trainer"
+      gear: "Neck Harness Trainer",
+      premium: true,
+      technique: "1) Start with bodyweight neck flexion and extension holds. 2) Progress to light manual resistance using your hand. 3) Add a neck harness with light weight once form is solid. 4) Train 2x per week with slow, controlled reps."
     },
     {
       term: "Trap Training",
       category: "Body & Frame",
       difficulty: 2,
       definition: "Targeted training of the trapezius muscles, particularly the often-neglected upper-back portion, to build the thickness that visually connects the neck, shoulders, and traps into one powerful line.",
-      gear: "Trap Bar & Shrug Program"
+      gear: "Trap Bar & Shrug Program",
+      premium: true,
+      technique: "1) Include barbell or dumbbell shrugs with a full range of motion. 2) Add farmer's carries to build traps isometrically. 3) Prioritize control over heavy weight to avoid neck strain. 4) Train 2x per week alongside your regular back and shoulder work."
     },
     {
       term: "Ab Etching",
@@ -1469,7 +1856,9 @@
       category: "Body & Frame",
       difficulty: 2,
       definition: "Multi-joint strength exercises — squat, deadlift, bench press, overhead press — that build overall muscle mass and frame size more efficiently than isolation exercises alone.",
-      gear: "Compound Lift Program"
+      gear: "Compound Lift Program",
+      premium: true,
+      technique: "1) Build your program around squat, deadlift, bench press, and overhead press. 2) Prioritize progressive overload — small consistent increases in weight or reps. 3) Train each major lift 1-2x per week with proper recovery. 4) Prioritize form before adding load to avoid injury."
     },
     {
       term: "Frame",
@@ -1490,7 +1879,9 @@
       category: "Dental & Orthodontic",
       difficulty: 1,
       definition: "Using a small metal or plastic tool to remove the bacterial coating on the tongue's surface each morning, improving breath freshness and overall oral hygiene.",
-      gear: "Tongue Scraper"
+      gear: "Tongue Scraper",
+      premium: true,
+      technique: "1) Scrape from the back of the tongue forward in a single smooth motion. 2) Rinse the scraper between passes. 3) Repeat 5-8 times, covering the full tongue surface. 4) Rinse your mouth and follow with your regular oral care routine."
     },
     {
       term: "Seasonal Color Analysis",
@@ -1651,7 +2042,9 @@
       category: "Skin",
       difficulty: 1,
       definition: "A liquid toner infused with mild acids, like glycolic or salicylic acid, applied after cleansing to gently remove dead skin cells and improve overall texture and clarity.",
-      gear: "AHA/BHA Toner"
+      gear: "AHA/BHA Toner",
+      premium: true,
+      technique: "1) Apply after cleansing on a cotton pad or clean hands. 2) Sweep gently across the face, avoiding the eye area. 3) Start with 2-3 uses per week and increase gradually. 4) Follow with a hydrating serum and moisturizer."
     },
     {
       term: "Setting Spray",
@@ -1672,21 +2065,27 @@
       category: "Body & Frame",
       difficulty: 2,
       definition: "Targeted resistance training for the shoulder (deltoid) muscles, which — alongside a narrow waist — is one of the primary drivers of visual shoulder width and the V-taper silhouette.",
-      gear: "Shoulder Training Program"
+      gear: "Shoulder Training Program",
+      premium: true,
+      technique: "1) Include a mix of pressing movements and lateral raises. 2) Prioritize the side (lateral) deltoid for visual width, not just the front. 3) Train shoulders 2x per week with moderate weight and strict form. 4) Progressively add volume or weight over time."
     },
     {
       term: "Calf Training",
       category: "Body & Frame",
       difficulty: 2,
       definition: "Targeted resistance training for the calf muscles, an often-neglected muscle group that contributes to overall lower-body proportion and balance in athletic silhouettes.",
-      gear: "Calf Raise Program"
+      gear: "Calf Raise Program",
+      premium: true,
+      technique: "1) Include both standing and seated calf raises to target both muscle heads. 2) Use a full stretch-to-contraction range of motion, pausing at the top. 3) Train 2-3x per week — calves respond well to higher frequency. 4) Progressively increase reps or load over several weeks."
     },
     {
       term: "Posture Assessment",
       category: "Body & Frame",
       difficulty: 1,
       definition: "A visual or professional evaluation of spinal alignment, shoulder position, and head carriage used to identify imbalances before starting a posture-correction routine.",
-      gear: "Posture Assessment Guide"
+      gear: "Posture Assessment Guide",
+      premium: true,
+      technique: "1) Take a relaxed side-profile photo against a plain wall. 2) Check ear, shoulder, hip, and ankle alignment against a vertical line. 3) Note forward head position, rounded shoulders, or pelvic tilt. 4) Re-check every few weeks to track changes from your posture routine."
     },
     {
       term: "Water Retention",
@@ -1700,7 +2099,9 @@
       category: "Body & Frame",
       difficulty: 1,
       definition: "Strength and control through the abdominal and lower-back muscles that supports upright posture and even weight distribution, indirectly improving how the entire frame carries itself.",
-      gear: "Core Stability Program"
+      gear: "Core Stability Program",
+      premium: true,
+      technique: "1) Start with planks and dead bugs to build baseline control. 2) Progress to loaded carries and anti-rotation exercises. 3) Train core 2-3x per week as part of your regular routine. 4) Focus on control and bracing rather than just chasing fatigue."
     },
     {
       term: "Manicure",
@@ -1777,28 +2178,36 @@
       category: "Nutrition & Recovery",
       difficulty: 2,
       definition: "An eating pattern that limits processed sugar, refined carbs, and fried foods in favor of whole foods, omega-3s, and antioxidants — believed to reduce facial puffiness and support clearer skin over time.",
-      gear: "Anti-Inflammatory Meal Guide"
+      gear: "Anti-Inflammatory Meal Guide",
+      premium: true,
+      technique: "1) Reduce processed sugar, refined carbs, and fried foods. 2) Increase omega-3 sources like fatty fish, walnuts, and flaxseed. 3) Add colorful vegetables and fruit for antioxidants at most meals. 4) Track how your skin and energy respond over 3-4 weeks of consistency."
     },
     {
       term: "Hydration",
       category: "Nutrition & Recovery",
       difficulty: 1,
       definition: "Consistent daily water intake that supports skin elasticity, reduces under-eye puffiness caused by fluid imbalance, and maintains overall energy and recovery — one of the simplest, most foundational habits in any routine.",
-      gear: "Hydration Tracker Bottle"
+      gear: "Hydration Tracker Bottle",
+      premium: true,
+      technique: "1) Start the day with a full glass of water before coffee. 2) Keep a water bottle visible as a passive reminder. 3) Aim for pale yellow urine as a rough hydration marker. 4) Increase intake on workout days or in hot weather."
     },
     {
       term: "Gut Health",
       category: "Nutrition & Recovery",
       difficulty: 2,
       definition: "Maintaining a balanced gut microbiome through fiber, fermented foods, and reduced processed-food intake, increasingly linked in research to skin clarity, inflammation levels, and overall complexion.",
-      gear: "Probiotic Supplement"
+      gear: "Probiotic Supplement",
+      premium: true,
+      technique: "1) Add fermented foods like yogurt, kimchi, or kefir a few times a week. 2) Increase fiber intake gradually through vegetables, legumes, and whole grains. 3) Reduce ultra-processed food and added sugar. 4) Stay consistent for several weeks, since microbiome shifts take time."
     },
     {
       term: "Cortisol Management",
       category: "Nutrition & Recovery",
       difficulty: 2,
       definition: "Actively managing chronic stress through sleep, exercise, and relaxation practices to keep cortisol levels balanced, since sustained elevated cortisol is linked to facial puffiness, skin breakouts, and fat retention around the midsection.",
-      gear: "Stress Management Guide"
+      gear: "Stress Management Guide",
+      premium: true,
+      technique: "1) Protect a consistent sleep schedule as the foundation. 2) Add 10-15 minutes of daily walking, stretching, or breathwork. 3) Limit late-day caffeine and doom-scrolling before bed. 4) Reassess stress levels weekly and adjust workload or recovery accordingly."
     }
   ];
 
@@ -1806,6 +2215,8 @@
   let activeCategory = "All";
   let openIndex = null;
   let searchTerm = "";
+  let isPremium = localStorage.getItem("looksmax_premium") === "true";
+  let selectedPlan = "yearly";
 
   const els = {
     termList: document.getElementById("termList"),
@@ -1817,8 +2228,63 @@
     totdTerm: document.getElementById("totdTerm"),
     totdDef: document.getElementById("totdDef"),
     toast: document.getElementById("toast"),
-    footerText: document.getElementById("footerText")
+    footerText: document.getElementById("footerText"),
+    premiumPill: document.getElementById("premiumPill"),
+    paywallOverlay: document.getElementById("paywallOverlay"),
+    paywallClose: document.getElementById("paywallClose"),
+    planOptions: document.getElementById("planOptions"),
+    unlockCta: document.getElementById("unlockCta")
   };
+
+  /* ---------------- Premium / Paywall ---------------- */
+  function updatePremiumPill() {
+    if (isPremium) {
+      els.premiumPill.className = "premium-pill active";
+      els.premiumPill.innerHTML = "👑 Premium Active";
+    } else {
+      els.premiumPill.className = "premium-pill";
+      els.premiumPill.innerHTML = "✨ Unlock Technique Guides";
+    }
+  }
+
+  function openPaywall() {
+    els.paywallOverlay.classList.add("show");
+  }
+
+  function closePaywall() {
+    els.paywallOverlay.classList.remove("show");
+  }
+
+  els.premiumPill.addEventListener("click", () => {
+    if (isPremium) {
+      showToast("Premium already active on this device.");
+    } else {
+      openPaywall();
+    }
+  });
+
+  els.paywallClose.addEventListener("click", closePaywall);
+  els.paywallOverlay.addEventListener("click", (e) => {
+    if (e.target === els.paywallOverlay) closePaywall();
+  });
+
+  els.planOptions.addEventListener("click", (e) => {
+    const card = e.target.closest(".plan-card");
+    if (!card) return;
+    selectedPlan = card.dataset.plan;
+    els.planOptions.querySelectorAll(".plan-card").forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+  });
+
+  els.unlockCta.addEventListener("click", () => {
+    isPremium = true;
+    localStorage.setItem("looksmax_premium", "true");
+    updatePremiumPill();
+    closePaywall();
+    openIndex = null;
+    renderList();
+    showToast("Premium unlocked — technique guides are open.");
+  });
 
   /* ---------------- Term of the Day ---------------- */
   function pickTermOfDay() {
@@ -1905,6 +2371,29 @@
         `<span class="${i < t.difficulty ? "filled" : ""}"></span>`
       ).join("");
 
+      const hasTechnique = Boolean(t.technique);
+      const isLocked = hasTechnique && t.premium && !isPremium;
+
+      const techniqueHtml = !hasTechnique ? "" : `
+        <div class="technique-section">
+          <div class="technique-header">
+            <span class="technique-title">📋 Technique Guide</span>
+          </div>
+          ${isLocked ? `
+            <div class="technique-locked">
+              <div class="blur-preview">${escapeHtml(t.technique)}</div>
+              <div class="lock-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a1408" stroke-width="2.4"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              </div>
+              <button class="unlock-btn" data-unlock="1">Unlock Technique Guide</button>
+              <div class="unlock-caption">Included with Premium</div>
+            </div>
+          ` : `
+            <div class="technique-steps">${formatSteps(t.technique)}</div>
+          `}
+        </div>
+      `;
+
       card.innerHTML = `
         <div class="term-top">
           <div style="flex:1; min-width:0;">
@@ -1912,6 +2401,7 @@
               <span class="term-idx">#${String(t._idx + 1).padStart(2, "0")}</span>
               <span class="term-name">${highlight(t.term, searchTerm)}</span>
               <span class="badge ${diff.cls}">${diff.label}</span>
+              ${t.premium ? `<span class="badge pro">👑 PRO</span>` : ""}
             </div>
             <div class="term-category">${t.category}</div>
           </div>
@@ -1923,6 +2413,7 @@
             <span class="difficulty-label">Difficulty</span>
             <div class="dots">${dots}</div>
           </div>
+          ${techniqueHtml}
           <button class="gear-btn" data-term="${escapeHtml(t.term)}">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3.5a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             Recommended Gear: ${escapeHtml(t.gear)}
@@ -1940,6 +2431,14 @@
         showToast(`"${t.gear}" — product page coming soon.`);
       });
 
+      const unlockBtn = card.querySelector("[data-unlock]");
+      if (unlockBtn) {
+        unlockBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openPaywall();
+        });
+      }
+
       els.termList.appendChild(card);
     });
   }
@@ -1948,6 +2447,14 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function formatSteps(text) {
+    const steps = text.split(/\s*\d+\)\s*/).map(s => s.trim()).filter(Boolean);
+    if (steps.length <= 1) return `<p style="margin:0;">${escapeHtml(text)}</p>`;
+    return `<ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;">${
+      steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")
+    }</ol>`;
   }
 
   /* ---------------- Toast ---------------- */
@@ -1976,7 +2483,8 @@
   });
 
   /* ---------------- Init ---------------- */
-  els.footerText.textContent = `${TERMS.length} terms & growing · Definitions for educational reference only`;
+  els.footerText.textContent = `${TERMS.length} terms & growing · Definitions always free`;
+  updatePremiumPill();
   renderTotd();
   renderIndexBar();
   renderList();
