@@ -1107,6 +1107,41 @@
     line-height: 1.35;
   }
 
+  .thread-card.pinned {
+    background: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .pin-icon { margin-right: 6px; display: inline-block; }
+
+  .thread-prefix {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: var(--ink-mute);
+    margin-right: 5px;
+  }
+
+  .reaction-bar {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .reaction-btn {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    color: var(--ink-soft);
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  .reaction-btn.active { background: var(--ink); color: var(--card); }
+  .reaction-btn:active { transform: scale(1.1); }
+
   .thread-tag {
     font-family: var(--font-mono);
     font-size: 9px;
@@ -5369,7 +5404,36 @@
 
   const DEFAULT_THREADS = [
     {
+      id: 25,
+      pinned: true,
+      prefix: "ANNOUNCEMENT",
+      title: "Welcome to the Forum — Community Guidelines",
+      category: "Questions",
+      author: "orthobound",
+      body: "Quick rules before you post: be respectful, share personal experience rather than medical advice, credit sources when posting routines, and always consult a licensed professional before any surgical or prescription-level topic. Glad to have you here.",
+      replies: [],
+      likes: 112,
+      views: 4820,
+      reactions: { fire: 40, lol: 2, respect: 88 }
+    },
+    {
+      id: 26,
+      pinned: true,
+      prefix: "GUIDE",
+      title: "New here? Start with these dictionary terms first",
+      category: "Questions",
+      author: "derma.simplified",
+      body: "Before diving into advanced routines, get familiar with the basics: Skincare Routine Order, TDEE, Softmaxxing vs Hardmaxxing, and Realistic Expectations. Saves everyone a lot of repeated questions.",
+      replies: [
+        { author: "tailored_up", text: "This should honestly be required reading before your first post." }
+      ],
+      likes: 96,
+      views: 3910,
+      reactions: { fire: 31, lol: 0, respect: 54 }
+    },
+    {
       id: 1,
+      prefix: "PROGRESS",
       title: "3 months of consistent SPF + retinoid — texture finally changed",
       category: "Skincare",
       author: "clearskinjourney",
@@ -5393,6 +5457,7 @@
     },
     {
       id: 3,
+      prefix: "QUESTION",
       title: "Best beginner-friendly compound lift program?",
       category: "Fitness",
       author: "newframe22",
@@ -5425,6 +5490,7 @@
     },
     {
       id: 6,
+      prefix: "QUESTION",
       title: "Is buccal fat removal worth it for a mild case, or overkill?",
       category: "Questions",
       author: "midface_qs",
@@ -5448,6 +5514,7 @@
     },
     {
       id: 8,
+      prefix: "PSA",
       title: "PSA: get your posture checked before blaming your jaw",
       category: "Questions",
       author: "orthobound",
@@ -5504,6 +5571,7 @@
     },
     {
       id: 13,
+      prefix: "FEEDBACK",
       title: "Rank system is actually motivating me to post more, ngl",
       category: "Progress Logs",
       author: "duneshadow",
@@ -5550,6 +5618,7 @@
     },
     {
       id: 17,
+      prefix: "QUESTION",
       title: "TDEE calculators are all over the place — which one do you trust?",
       category: "Fitness",
       author: "newframe22",
@@ -5851,6 +5920,53 @@
     renderThreads();
   }
 
+  /* ---------------- Reactions ---------------- */
+  const REACTION_TYPES = [
+    { key: "fire", emoji: "🔥" },
+    { key: "lol", emoji: "💀" },
+    { key: "respect", emoji: "🤝" }
+  ];
+
+  let userReactions = loadUserReactions();
+
+  function loadUserReactions() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_reactions"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveUserReactions() {
+    localStorage.setItem("looksmax_reactions", JSON.stringify([...userReactions]));
+  }
+
+  function toggleReaction(t, key) {
+    if (!t.reactions) t.reactions = {};
+    if (!t.reactions[key]) t.reactions[key] = 0;
+    const reactKey = `${t.id}:${key}`;
+    if (userReactions.has(reactKey)) {
+      userReactions.delete(reactKey);
+      t.reactions[key] = Math.max(0, t.reactions[key] - 1);
+    } else {
+      userReactions.add(reactKey);
+      t.reactions[key] += 1;
+    }
+    saveUserReactions();
+    saveThreads();
+    renderThreads();
+  }
+
+  /* ---------------- Views ---------------- */
+  function registerView(t) {
+    t.views = (t.views || (t.id * 37 + 120)) + 1;
+    saveThreads();
+  }
+
+  function formatViews(n) {
+    return n.toLocaleString();
+  }
+
   /* ---------------- Sort ---------------- */
   let threadSort = "newest";
   document.querySelectorAll(".sort-btn").forEach(btn => {
@@ -5874,19 +5990,28 @@
       return;
     }
     list.innerHTML = "";
-    const ordered = filtered.slice();
-    if (threadSort === "top") ordered.sort((a, b) => b.likes - a.likes);
-    else ordered.reverse();
+    const pinned = filtered.filter(t => t.pinned);
+    const rest = filtered.filter(t => !t.pinned);
+    if (threadSort === "top") rest.sort((a, b) => b.likes - a.likes);
+    else rest.reverse();
+    const ordered = [...pinned, ...rest];
 
     ordered.forEach(t => {
       const card = document.createElement("div");
-      card.className = "thread-card" + (openThreadId === t.id ? " open" : "");
+      card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
       const repliesHtml = t.replies.length
         ? t.replies.map(r => `<div class="reply-item">${avatarHtml(r.author)}<span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
+      const views = t.views || (t.id * 37 + 120);
+      const reactions = t.reactions || {};
+      const reactionsHtml = REACTION_TYPES.map(r => {
+        const count = reactions[r.key] || 0;
+        const active = userReactions.has(`${t.id}:${r.key}`);
+        return `<button class="reaction-btn ${active ? "active" : ""}" data-react="${r.key}">${r.emoji} ${count}</button>`;
+      }).join("");
       card.innerHTML = `
         <div class="thread-top">
-          <div class="thread-title">${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
+          <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
           <span class="thread-tag" style="${categoryTagStyle(t.category)}">${escapeHtml(t.category)}</span>
         </div>
         <div class="thread-meta">
@@ -5895,11 +6020,14 @@
           ${tierBadgeHtml(t.author)}
           <span>·</span>
           <span>${timeAgoLabel(t.id)}</span>
+          <span>·</span>
+          <span>👁 ${formatViews(views)}</span>
         </div>
         <div class="thread-stats">
           <span>💬 ${t.replies.length} replies</span>
           <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
         </div>
+        <div class="reaction-bar">${reactionsHtml}</div>
         <div class="thread-body">
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
           <div class="reply-list">${repliesHtml}</div>
@@ -5910,12 +6038,20 @@
         </div>
       `;
       card.querySelector(".thread-top").addEventListener("click", () => {
-        openThreadId = (openThreadId === t.id) ? null : t.id;
+        const opening = openThreadId !== t.id;
+        openThreadId = opening ? t.id : null;
+        if (opening) registerView(t);
         renderThreads();
       });
       card.querySelector("[data-like]").addEventListener("click", (e) => {
         e.stopPropagation();
         toggleLike(t);
+      });
+      card.querySelectorAll("[data-react]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleReaction(t, btn.dataset.react);
+        });
       });
       const input = card.querySelector(".reply-input");
       const sendBtn = card.querySelector(".reply-send-btn");
