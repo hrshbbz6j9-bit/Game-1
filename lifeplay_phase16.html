@@ -2238,6 +2238,132 @@ RIVAL_EVENTS_P15.push(
   {text:r=>`Your party was the one everyone talked about, not ${r.name}'s.`, field:'social', bad:false},
   {text:r=>`You won everyone over at the reunion, leaving ${r.name} in the dust.`, field:'social', bad:false}
 );
+
+/* ---------------------------------------------------------------------
+   ACHIEVEMENT WIRING FIXES — an audit found 18 of 57 achievement keys
+   were defined but never actually checked anywhere, including two whose
+   supporting mechanic didn't exist yet (travel, casino-winnings
+   tracking). Building those two mechanics and wiring every orphaned
+   achievement here via the override pattern; nothing above is rewritten.
+   --------------------------------------------------------------------- */
+
+/* --- New mechanic: Travel (also powers the pre-existing "wanderer" secret ending) --- */
+function travelToCityP17(city){
+  const cost = 250;
+  if(state.money<cost){ log(`Not enough money to travel to ${city}.`,'bad'); openWorldPanel(); return; }
+  state.money -= cost;
+  if(!state.flags.citiesVisited) state.flags.citiesVisited = [];
+  if(!state.flags.citiesVisited.includes(city)){
+    state.flags.citiesVisited.push(city);
+    checkAchievement('globe_trotter');
+    if(state.flags.citiesVisited.length>=3) checkAchievement('world_traveler');
+  }
+  state.stats.happiness = clamp(state.stats.happiness+rand(3,8),0,100);
+  log(`You took a trip to ${city}. What a nice change of scenery.`,'good');
+  openWorldPanel();
+}
+
+/* --- New mechanic: Charity donations (also powers the "philanthropist" achievement) --- */
+const CHARITY_TIERS_P17 = [100, 500, 2000, 10000];
+function donateCharityP17(amount){
+  if(state.money<amount){ log(`You can't afford to donate ${fmtMoney(amount)} right now.`,'bad'); openWorldPanel(); return; }
+  state.money -= amount;
+  state.stats.karma = clamp(state.stats.karma+Math.round(amount/200),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  state.flags.charityDonated = (state.flags.charityDonated||0) + amount;
+  log(`You donated ${fmtMoney(amount)} to charity.`,'good');
+  if(state.flags.charityDonated>=10000) checkAchievement('philanthropist');
+  openWorldPanel();
+}
+
+const _origOpenWorldPanel_Fix = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_Fix();
+  const body = $('panel-body');
+  const hr1 = document.createElement('hr'); hr1.style.borderColor='var(--border)'; body.appendChild(hr1);
+  const travelLabel = document.createElement('b'); travelLabel.textContent = '✈️ Travel ($250/trip)'; body.appendChild(travelLabel);
+  CITIES.filter(c=>c!==state.city).forEach(c=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block';
+    btn.textContent = 'Visit ' + c;
+    btn.onclick = ()=>travelToCityP17(c);
+    body.appendChild(btn);
+  });
+  const hr2 = document.createElement('hr'); hr2.style.borderColor='var(--border)'; body.appendChild(hr2);
+  const charityLabel = document.createElement('b'); charityLabel.textContent = '🤝 Charity'; body.appendChild(charityLabel);
+  CHARITY_TIERS_P17.forEach(amt=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = 'Donate ' + fmtMoney(amt);
+    btn.onclick = ()=>donateCharityP17(amt);
+    body.appendChild(btn);
+  });
+};
+
+/* --- Casino winnings/streak tracking (also powers "gambler_ending" secret ending) --- */
+function trackCasinoResultP17(delta){
+  if(delta>0){
+    state.flags.casinoWinnings = (state.flags.casinoWinnings||0) + delta;
+    state.flags.casinoWinStreak = (state.flags.casinoWinStreak||0) + 1;
+    if(state.flags.casinoWinnings>=10000) checkAchievement('casino_king');
+    if(state.flags.casinoWinStreak>=5) checkAchievement('night_owl');
+  } else if(delta<0){
+    state.flags.casinoWinStreak = 0;
+  }
+}
+const _origPlaySlots_Fix = playSlots;
+playSlots = function(){ const before=state.money; _origPlaySlots_Fix(); trackCasinoResultP17(state.money-before); };
+const _origPlayBlackjack_Fix = playBlackjack;
+playBlackjack = function(){ const before=state.money; _origPlayBlackjack_Fix(); trackCasinoResultP17(state.money-before); };
+const _origPlayRoulette_Fix = playRoulette;
+playRoulette = function(){ const before=state.money; _origPlayRoulette_Fix(); trackCasinoResultP17(state.money-before); };
+
+/* --- Remaining orphaned achievements: simple additive checks on existing functions --- */
+const _origTickPrison_Fix = tickPrison;
+tickPrison = function(){
+  const wasInPrison = state.inPrison;
+  _origTickPrison_Fix();
+  if(wasInPrison && !state.inPrison) checkAchievement('ex_con');
+};
+const _origDropOut_Fix = dropOut;
+dropOut = function(){ _origDropOut_Fix(); checkAchievement('dropout'); };
+const _origFileDivorce_Fix = fileDivorce;
+fileDivorce = function(){ _origFileDivorce_Fix(); checkAchievement('divorced_once'); };
+const _origOpenTherapyPanel_Fix = openTherapyPanel;
+openTherapyPanel = function(){
+  const before = state.money;
+  _origOpenTherapyPanel_Fix();
+  if(state.money < before){
+    state.flags.therapySessionsAttended = (state.flags.therapySessionsAttended||0) + 1;
+    if(state.flags.therapySessionsAttended>=10) checkAchievement('therapy_regular');
+  }
+};
+const _origSellCrypto_Fix = sellCrypto;
+sellCrypto = function(k){
+  const before = state.money;
+  _origSellCrypto_Fix(k);
+  if(state.money-before >= 50000) checkAchievement('wall_street');
+};
+const _origTickSports_Fix = tickSports;
+tickSports = function(){
+  _origTickSports_Fix();
+  if(state.sportsCareer && state.sportsCareer.stage===6 && state.sportsCareer.skill>=95) checkAchievement('olympic_ach');
+};
+const _origRenderDeathScreen_Fix = renderDeathScreen;
+renderDeathScreen = function(){
+  if(calcLegacyScore()>=90) checkAchievement('legacy_gold');
+  _origRenderDeathScreen_Fix();
+};
+const _origCheckAchievementsPassive_Fix = checkAchievementsPassive;
+checkAchievementsPassive = function(){
+  _origCheckAchievementsPassive_Fix();
+  if(state.eduStage==='grad' && state.eduYear>=2) checkAchievement('doctorate');
+  if(state.eduStage==='college' && state.eduYear>=4 && state.gpa>=3.7) checkAchievement('scholar');
+  if(state.age>=40 && state.criminalRecord.length===0) checkAchievement('clean_record');
+  if(state.relationships.length>=10) checkAchievement('social_butterfly');
+  if(state.criminalRecord.length>0 && state.job && state.job.tier>=3) checkAchievement('reformed');
+  if(netWorth()>=1000000 && state.job && state.job.tier<=2) checkAchievement('self_made');
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
