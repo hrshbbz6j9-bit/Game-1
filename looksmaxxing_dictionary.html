@@ -1071,6 +1071,9 @@
   }
   .leaderboard-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
 
+  .profile-action-row { display: flex; gap: 8px; margin-top: 8px; }
+  .profile-action-row .leaderboard-btn { flex: 1; }
+
   .forum-toolbar {
     display: flex;
     align-items: center;
@@ -1631,6 +1634,44 @@
   }
   .leaderboard-score span { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--ink-mute); display: block; text-align: right; }
 
+  /* ---------- Achievements ---------- */
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .achievement-item {
+    padding: 12px 10px;
+    border: 1.5px solid var(--ink);
+    background: var(--card);
+    text-align: center;
+  }
+  .achievement-item.locked { opacity: 0.4; }
+  .achievement-item.unlocked { background: var(--lime); }
+  .achievement-item.unlocked .achievement-name,
+  .achievement-item.unlocked .achievement-desc { color: var(--ink-fixed); }
+
+  .achievement-icon { font-size: 26px; margin-bottom: 6px; }
+
+  .achievement-name {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .achievement-desc {
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--ink-mute);
+    line-height: 1.4;
+  }
+
   /* ---------- Popup Ad ---------- */
   .popup-ad-overlay {
     position: fixed;
@@ -1982,6 +2023,15 @@
     <div class="paywall-title" style="text-align:left;">🏆 Leaderboard</div>
     <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Ranked by activity score across the whole forum — 3 points per thread, 1 per reply.</div>
     <div class="leaderboard-list" id="leaderboardList"></div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="achievementsOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="achievementsClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">🏅 Achievements</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;" id="achievementsProgress"></div>
+    <div class="achievements-grid" id="achievementsGrid"></div>
   </div>
 </div>
 
@@ -6128,6 +6178,48 @@
     }).join("");
   }
 
+  /* ---------------- Achievements ---------------- */
+  const ACHIEVEMENTS = [
+    { icon: "🎉", name: "First Steps", desc: "Post your first thread", check: () => authorStats(username).threadCount >= 1 },
+    { icon: "💬", name: "Conversationalist", desc: "Post 10 replies", check: () => authorStats(username).replyCount >= 10 },
+    { icon: "💯", name: "Century Club", desc: "Reach 100 activity points", check: () => authorStats(username).score >= 100 },
+    { icon: "⭐", name: "Curator", desc: "Favorite 10 dictionary terms", check: () => favorites.size >= 10 },
+    { icon: "🔥", name: "Engaged", desc: "React to 5 different threads", check: () => new Set([...userReactions].map(r => r.split(":")[0])).size >= 5 },
+    { icon: "📝", name: "Critic", desc: "Leave 3 course reviews", check: () => courses.reduce((n, c) => n + (c.reviews || []).filter(r => r.author === username).length, 0) >= 3 },
+    { icon: "🔖", name: "Archivist", desc: "Watch 5 threads", check: () => watchedThreads.size >= 5 },
+    { icon: "🌙", name: "Night Owl", desc: "Try dark mode", check: () => localStorage.getItem("looksmax_theme") === "dark" },
+    { icon: "👑", name: "VIP Member", desc: "Unlock Premium", check: () => isPremium },
+    { icon: "🎓", name: "Entrepreneur", desc: "List a course for sale", check: () => courses.some(c => c.creator === username) }
+  ];
+
+  function openAchievements() {
+    renderAchievements();
+    document.getElementById("achievementsOverlay").classList.add("show");
+  }
+  function closeAchievements() {
+    document.getElementById("achievementsOverlay").classList.remove("show");
+  }
+  document.getElementById("achievementsClose").addEventListener("click", closeAchievements);
+  document.getElementById("achievementsOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "achievementsOverlay") closeAchievements();
+  });
+
+  function renderAchievements() {
+    const unlocked = ACHIEVEMENTS.filter(a => a.check());
+    document.getElementById("achievementsProgress").textContent =
+      `${unlocked.length} of ${ACHIEVEMENTS.length} unlocked`;
+    document.getElementById("achievementsGrid").innerHTML = ACHIEVEMENTS.map(a => {
+      const isUnlocked = a.check();
+      return `
+        <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}">
+          <div class="achievement-icon">${isUnlocked ? a.icon : "🔒"}</div>
+          <div class="achievement-name">${escapeHtml(a.name)}</div>
+          <div class="achievement-desc">${escapeHtml(a.desc)}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
   function tierBadgeHtml(name) {
     const { score } = authorStats(name);
     const { current } = tierForScore(score);
@@ -6174,11 +6266,15 @@
       </div>
       <div class="profile-progress-row">
         ${progressHtml}
+      </div>
+      <div class="profile-action-row">
         <button class="leaderboard-btn" id="leaderboardBtn">🏆 Leaderboard</button>
+        <button class="leaderboard-btn" id="achievementsBtn">🏅 Achievements</button>
       </div>
     `;
     document.getElementById("editProfileBtn").addEventListener("click", openProfileModal);
     document.getElementById("leaderboardBtn").addEventListener("click", openLeaderboard);
+    document.getElementById("achievementsBtn").addEventListener("click", openAchievements);
   }
 
   const profileOverlay = document.getElementById("profileOverlay");
