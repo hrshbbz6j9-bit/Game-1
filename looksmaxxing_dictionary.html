@@ -7,22 +7,20 @@
 <title>Looksmaxxing Dictionary</title>
 <style>
   :root {
-    --bg-0: #07070b;
-    --bg-1: #0d0d14;
-    --bg-2: #14141d;
-    --card: #121219;
-    --card-border: rgba(255,255,255,0.08);
-    --gold: #d4af7a;
-    --gold-bright: #f2d9a8;
-    --text-0: #f5f3ee;
-    --text-1: #b7b4ac;
-    --text-2: #7a776f;
-    --accent: #8f7bff;
-    --danger: #ff6b6b;
-    --easy: #6bffb0;
-    --mid: #ffd86b;
-    --hard: #ff8a6b;
-    --extreme: #ff6b6b;
+    --paper: #F2EEE1;
+    --card: #FFFFFF;
+    --ink: #14120F;
+    --ink-soft: #4A463D;
+    --ink-mute: #8A8572;
+    --lime: #C6F135;
+    --coral: #FF4B3E;
+    --blue: #2F5AFF;
+    --yellow: #FFC53D;
+    --orange: #FF8A3D;
+    --teal: #2EC4B6;
+    --font-display: Georgia, 'Times New Roman', serif;
+    --font-mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --ad-banner-h: 40px;
@@ -34,22 +32,35 @@
   html, body {
     margin: 0;
     padding: 0;
-    background: var(--bg-0);
-    color: var(--text-0);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
     overscroll-behavior-y: none;
     height: 100%;
     width: 100%;
   }
 
   body {
-    background:
-      radial-gradient(circle at 50% -10%, rgba(143,123,255,0.18), transparent 45%),
-      radial-gradient(circle at 90% 10%, rgba(212,175,122,0.10), transparent 40%),
-      var(--bg-0);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--ink) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ink) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    background-blend-mode: normal;
+    position: relative;
     min-height: 100vh;
     display: flex;
     justify-content: center;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    opacity: 0.94;
+    pointer-events: none;
+    z-index: -1;
   }
 
   #app {
@@ -61,6 +72,9 @@
     padding-top: calc(var(--safe-top) + var(--ad-banner-h) + 14px);
     padding-bottom: calc(var(--safe-bottom) + var(--bottom-nav-h) + 24px);
     position: relative;
+    background: var(--paper);
+    border-left: 3px solid var(--ink);
+    border-right: 3px solid var(--ink);
     transition: padding-top 0.2s ease;
   }
   #app.ads-removed { padding-top: calc(var(--safe-top) + 14px); }
@@ -78,90 +92,98 @@
   }
 
   .eyebrow {
+    font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--accent);
+    letter-spacing: 3px;
+    color: var(--blue);
     text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 6px;
-    opacity: 0.85;
+    font-weight: 700;
+    margin-bottom: 8px;
   }
 
   h1.title {
     margin: 0;
-    font-size: 27px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    line-height: 1.15;
-    background: linear-gradient(135deg, #ffffff 10%, var(--gold-bright) 55%, #ffffff 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 24px rgba(212,175,122,0.35), 0 0 60px rgba(143,123,255,0.15);
-    animation: glowPulse 4s ease-in-out infinite;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    line-height: 0.98;
+    text-transform: uppercase;
+    color: var(--ink);
   }
-
-  @keyframes glowPulse {
-    0%, 100% { filter: drop-shadow(0 0 6px rgba(212,175,122,0.25)); }
-    50% { filter: drop-shadow(0 0 18px rgba(212,175,122,0.55)); }
+  h1.title::after {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 6px;
+    background: var(--coral);
+    margin: 12px auto 0;
   }
 
   .subtitle {
-    margin-top: 8px;
-    font-size: 12.5px;
-    color: var(--text-2);
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
     letter-spacing: 0.3px;
   }
 
-  /* ---------- Term of the Day ---------- */
-  .totd-wrap {
-    padding: 4px 16px 6px;
+  .premium-pill-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
   }
+
+  .premium-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 3px solid var(--ink);
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    text-transform: uppercase;
+  }
+  .premium-pill:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  .premium-pill.active { background: var(--lime); }
+
+  /* ---------- Term of the Day ---------- */
+  .totd-wrap { padding: 4px 16px 6px; }
 
   .totd-card {
     position: relative;
-    border-radius: 22px;
+    background: var(--card);
+    border: 3px solid var(--ink);
     padding: 20px 20px 18px;
-    background: linear-gradient(160deg, #1a1626 0%, #14121c 55%, #0f0f16 100%);
-    border: 1px solid rgba(212,175,122,0.25);
-    overflow: hidden;
+    box-shadow: 6px 6px 0 var(--ink);
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.2s ease;
-  }
-
-  .totd-card:active {
-    transform: scale(0.985);
-  }
-
-  .totd-card::before {
-    content: "";
-    position: absolute;
-    top: -60%;
-    right: -30%;
-    width: 220px;
-    height: 220px;
-    background: radial-gradient(circle, rgba(143,123,255,0.28), transparent 70%);
-    pointer-events: none;
   }
 
   .totd-label {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 10.5px;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     letter-spacing: 2px;
-    font-weight: 700;
-    color: var(--gold);
+    font-weight: 800;
+    color: var(--coral);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .totd-label .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 8px var(--gold);
+    width: 8px;
+    height: 8px;
+    background: var(--coral);
+    border: 2px solid var(--ink);
     animation: dotBlink 1.8s ease-in-out infinite;
   }
 
@@ -171,53 +193,46 @@
   }
 
   .totd-term {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-    margin-bottom: 6px;
-    position: relative;
-    z-index: 1;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 26px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
   }
 
   .totd-def {
+    font-family: var(--font-body);
     font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-1);
-    position: relative;
-    z-index: 1;
+    line-height: 1.55;
+    color: var(--ink-soft);
     max-height: 0;
     opacity: 0;
     overflow: hidden;
     transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
   }
-
   .totd-card.expanded .totd-def {
-    max-height: 200px;
+    max-height: 220px;
     opacity: 1;
-    margin-top: 10px;
+    margin-top: 12px;
   }
 
   .totd-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 14px;
-    position: relative;
-    z-index: 1;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 2px dashed var(--ink);
   }
 
   .totd-hint {
-    font-size: 11.5px;
-    color: var(--text-2);
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
   }
 
-  .chev {
-    transition: transform 0.3s ease;
-    display: inline-block;
-  }
+  .chev { transition: transform 0.3s ease; font-weight: 900; }
   .totd-card.expanded .chev { transform: rotate(180deg); }
 
   /* ---------- Search ---------- */
@@ -226,7 +241,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: linear-gradient(180deg, var(--bg-0) 70%, rgba(7,7,11,0));
+    background: var(--paper);
     padding-bottom: 14px;
   }
 
@@ -235,40 +250,33 @@
     align-items: center;
     gap: 10px;
     background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 13px 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border: 3px solid var(--ink);
+    padding: 12px 15px;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
   }
-
-  .search-box:focus-within {
-    border-color: rgba(143,123,255,0.5);
-    box-shadow: 0 0 0 3px rgba(143,123,255,0.12);
-  }
-
-  .search-box svg { flex-shrink: 0; opacity: 0.5; }
+  .search-box:focus-within { box-shadow: 4px 4px 0 var(--blue); border-color: var(--blue); }
+  .search-box svg { flex-shrink: 0; stroke: var(--ink); }
 
   .search-box input {
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
-    color: var(--text-0);
-    font-size: 15.5px;
-    font-family: inherit;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
     min-width: 0;
   }
-
-  .search-box input::placeholder { color: var(--text-2); }
+  .search-box input::placeholder { color: var(--ink-mute); }
 
   .clear-btn {
-    background: rgba(255,255,255,0.08);
+    background: var(--ink);
     border: none;
-    color: var(--text-1);
+    color: var(--card);
     width: 22px;
     height: 22px;
-    border-radius: 50%;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1;
     cursor: pointer;
     display: none;
@@ -279,8 +287,9 @@
   .clear-btn.show { display: flex; }
 
   .result-count {
-    font-size: 11.5px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-mute);
     padding: 10px 4px 0;
     letter-spacing: 0.3px;
   }
@@ -288,45 +297,41 @@
   /* ---------- Index ---------- */
   .index-bar {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     overflow-x: auto;
-    padding: 4px 16px 10px;
+    padding: 4px 16px 12px;
     scrollbar-width: none;
   }
   .index-bar::-webkit-scrollbar { display: none; }
 
   .index-chip {
     flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-1);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--ink);
     background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 10px;
-    padding: 6px 11px;
+    border: 2px solid var(--ink);
+    padding: 7px 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    text-transform: uppercase;
   }
-  .index-chip.active {
-    color: #0a0a0f;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    border-color: transparent;
-  }
+  .index-chip.active { background: var(--lime); box-shadow: 3px 3px 0 var(--ink); }
 
   /* ---------- Term List ---------- */
   .term-list {
     padding: 4px 16px 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
 
   .term-card {
     background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 18px;
+    border: 3px solid var(--ink);
     padding: 16px 16px 14px;
-    animation: fadeIn 0.35s ease both;
+    box-shadow: 5px 5px 0 var(--ink);
+    animation: fadeIn 0.3s ease both;
   }
 
   @keyframes fadeIn {
@@ -350,103 +355,88 @@
   }
 
   .term-name {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text-0);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--ink);
   }
-
-  .term-name mark {
-    background: rgba(212,175,122,0.35);
-    color: var(--gold-bright);
-    border-radius: 3px;
-    padding: 0 1px;
-  }
+  .term-name mark { background: var(--yellow); color: var(--ink); padding: 0 2px; }
 
   .badge {
+    font-family: var(--font-mono);
     font-size: 9.5px;
     font-weight: 800;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.4px;
     text-transform: uppercase;
     padding: 3px 8px;
-    border-radius: 20px;
+    border: 2px solid var(--ink);
     white-space: nowrap;
   }
-  .badge.easy { color: var(--easy); background: rgba(107,255,176,0.12); }
-  .badge.mid { color: var(--mid); background: rgba(255,216,107,0.12); }
-  .badge.hard { color: var(--hard); background: rgba(255,138,107,0.12); }
-  .badge.extreme { color: var(--extreme); background: rgba(255,107,107,0.14); }
-
-  .badge.pro {
-    color: #1a1408;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
+  .badge.easy { color: var(--ink); background: var(--lime); }
+  .badge.mid { color: var(--ink); background: var(--yellow); }
+  .badge.hard { color: var(--ink); background: var(--orange); }
+  .badge.extreme { color: #fff; background: var(--coral); }
+  .badge.pro { color: #fff; background: var(--ink); display: inline-flex; align-items: center; gap: 3px; }
 
   .term-idx {
+    font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--text-2);
+    color: var(--ink-mute);
     font-weight: 700;
     flex-shrink: 0;
     padding-top: 2px;
   }
 
   .term-category {
+    font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--accent);
-    margin-top: 3px;
+    color: var(--blue);
+    margin-top: 4px;
     letter-spacing: 0.3px;
+    text-transform: uppercase;
   }
 
   .term-body {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.35s ease;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.35s ease, padding-top 0.35s ease;
   }
   .term-card.open .term-body {
-    max-height: 900px;
+    max-height: 1400px;
     opacity: 1;
-    margin-top: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 2px dashed var(--ink);
   }
 
   .term-def {
+    font-family: var(--font-body);
     font-size: 13.5px;
-    line-height: 1.55;
-    color: var(--text-1);
+    line-height: 1.6;
+    color: var(--ink-soft);
   }
-
-  .term-def mark {
-    background: rgba(212,175,122,0.35);
-    color: var(--gold-bright);
-    border-radius: 3px;
-    padding: 0 1px;
-  }
+  .term-def mark { background: var(--yellow); color: var(--ink); padding: 0 2px; }
 
   .difficulty-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 14px;
   }
 
   .difficulty-label {
+    font-family: var(--font-mono);
     font-size: 10.5px;
-    color: var(--text-2);
+    color: var(--ink-mute);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     font-weight: 700;
   }
 
   .dots { display: flex; gap: 4px; }
-  .dots span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-  }
-  .dots span.filled { background: var(--gold); box-shadow: 0 0 6px rgba(212,175,122,0.6); }
+  .dots span { width: 8px; height: 8px; border: 1.5px solid var(--ink); background: var(--card); }
+  .dots span.filled { background: var(--ink); }
 
   .gear-btn {
     margin-top: 14px;
@@ -455,63 +445,63 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: linear-gradient(135deg, rgba(143,123,255,0.16), rgba(143,123,255,0.06));
-    border: 1px solid rgba(143,123,255,0.3);
-    color: #cfc6ff;
-    font-size: 13px;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     padding: 11px;
-    border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.12s ease, background 0.2s ease;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    text-transform: uppercase;
   }
-  .gear-btn:active { transform: scale(0.97); background: rgba(143,123,255,0.22); }
+  .gear-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+
+  .chevron-icon { transition: transform 0.3s ease; flex-shrink: 0; font-weight: 900; }
+  .term-card.open .chevron-icon { transform: rotate(180deg); }
 
   /* ---------- Technique Guide (Premium) ---------- */
-  .technique-section {
-    margin-top: 14px;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid rgba(212,175,122,0.22);
-  }
+  .technique-section { margin-top: 14px; border: 2px solid var(--ink); }
 
   .technique-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 13px;
-    background: rgba(212,175,122,0.08);
+    padding: 9px 12px;
+    background: var(--yellow);
+    border-bottom: 2px solid var(--ink);
   }
 
   .technique-title {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--gold-bright);
+    color: var(--ink);
   }
 
   .technique-steps {
     padding: 13px;
+    font-family: var(--font-body);
     font-size: 13px;
     line-height: 1.6;
-    color: var(--text-1);
+    color: var(--ink-soft);
   }
 
-  .technique-locked {
-    position: relative;
-    padding: 20px 16px 22px;
-    text-align: center;
-  }
+  .technique-locked { position: relative; padding: 20px 16px 22px; text-align: center; }
 
   .technique-locked .blur-preview {
+    font-family: var(--font-body);
     font-size: 12.5px;
     line-height: 1.6;
-    color: var(--text-2);
+    color: var(--ink-mute);
     filter: blur(4px);
     user-select: none;
     pointer-events: none;
@@ -520,75 +510,58 @@
   }
 
   .lock-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    width: 34px;
+    height: 34px;
+    background: var(--yellow);
+    border: 2px solid var(--ink);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 10px auto 10px;
-    box-shadow: 0 4px 16px rgba(212,175,122,0.35);
   }
 
   .unlock-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    color: #1a1408;
-    border: none;
-    font-size: 12.5px;
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.2px;
     padding: 10px 18px;
-    border-radius: 11px;
     cursor: pointer;
-    transition: transform 0.12s ease;
+    box-shadow: 3px 3px 0 var(--ink);
+    text-transform: uppercase;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .unlock-btn:active { transform: scale(0.96); }
+  .unlock-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
   .unlock-caption {
     margin-top: 8px;
-    font-size: 10.5px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
   }
 
-  /* ---------- Premium Pill (Header) ---------- */
-  .premium-pill-wrap {
-    display: flex;
-    justify-content: center;
-    margin-top: 14px;
+  /* ---------- Premium Pill / Paywall shared ---------- */
+  .single-price {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 900;
+    margin: 8px 0 18px;
+    color: var(--ink);
   }
+  .single-price span { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--ink-mute); }
 
-  .premium-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    border: 1px solid rgba(212,175,122,0.35);
-    background: rgba(212,175,122,0.08);
-    color: var(--gold-bright);
-    transition: transform 0.12s ease, background 0.2s ease;
-  }
-  .premium-pill:active { transform: scale(0.96); }
-  .premium-pill.active {
-    background: linear-gradient(135deg, rgba(107,255,176,0.14), rgba(107,255,176,0.05));
-    border-color: rgba(107,255,176,0.35);
-    color: var(--easy);
-  }
-
-  /* ---------- Paywall Modal ---------- */
   .paywall-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(4,4,7,0.72);
-    backdrop-filter: blur(4px);
+    background: rgba(20,18,15,0.65);
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -597,18 +570,15 @@
     pointer-events: none;
     transition: opacity 0.25s ease;
   }
-  .paywall-overlay.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .paywall-overlay.show { opacity: 1; pointer-events: auto; }
 
   .paywall-sheet {
     width: 100%;
     max-width: 480px;
-    background: linear-gradient(170deg, #17131f 0%, #100e16 60%, #0b0a10 100%);
-    border: 1px solid rgba(212,175,122,0.25);
+    background: var(--paper);
+    border: 3px solid var(--ink);
     border-bottom: none;
-    border-radius: 26px 26px 0 0;
+    border-top-width: 6px;
     padding: 26px 22px calc(env(safe-area-inset-bottom, 0px) + 26px);
     transform: translateY(24px);
     transition: transform 0.3s ease;
@@ -620,10 +590,9 @@
   .paywall-close {
     width: 30px;
     height: 30px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
+    background: var(--ink);
     border: none;
-    color: var(--text-1);
+    color: var(--card);
     font-size: 14px;
     cursor: pointer;
     display: flex;
@@ -635,198 +604,124 @@
   .paywall-crown {
     width: 52px;
     height: 52px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    background: var(--yellow);
+    border: 3px solid var(--ink);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 4px auto 16px;
-    box-shadow: 0 8px 24px rgba(212,175,122,0.3);
   }
 
   .paywall-title {
     text-align: center;
-    font-size: 20px;
-    font-weight: 800;
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 900;
     margin-bottom: 6px;
+    color: var(--ink);
+    text-transform: uppercase;
   }
 
   .paywall-sub {
     text-align: center;
+    font-family: var(--font-body);
     font-size: 13px;
-    color: var(--text-1);
+    color: var(--ink-soft);
     line-height: 1.5;
     margin-bottom: 20px;
     padding: 0 10px;
   }
 
-  .paywall-features {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 22px;
-  }
+  .paywall-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
 
   .paywall-feature {
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: var(--font-body);
     font-size: 13px;
-    color: var(--text-0);
+    color: var(--ink);
   }
-
   .paywall-feature .check {
     width: 20px;
     height: 20px;
-    border-radius: 50%;
-    background: rgba(107,255,176,0.14);
-    color: var(--easy);
+    background: var(--lime);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
+    font-weight: 900;
   }
 
-  .plan-options {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
+  .plan-options { display: flex; gap: 10px; margin-bottom: 18px; }
 
   .plan-card {
     flex: 1;
-    border: 1px solid var(--card-border);
+    border: 2px solid var(--ink);
     background: var(--card);
-    border-radius: 14px;
     padding: 12px 10px;
     text-align: center;
     cursor: pointer;
     position: relative;
-    transition: border-color 0.15s ease, background 0.15s ease;
   }
-  .plan-card.selected {
-    border-color: var(--gold);
-    background: rgba(212,175,122,0.08);
-  }
+  .plan-card.selected { background: var(--lime); box-shadow: 3px 3px 0 var(--ink); }
 
   .plan-tag {
     position: absolute;
-    top: -9px;
+    top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--gold);
-    color: #1a1408;
+    background: var(--coral);
+    color: #fff;
+    font-family: var(--font-mono);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
     padding: 3px 8px;
-    border-radius: 20px;
+    border: 1.5px solid var(--ink);
     white-space: nowrap;
   }
 
   .plan-name {
-    font-size: 12px;
-    color: var(--text-1);
-    font-weight: 700;
-    margin-top: 4px;
-  }
-
-  .plan-price {
-    font-size: 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
     font-weight: 800;
     margin-top: 4px;
+    text-transform: uppercase;
   }
 
-  .plan-price span {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-2);
-  }
+  .plan-price { font-family: var(--font-display); font-size: 18px; font-weight: 900; margin-top: 4px; color: var(--ink); }
+  .plan-price span { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--ink-mute); }
 
   .cta-btn {
     width: 100%;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    color: #1a1408;
-    border: none;
-    font-size: 15px;
+    background: var(--ink);
+    color: var(--card);
+    border: 3px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
     font-weight: 800;
     padding: 15px;
-    border-radius: 14px;
     cursor: pointer;
-    transition: transform 0.12s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    box-shadow: 4px 4px 0 var(--coral);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .cta-btn:active { transform: scale(0.98); }
+  .cta-btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--coral); }
 
   .paywall-disclaimer {
     text-align: center;
-    font-size: 10px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-mute);
     margin-top: 12px;
     line-height: 1.5;
-  }
-
-  .chevron-icon {
-    transition: transform 0.3s ease;
-    flex-shrink: 0;
-    margin-top: 3px;
-  }
-  .term-card.open .chevron-icon { transform: rotate(180deg); }
-
-  /* ---------- Empty state ---------- */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-2);
-  }
-  .empty-state .glyph { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-state p { font-size: 13.5px; line-height: 1.5; }
-
-  /* ---------- Toast ---------- */
-  .toast {
-    position: fixed;
-    bottom: calc(var(--safe-bottom) + 24px);
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: #1c1a26;
-    border: 1px solid rgba(212,175,122,0.3);
-    color: var(--text-0);
-    padding: 12px 20px;
-    border-radius: 14px;
-    font-size: 13px;
-    font-weight: 600;
-    max-width: 85%;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    z-index: 100;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  footer {
-    text-align: center;
-    padding: 18px 20px 4px;
-    font-size: 10.5px;
-    color: var(--text-2);
-    letter-spacing: 0.5px;
-  }
-
-  .single-price {
-    text-align: center;
-    font-size: 28px;
-    font-weight: 800;
-    margin: 8px 0 18px;
-  }
-  .single-price span {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-2);
   }
 
   /* ---------- Ad Banner ---------- */
@@ -834,10 +729,9 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 150;
-    background: linear-gradient(90deg, #2a2340, #1c1626);
-    border-bottom: 1px solid rgba(143,123,255,0.25);
+    background: var(--ink);
+    border-bottom: 3px solid var(--ink);
     padding-top: var(--safe-top);
-    transition: transform 0.25s ease;
   }
   .ad-banner.hidden { display: none; }
 
@@ -852,21 +746,23 @@
 
   .ad-banner-tag {
     flex-shrink: 0;
+    font-family: var(--font-mono);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: var(--text-2);
-    background: rgba(255,255,255,0.08);
+    color: var(--ink);
+    background: var(--yellow);
     padding: 2px 6px;
-    border-radius: 5px;
+    border: 1.5px solid var(--card);
   }
 
   .ad-banner-text {
     flex: 1;
     min-width: 0;
-    font-size: 11.5px;
-    color: var(--text-1);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--card);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -874,15 +770,16 @@
 
   .ad-banner-remove {
     flex-shrink: 0;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: var(--gold-bright);
-    background: rgba(212,175,122,0.12);
-    border: 1px solid rgba(212,175,122,0.3);
-    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ink);
+    background: var(--lime);
+    border: 1.5px solid var(--card);
     padding: 5px 9px;
     cursor: pointer;
     white-space: nowrap;
+    text-transform: uppercase;
   }
 
   /* ---------- Bottom Nav ---------- */
@@ -890,9 +787,8 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 150;
-    background: rgba(11,10,16,0.92);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--card-border);
+    background: var(--ink);
+    border-top: 3px solid var(--ink);
     padding-bottom: var(--safe-bottom);
   }
 
@@ -907,19 +803,20 @@
   .nav-tab {
     background: none;
     border: none;
-    color: var(--text-2);
+    color: rgba(242,238,225,0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    font-size: 10.5px;
-    font-weight: 700;
-    padding: 6px 18px;
-    border-radius: 12px;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 6px 16px;
     cursor: pointer;
+    text-transform: uppercase;
     transition: color 0.15s ease;
   }
-  .nav-tab.active { color: var(--gold-bright); }
+  .nav-tab.active { color: var(--lime); }
 
   /* ---------- Forum ---------- */
   .forum-toolbar {
@@ -930,67 +827,57 @@
     padding: 4px 16px 12px;
   }
 
-  .forum-tabs {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    flex: 1;
-  }
+  .forum-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; }
   .forum-tabs::-webkit-scrollbar { display: none; }
 
   .new-thread-btn {
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    color: #1a1408;
-    border: none;
-    font-size: 12px;
+    background: var(--coral);
+    color: #fff;
+    border: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
     font-weight: 800;
     padding: 9px 13px;
-    border-radius: 11px;
     cursor: pointer;
     white-space: nowrap;
+    box-shadow: 3px 3px 0 var(--ink);
+    text-transform: uppercase;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+  .new-thread-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
-  .thread-list {
-    padding: 4px 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+  .thread-list { padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
 
   .thread-card {
     background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
+    border: 3px solid var(--ink);
     padding: 14px 15px;
     cursor: pointer;
-    animation: fadeIn 0.35s ease both;
+    box-shadow: 5px 5px 0 var(--ink);
+    animation: fadeIn 0.3s ease both;
   }
 
-  .thread-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    align-items: flex-start;
-  }
+  .thread-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 
   .thread-title {
-    font-size: 14.5px;
-    font-weight: 700;
-    color: var(--text-0);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--ink);
     line-height: 1.35;
   }
 
   .thread-tag {
-    font-size: 9.5px;
+    font-family: var(--font-mono);
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
     padding: 3px 8px;
-    border-radius: 20px;
-    color: var(--accent);
-    background: rgba(143,123,255,0.12);
+    border: 1.5px solid var(--ink);
+    color: #fff;
+    background: var(--blue);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -1000,113 +887,97 @@
     align-items: center;
     gap: 8px;
     margin-top: 8px;
-    font-size: 11px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-mute);
   }
-  .thread-meta .author { color: var(--gold-bright); font-weight: 700; }
+  .thread-meta .author { color: var(--coral); font-weight: 800; }
 
-  .thread-preview {
-    font-size: 12.5px;
-    color: var(--text-1);
-    line-height: 1.5;
-    margin-top: 8px;
-  }
+  .thread-preview { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
 
   .thread-stats {
     display: flex;
     gap: 14px;
     margin-top: 10px;
-    font-size: 11px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-mute);
   }
 
   .thread-body {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease, padding-top 0.3s ease;
   }
   .thread-card.open .thread-body {
     max-height: 1200px;
     opacity: 1;
     margin-top: 12px;
-  }
-
-  .reply-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     padding-top: 12px;
-    border-top: 1px solid var(--card-border);
+    border-top: 2px dashed var(--ink);
   }
 
-  .reply-item { font-size: 12.5px; line-height: 1.5; }
-  .reply-author { color: var(--gold-bright); font-weight: 700; margin-right: 6px; }
-  .reply-text { color: var(--text-1); }
+  .reply-list { display: flex; flex-direction: column; gap: 10px; }
+  .reply-item { font-family: var(--font-body); font-size: 12.5px; line-height: 1.5; }
+  .reply-author { font-family: var(--font-mono); color: var(--coral); font-weight: 800; margin-right: 6px; }
+  .reply-text { color: var(--ink-soft); }
 
-  .reply-input-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
+  .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
 
   .reply-input-row input {
     flex: 1;
     min-width: 0;
-    background: var(--bg-1);
-    border: 1px solid var(--card-border);
-    border-radius: 10px;
+    background: var(--card);
+    border: 2px solid var(--ink);
     padding: 9px 12px;
-    color: var(--text-0);
+    color: var(--ink);
+    font-family: var(--font-body);
     font-size: 12.5px;
-    font-family: inherit;
     outline: none;
   }
 
   .reply-send-btn {
     flex-shrink: 0;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
+    background: var(--ink);
+    color: var(--card);
+    border: 2px solid var(--ink);
     padding: 0 15px;
-    font-weight: 700;
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 11.5px;
     cursor: pointer;
+    text-transform: uppercase;
   }
 
   /* ---------- Form Elements (modals) ---------- */
   .form-label {
+    font-family: var(--font-mono);
     font-size: 10.5px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: var(--text-2);
+    color: var(--ink-mute);
     margin-bottom: 6px;
     display: block;
   }
 
   .form-input, .form-textarea, .form-select {
     width: 100%;
-    background: var(--bg-1);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
+    background: var(--card);
+    border: 2px solid var(--ink);
     padding: 12px 14px;
-    color: var(--text-0);
+    color: var(--ink);
+    font-family: var(--font-body);
     font-size: 13.5px;
-    font-family: inherit;
     outline: none;
     margin-bottom: 14px;
   }
   .form-textarea { min-height: 80px; resize: vertical; }
-  .form-select { appearance: none; }
+  .form-select { appearance: none; font-family: var(--font-body); }
 
   /* ---------- Courses ---------- */
-  .courses-toolbar {
-    display: flex;
-    gap: 10px;
-    padding: 4px 16px 14px;
-  }
+  .courses-toolbar { display: flex; gap: 10px; padding: 4px 16px 14px; }
 
   .sell-course-btn, .dashboard-btn {
     flex: 1;
@@ -1114,146 +985,122 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 12.5px;
-    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 800;
     padding: 11px;
-    border-radius: 12px;
     cursor: pointer;
-    border: 1px solid var(--card-border);
+    border: 2px solid var(--ink);
     background: var(--card);
-    color: var(--text-0);
+    color: var(--ink);
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .sell-course-btn {
-    border-color: rgba(212,175,122,0.3);
-    background: rgba(212,175,122,0.08);
-    color: var(--gold-bright);
-  }
+  .sell-course-btn { background: var(--lime); }
+  .sell-course-btn:active, .dashboard-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
 
-  .course-grid {
-    padding: 4px 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+  .course-grid { padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 16px; }
 
   .course-card {
     background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 18px;
-    overflow: hidden;
-    animation: fadeIn 0.35s ease both;
+    border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    animation: fadeIn 0.3s ease both;
   }
 
-  .course-thumb {
-    height: 100px;
-    position: relative;
-  }
+  .course-thumb { height: 100px; position: relative; border-bottom: 3px solid var(--ink); }
 
   .course-thumb .course-price-tag {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
+    background: var(--ink);
     color: #fff;
+    font-family: var(--font-mono);
     font-size: 13px;
     font-weight: 800;
     padding: 4px 10px;
-    border-radius: 10px;
+    border: 2px solid var(--card);
   }
 
   .course-body { padding: 14px 15px 15px; }
-  .course-title { font-size: 15px; font-weight: 700; color: var(--text-0); margin-bottom: 4px; }
-  .course-creator { font-size: 11.5px; color: var(--accent); margin-bottom: 8px; }
-  .course-desc { font-size: 12.5px; color: var(--text-1); line-height: 1.5; margin-bottom: 10px; }
+  .course-title { font-family: var(--font-display); font-size: 15.5px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+  .course-creator { font-family: var(--font-mono); font-size: 11px; color: var(--blue); margin-bottom: 8px; }
+  .course-desc { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 10px; }
 
-  .course-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .course-footer { display: flex; align-items: center; justify-content: space-between; }
 
   .course-rating {
-    font-size: 11.5px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-mute);
     display: flex;
     align-items: center;
     gap: 4px;
   }
 
   .buy-course-btn {
-    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-    color: #1a1408;
-    border: none;
-    font-size: 12px;
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
     font-weight: 800;
     padding: 9px 16px;
-    border-radius: 10px;
     cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    text-transform: uppercase;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+  .buy-course-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
 
   .revenue-breakdown {
     margin-top: 10px;
     padding: 10px 12px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 10px;
-    font-size: 11px;
-    color: var(--text-2);
+    background: var(--paper);
+    border: 1.5px dashed var(--ink);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
     line-height: 1.7;
   }
-  .revenue-breakdown b { color: var(--easy); }
+  .revenue-breakdown b { color: var(--ink); background: var(--lime); padding: 0 3px; }
 
-  .dashboard-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
+  .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 
-  .stat-tile {
-    background: var(--bg-1);
-    border: 1px solid var(--card-border);
-    border-radius: 14px;
-    padding: 13px;
-  }
+  .stat-tile { background: var(--paper); border: 2px solid var(--ink); padding: 13px; }
   .stat-tile-label {
-    font-size: 10px;
-    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-mute);
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    font-weight: 700;
-  }
-  .stat-tile-value {
-    font-size: 20px;
     font-weight: 800;
-    margin-top: 4px;
   }
-  .stat-tile-value.gold { color: var(--gold-bright); }
-  .stat-tile-value.green { color: var(--easy); }
+  .stat-tile-value { font-family: var(--font-display); font-size: 21px; font-weight: 900; margin-top: 4px; color: var(--ink); }
+  .stat-tile-value.gold { color: var(--ink); background: var(--yellow); display: inline-block; padding: 0 4px; }
+  .stat-tile-value.green { color: var(--ink); background: var(--lime); display: inline-block; padding: 0 4px; }
 
-  .dashboard-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  .dashboard-list { display: flex; flex-direction: column; gap: 8px; }
   .dashboard-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12.5px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     padding: 10px 12px;
-    background: var(--bg-1);
-    border-radius: 10px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
   }
-  .dashboard-row .name { color: var(--text-0); font-weight: 600; }
-  .dashboard-row .cut { color: var(--easy); font-weight: 700; }
+  .dashboard-row .name { color: var(--ink); font-weight: 700; }
+  .dashboard-row .cut { color: var(--ink); font-weight: 800; background: var(--lime); padding: 1px 5px; }
 
   /* ---------- Popup Ad ---------- */
   .popup-ad-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(4,4,7,0.75);
-    backdrop-filter: blur(4px);
+    background: rgba(20,18,15,0.7);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1268,38 +1115,33 @@
   .popup-ad-sheet {
     width: 100%;
     max-width: 340px;
-    background: linear-gradient(170deg, #17131f 0%, #100e16 100%);
-    border: 1px solid rgba(143,123,255,0.3);
-    border-radius: 22px;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
     padding: 22px 20px;
     position: relative;
-    transform: scale(0.92);
+    transform: scale(0.94);
     transition: transform 0.25s ease;
   }
   .popup-ad-overlay.show .popup-ad-sheet { transform: scale(1); }
 
   .popup-ad-tag {
+    font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--text-2);
-    background: rgba(255,255,255,0.08);
+    color: #fff;
+    background: var(--ink);
     display: inline-block;
     padding: 3px 8px;
-    border-radius: 20px;
     margin-bottom: 12px;
   }
 
-  .popup-ad-img {
-    height: 120px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #8f7bff, #4b3f8f);
-    margin-bottom: 14px;
-  }
+  .popup-ad-img { height: 120px; background: var(--blue); margin-bottom: 14px; border: 2px solid var(--ink); }
 
-  .popup-ad-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
-  .popup-ad-sub { font-size: 12.5px; color: var(--text-1); line-height: 1.5; margin-bottom: 16px; }
+  .popup-ad-title { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--ink); }
+  .popup-ad-sub { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px; }
 
   .popup-ad-skip {
     display: block;
@@ -1307,11 +1149,50 @@
     text-align: center;
     background: none;
     border: none;
-    color: var(--text-2);
+    color: var(--ink-mute);
+    font-family: var(--font-mono);
     font-size: 11px;
     margin-top: 12px;
     cursor: pointer;
     text-decoration: underline;
+  }
+
+  /* ---------- Empty state ---------- */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-mute); }
+  .empty-state .glyph { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
+  .empty-state p { font-family: var(--font-body); font-size: 13.5px; line-height: 1.5; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + var(--bottom-nav-h) + 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    border: 2px solid var(--ink);
+    color: var(--card);
+    padding: 12px 20px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    max-width: 85%;
+    text-align: center;
+    box-shadow: 4px 4px 0 var(--lime);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center;
+    padding: 18px 20px 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
   }
 </style>
 </head>
@@ -1447,8 +1328,8 @@
 <div class="paywall-overlay" id="removeAdsOverlay">
   <div class="paywall-sheet">
     <button class="paywall-close" id="removeAdsClose" aria-label="Close">✕</button>
-    <div class="paywall-crown" style="background:linear-gradient(135deg,#cfc6ff,#8f7bff);">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17131f" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <div class="paywall-crown" style="background:#2F5AFF;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2EEE1" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </div>
     <div class="paywall-title">Remove Ads</div>
     <div class="paywall-sub">One-time payment. No more top banner, no more sponsored popups — ever, on this device.</div>
@@ -2848,6 +2729,228 @@
       gear: "Stress Management Guide",
       premium: true,
       technique: "1) Protect a consistent sleep schedule as the foundation. 2) Add 10-15 minutes of daily walking, stretching, or breathwork. 3) Limit late-day caffeine and doom-scrolling before bed. 4) Reassess stress levels weekly and adjust workload or recovery accordingly."
+    },
+    {
+      term: "Squalane Oil",
+      category: "Skin",
+      difficulty: 1,
+      definition: "A lightweight, non-comedogenic oil that mimics the skin's natural sebum, used to seal in moisture and soften texture without feeling greasy.",
+      gear: "100% Squalane Oil",
+      premium: true,
+      technique: "1) Apply 2-3 drops to slightly damp skin as the last step of your routine. 2) Warm it between your palms before pressing it in. 3) Use nightly if skin runs dry, or mix into moisturizer if oily. 4) Adjust the amount seasonally as skin's oil production changes."
+    },
+    {
+      term: "Ceramide Moisturizer",
+      category: "Skin",
+      difficulty: 1,
+      definition: "A moisturizer formulated with ceramides — lipids naturally found in skin — that helps rebuild and reinforce the moisture barrier, especially after using strong actives.",
+      gear: "Ceramide Barrier Cream"
+    },
+    {
+      term: "Azelaic Acid",
+      category: "Skin",
+      difficulty: 2,
+      definition: "A gentle multi-tasking acid that reduces redness, fades post-acne marks, and has mild antibacterial properties, making it well tolerated by sensitive and acne-prone skin alike.",
+      gear: "Azelaic Acid 10% Cream"
+    },
+    {
+      term: "Tranexamic Acid",
+      category: "Skin",
+      difficulty: 3,
+      definition: "A brightening ingredient, available topically or orally under medical guidance, that targets stubborn pigmentation and melasma by interrupting the pathway that triggers excess melanin production.",
+      gear: "Consult a Dermatologist"
+    },
+    {
+      term: "Thread Lift",
+      category: "Skin",
+      difficulty: 5,
+      definition: "A minimally invasive procedure that uses dissolvable sutures to mechanically lift and tighten sagging skin, offering a shorter-recovery alternative to a surgical facelift with more temporary results.",
+      gear: "Consult a Licensed Provider"
+    },
+    {
+      term: "Fat Transfer",
+      category: "Cheekbones",
+      difficulty: 5,
+      definition: "A surgical technique that harvests fat from one area of the body and reinjects it into the face to restore volume, most often used in the cheeks and temples as a natural alternative to synthetic filler.",
+      gear: "Consult a Licensed Surgeon"
+    },
+    {
+      term: "Microblading",
+      category: "Eye Aesthetics",
+      difficulty: 3,
+      definition: "A semi-permanent cosmetic tattoo technique that deposits pigment in fine, hair-like strokes to fill in sparse eyebrows, typically lasting 1-3 years before fading.",
+      gear: "Consult a Licensed Technician"
+    },
+    {
+      term: "Colored Contacts",
+      category: "Eye Aesthetics",
+      difficulty: 1,
+      definition: "Tinted contact lenses that alter or enhance natural eye color, available in prescription and non-prescription forms, requiring proper fitting and hygiene to avoid eye irritation or infection.",
+      gear: "Consult an Optometrist"
+    },
+    {
+      term: "Columella",
+      category: "Nose",
+      difficulty: 2,
+      definition: "The strip of tissue separating the two nostrils at the base of the nose. Its shape and the angle it forms with the upper lip (the nasolabial angle) are frequently assessed in rhinoplasty planning.",
+      gear: "Facial Proportion Guide"
+    },
+    {
+      term: "SMAS Facelift",
+      category: "Neck",
+      difficulty: 5,
+      definition: "A surgical facelift technique that lifts and repositions the deeper SMAS layer of muscle and connective tissue, not just the skin, producing longer-lasting results than a skin-only lift.",
+      gear: "Consult a Licensed Surgeon"
+    },
+    {
+      term: "Rosemary Oil",
+      category: "Hair",
+      difficulty: 1,
+      definition: "An essential oil studied as a natural adjunct for scalp stimulation and hair thickness, often diluted in a carrier oil and massaged into the scalp a few times a week.",
+      gear: "Rosemary Hair Oil",
+      premium: true,
+      technique: "1) Mix a few drops of rosemary oil with a carrier oil like jojoba or coconut oil. 2) Massage into the scalp for 3-5 minutes to boost circulation. 3) Leave on for at least 30 minutes, or overnight for a deeper treatment. 4) Rinse and shampoo as normal, using 2-3x per week."
+    },
+    {
+      term: "Beard Transplant",
+      category: "Hair",
+      difficulty: 5,
+      definition: "A follicular unit extraction procedure that relocates hair follicles, usually from the scalp, into patchy or thin areas of the beard to create fuller, more even facial hair coverage.",
+      gear: "Consult a Hair Restoration Clinic"
+    },
+    {
+      term: "Interdental Brush",
+      category: "Dental & Orthodontic",
+      difficulty: 1,
+      definition: "A small brush designed to clean between teeth and around braces or bridges, reaching gaps that regular floss or brushing can miss.",
+      gear: "Interdental Brush Set"
+    },
+    {
+      term: "Water Flosser",
+      category: "Dental & Orthodontic",
+      difficulty: 1,
+      definition: "A device that uses a pressurized stream of water to remove plaque and debris between teeth and along the gumline, often easier to use consistently than traditional string floss.",
+      gear: "Water Flosser Device",
+      premium: true,
+      technique: "1) Fill the reservoir with lukewarm water. 2) Lean over the sink and start on the lowest pressure setting. 3) Trace along the gumline and between each tooth for a few seconds. 4) Gradually increase pressure as your gums adjust over the first week."
+    },
+    {
+      term: "Rear Delt Training",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Targeted training of the rear deltoid muscles, an often-neglected area that improves shoulder roundness from the back and supports better posture by balancing out front-dominant pressing work.",
+      gear: "Rear Delt Fly Program"
+    },
+    {
+      term: "Forearm Development",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Targeted training of the forearm muscles through grip work and wrist curls, contributing to a more proportionate, defined look in short sleeves alongside grip strength gains.",
+      gear: "Forearm Training Program"
+    },
+    {
+      term: "Mobility Training",
+      category: "Body & Frame",
+      difficulty: 1,
+      definition: "Dedicated stretching and controlled range-of-motion work for major joints, which supports better posture, lifting form, and overall ease of movement as training intensity increases.",
+      gear: "Mobility Routine Guide",
+      premium: true,
+      technique: "1) Spend 5-10 minutes on dynamic stretches before training. 2) Add static stretching for tight areas after your workout, holding each for 30 seconds. 3) Dedicate one full session per week to mobility work alone. 4) Track range of motion monthly to see progress."
+    },
+    {
+      term: "Sleep Apnea",
+      category: "Nutrition & Recovery",
+      difficulty: 3,
+      definition: "A condition where breathing repeatedly stops and starts during sleep, often linked to chronic mouth breathing and poor sleep quality — worth ruling out with a doctor if nasal breathing feels persistently difficult.",
+      gear: "Consult a Sleep Specialist"
+    },
+    {
+      term: "Blue Light Blocking",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "Reducing screen exposure or using blue-light-filtering glasses in the evening to support natural melatonin production and improve sleep onset and quality.",
+      gear: "Blue Light Blocking Glasses",
+      premium: true,
+      technique: "1) Switch devices to night mode or a warmer color temperature after sunset. 2) Put screens away 30-60 minutes before bed. 3) Use blue-light glasses in the evening if screen time is unavoidable. 4) Keep bedroom lighting warm and dim in the hour before sleep."
+    },
+    {
+      term: "Vitamin D",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "A hormone-like vitamin produced from sun exposure and available through diet or supplementation, playing a role in mood, immune function, and hormonal balance that indirectly supports energy and skin health.",
+      gear: "Vitamin D3 Supplement"
+    },
+    {
+      term: "Electrolyte Balance",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "Maintaining adequate sodium, potassium, and magnesium levels to support hydration, muscle function, and reduce the puffiness that comes from either dehydration or excess sodium intake.",
+      gear: "Electrolyte Supplement"
+    },
+    {
+      term: "Concealer Technique",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "Using a color-correcting concealer to reduce the visibility of dark circles, blemishes, or redness, applied sparingly and blended to look natural rather than masked.",
+      gear: "Color-Correcting Concealer",
+      premium: true,
+      technique: "1) Choose a shade one tone lighter than your skin for under-eyes, or true-to-tone for blemishes. 2) Apply in a small triangle shape under the eye, not just a dot. 3) Pat gently with a finger or sponge to blend — never rub. 4) Set lightly with translucent powder if needed."
+    },
+    {
+      term: "Brow Filling",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "Using a brow pencil or powder to fill in sparse areas and define brow shape, adding structure to the upper face without a permanent procedure like microblading.",
+      gear: "Brow Pencil & Gel Duo"
+    },
+    {
+      term: "Self-Tanner",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "A topical product that reacts with the skin's surface to produce a temporary bronzed tone without UV exposure, offering a lower-risk alternative to sun tanning or tanning beds.",
+      gear: "Gradual Self-Tanning Lotion"
+    },
+    {
+      term: "Sigma",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Internet archetype slang for someone perceived as independent, quietly confident, and outside typical social hierarchies — often used half-ironically in meme culture.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Delulu",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Playful slang short for 'delusional,' used self-referentially to describe unrealistic optimism about a glow up, a crush, or a goal — usually lighthearted rather than literal.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Main Character Energy",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for carrying yourself with confidence and intention, as if you're the lead in your own story rather than a background character — often tied to glow-up and self-improvement content.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Locked In",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for being fully focused and disciplined on a goal — training, skincare, studying — with no distractions pulling attention away.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Sebum Production",
+      category: "Skin",
+      difficulty: 2,
+      definition: "The natural oil output of the skin's sebaceous glands, influenced by genetics, hormones, and climate — a key factor in determining whether a routine should lean hydrating or oil-controlling.",
+      gear: "Oil-Control Moisturizer"
+    },
+    {
+      term: "Jaw Clicking (TMJ Disorder)",
+      category: "Jaw & Chin",
+      difficulty: 3,
+      definition: "Popping, clicking, or pain in the jaw joint during movement, often linked to clenching, misalignment, or overuse — worth having assessed before starting intensive jaw-training routines like hard mewing or mastic gum.",
+      gear: "Consult a TMJ Specialist"
     }
   ];
 
@@ -3274,6 +3377,29 @@
         { author: "orthobound", text: "Talk to multiple surgeons before deciding — it's permanent and easy to overdo." }
       ],
       likes: 22
+    },
+    {
+      id: 7,
+      title: "6 months of sleepmaxxing — the most underrated change I made",
+      category: "Progress Logs",
+      author: "restedandready",
+      body: "Fixed my sleep schedule before touching anything else. Under-eye puffiness down, skin clearer, way less reactive to stress. Should've started here instead of buying five different serums first.",
+      replies: [
+        { author: "clearskinjourney", text: "Sleep is so slept on (pun intended). Glad it's working for you." },
+        { author: "newframe22", text: "How'd you actually fix your sleep schedule? That's the hard part for me." }
+      ],
+      likes: 58
+    },
+    {
+      id: 8,
+      title: "PSA: get your posture checked before blaming your jaw",
+      category: "Questions",
+      author: "orthobound",
+      body: "Spent a year thinking I had a weak chin. Turns out forward head posture was doing most of the damage to my profile. Fixed posture first, jaw looks noticeably better with zero surgery.",
+      replies: [
+        { author: "tailored_up", text: "This needs to be pinned. Posture is the free option nobody tries first." }
+      ],
+      likes: 74
     }
   ];
 
@@ -3416,7 +3542,7 @@
       price: 79,
       sales: 340,
       rating: 4.7,
-      gradient: "linear-gradient(135deg,#8f7bff,#4b3f8f)",
+      gradient: "#2F5AFF",
       desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking."
     },
     {
@@ -3426,7 +3552,7 @@
       price: 39,
       sales: 512,
       rating: 4.8,
-      gradient: "linear-gradient(135deg,#d4af7a,#8a6b3d)",
+      gradient: "#FFC53D",
       desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type."
     },
     {
@@ -3436,7 +3562,7 @@
       price: 59,
       sales: 208,
       rating: 4.6,
-      gradient: "linear-gradient(135deg,#6bffb0,#1f7a52)",
+      gradient: "#C6F135",
       desc: "A 16-week compound-lift program built around deltoid, trap, and lat development for a stronger V-taper."
     },
     {
@@ -3446,8 +3572,28 @@
       price: 29,
       sales: 176,
       rating: 4.5,
-      gradient: "linear-gradient(135deg,#ff8a6b,#8a3d2f)",
+      gradient: "#FF8A3D",
       desc: "Fit, fragrance, grooming routines, and color analysis basics — the fundamentals most guys skip."
+    },
+    {
+      id: 5,
+      title: "Sleepmaxxing & Recovery: The Foundation Nobody Sells",
+      creator: "restedandready",
+      price: 25,
+      sales: 94,
+      rating: 4.9,
+      gradient: "#2EC4B6",
+      desc: "A no-fluff sleep and stress-management protocol — the cheapest, highest-leverage habit most routines skip entirely."
+    },
+    {
+      id: 6,
+      title: "Posture Reset: Fixing Your Profile Without Surgery",
+      creator: "orthobound",
+      price: 45,
+      sales: 131,
+      rating: 4.7,
+      gradient: "#FF4B3E",
+      desc: "A 10-week posture and mobility program addressing forward head posture — often mistaken for weak jaw structure."
     }
   ];
 
@@ -3522,13 +3668,7 @@
   }
   document.getElementById("sellCoursePrice").addEventListener("input", updateSellCourseBreakdown);
 
-  const courseGradients = [
-    "linear-gradient(135deg,#8f7bff,#4b3f8f)",
-    "linear-gradient(135deg,#d4af7a,#8a6b3d)",
-    "linear-gradient(135deg,#6bffb0,#1f7a52)",
-    "linear-gradient(135deg,#ff8a6b,#8a3d2f)",
-    "linear-gradient(135deg,#ff6b9d,#8a2f5c)"
-  ];
+  const courseGradients = ["#2F5AFF", "#FFC53D", "#C6F135", "#FF8A3D", "#2EC4B6", "#FF4B3E"];
 
   document.getElementById("sellCourseSubmit").addEventListener("click", () => {
     const titleInput = document.getElementById("sellCourseTitle");
