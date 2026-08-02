@@ -25,6 +25,8 @@
     --extreme: #ff6b6b;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ad-banner-h: 40px;
+    --bottom-nav-h: 62px;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -56,10 +58,17 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    padding-top: calc(var(--safe-top) + 14px);
-    padding-bottom: calc(var(--safe-bottom) + 24px);
+    padding-top: calc(var(--safe-top) + var(--ad-banner-h) + 14px);
+    padding-bottom: calc(var(--safe-bottom) + var(--bottom-nav-h) + 24px);
     position: relative;
+    transition: padding-top 0.2s ease;
   }
+  #app.ads-removed { padding-top: calc(var(--safe-top) + 14px); }
+
+  .view-section { display: none; }
+  .view-section.active { display: block; }
+
+  .section-header { padding-bottom: 8px; }
 
   /* ---------- Header ---------- */
   header {
@@ -807,47 +816,604 @@
     color: var(--text-2);
     letter-spacing: 0.5px;
   }
+
+  .single-price {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 8px 0 18px;
+  }
+  .single-price span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+
+  /* ---------- Ad Banner ---------- */
+  .ad-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 150;
+    background: linear-gradient(90deg, #2a2340, #1c1626);
+    border-bottom: 1px solid rgba(143,123,255,0.25);
+    padding-top: var(--safe-top);
+    transition: transform 0.25s ease;
+  }
+  .ad-banner.hidden { display: none; }
+
+  .ad-banner-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+  }
+
+  .ad-banner-tag {
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    background: rgba(255,255,255,0.08);
+    padding: 2px 6px;
+    border-radius: 5px;
+  }
+
+  .ad-banner-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 11.5px;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ad-banner-remove {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--gold-bright);
+    background: rgba(212,175,122,0.12);
+    border: 1px solid rgba(212,175,122,0.3);
+    border-radius: 8px;
+    padding: 5px 9px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ---------- Bottom Nav ---------- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: rgba(11,10,16,0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--card-border);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .bottom-nav-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 6px 6px;
+  }
+
+  .nav-tab {
+    background: none;
+    border: none;
+    color: var(--text-2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .nav-tab.active { color: var(--gold-bright); }
+
+  /* ---------- Forum ---------- */
+  .forum-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 16px 12px;
+  }
+
+  .forum-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+  .forum-tabs::-webkit-scrollbar { display: none; }
+
+  .new-thread-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color: #1a1408;
+    border: none;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 9px 13px;
+    border-radius: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .thread-list {
+    padding: 4px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .thread-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px 15px;
+    cursor: pointer;
+    animation: fadeIn 0.35s ease both;
+  }
+
+  .thread-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .thread-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-0);
+    line-height: 1.35;
+  }
+
+  .thread-tag {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    color: var(--accent);
+    background: rgba(143,123,255,0.12);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .thread-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-2);
+  }
+  .thread-meta .author { color: var(--gold-bright); font-weight: 700; }
+
+  .thread-preview {
+    font-size: 12.5px;
+    color: var(--text-1);
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .thread-stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-2);
+  }
+
+  .thread-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+  }
+  .thread-card.open .thread-body {
+    max-height: 1200px;
+    opacity: 1;
+    margin-top: 12px;
+  }
+
+  .reply-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .reply-item { font-size: 12.5px; line-height: 1.5; }
+  .reply-author { color: var(--gold-bright); font-weight: 700; margin-right: 6px; }
+  .reply-text { color: var(--text-1); }
+
+  .reply-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .reply-input-row input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-1);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--text-0);
+    font-size: 12.5px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .reply-send-btn {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 15px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* ---------- Form Elements (modals) ---------- */
+  .form-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    background: var(--bg-1);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text-0);
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-select { appearance: none; }
+
+  /* ---------- Courses ---------- */
+  .courses-toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 4px 16px 14px;
+  }
+
+  .sell-course-btn, .dashboard-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 11px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text-0);
+  }
+  .sell-course-btn {
+    border-color: rgba(212,175,122,0.3);
+    background: rgba(212,175,122,0.08);
+    color: var(--gold-bright);
+  }
+
+  .course-grid {
+    padding: 4px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .course-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    overflow: hidden;
+    animation: fadeIn 0.35s ease both;
+  }
+
+  .course-thumb {
+    height: 100px;
+    position: relative;
+  }
+
+  .course-thumb .course-price-tag {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 10px;
+  }
+
+  .course-body { padding: 14px 15px 15px; }
+  .course-title { font-size: 15px; font-weight: 700; color: var(--text-0); margin-bottom: 4px; }
+  .course-creator { font-size: 11.5px; color: var(--accent); margin-bottom: 8px; }
+  .course-desc { font-size: 12.5px; color: var(--text-1); line-height: 1.5; margin-bottom: 10px; }
+
+  .course-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .course-rating {
+    font-size: 11.5px;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .buy-course-btn {
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color: #1a1408;
+    border: none;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 9px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .revenue-breakdown {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+  .revenue-breakdown b { color: var(--easy); }
+
+  .dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-tile {
+    background: var(--bg-1);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 13px;
+  }
+  .stat-tile-label {
+    font-size: 10px;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+  .stat-tile-value {
+    font-size: 20px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .stat-tile-value.gold { color: var(--gold-bright); }
+  .stat-tile-value.green { color: var(--easy); }
+
+  .dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    padding: 10px 12px;
+    background: var(--bg-1);
+    border-radius: 10px;
+  }
+  .dashboard-row .name { color: var(--text-0); font-weight: 600; }
+  .dashboard-row .cut { color: var(--easy); font-weight: 700; }
+
+  /* ---------- Popup Ad ---------- */
+  .popup-ad-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4,4,7,0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 220;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    padding: 20px;
+  }
+  .popup-ad-overlay.show { opacity: 1; pointer-events: auto; }
+
+  .popup-ad-sheet {
+    width: 100%;
+    max-width: 340px;
+    background: linear-gradient(170deg, #17131f 0%, #100e16 100%);
+    border: 1px solid rgba(143,123,255,0.3);
+    border-radius: 22px;
+    padding: 22px 20px;
+    position: relative;
+    transform: scale(0.92);
+    transition: transform 0.25s ease;
+  }
+  .popup-ad-overlay.show .popup-ad-sheet { transform: scale(1); }
+
+  .popup-ad-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    background: rgba(255,255,255,0.08);
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+
+  .popup-ad-img {
+    height: 120px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #8f7bff, #4b3f8f);
+    margin-bottom: 14px;
+  }
+
+  .popup-ad-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .popup-ad-sub { font-size: 12.5px; color: var(--text-1); line-height: 1.5; margin-bottom: 16px; }
+
+  .popup-ad-skip {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--text-2);
+    font-size: 11px;
+    margin-top: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
 </style>
 </head>
 <body>
+
+<div class="ad-banner" id="adBanner">
+  <div class="ad-banner-inner">
+    <span class="ad-banner-tag">Ad</span>
+    <span class="ad-banner-text" id="adBannerText">Sponsored — GlowLab Skincare: 20% off your first order</span>
+    <button class="ad-banner-remove" id="adBannerRemove">Remove Ads</button>
+  </div>
+</div>
+
 <div id="app">
 
-  <header>
-    <div class="eyebrow">Est. Aesthetics Codex</div>
-    <h1 class="title">LOOKSMAXXING<br>DICTIONARY</h1>
-    <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
-    <div class="premium-pill-wrap">
-      <div class="premium-pill" id="premiumPill"></div>
-    </div>
-  </header>
+  <div id="view-dictionary" class="view-section active">
 
-  <div class="totd-wrap">
-    <div class="totd-card" id="totdCard">
-      <div class="totd-label"><span class="dot"></span>Term of the Day</div>
-      <div class="totd-term" id="totdTerm">—</div>
-      <div class="totd-def" id="totdDef">—</div>
-      <div class="totd-meta">
-        <div class="totd-hint">Tap to expand</div>
-        <span class="chev">▾</span>
+    <header>
+      <div class="eyebrow">Est. Aesthetics Codex</div>
+      <h1 class="title">LOOKSMAXXING<br>DICTIONARY</h1>
+      <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
+      <div class="premium-pill-wrap">
+        <div class="premium-pill" id="premiumPill"></div>
+      </div>
+    </header>
+
+    <div class="totd-wrap">
+      <div class="totd-card" id="totdCard">
+        <div class="totd-label"><span class="dot"></span>Term of the Day</div>
+        <div class="totd-term" id="totdTerm">—</div>
+        <div class="totd-def" id="totdDef">—</div>
+        <div class="totd-meta">
+          <div class="totd-hint">Tap to expand</div>
+          <span class="chev">▾</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="search-wrap">
-    <div class="search-box">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="searchInput" placeholder="Search terms, e.g. mewing..." autocomplete="off" autocorrect="off" spellcheck="false">
-      <button class="clear-btn" id="clearBtn" aria-label="Clear search">✕</button>
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search terms, e.g. mewing..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="clear-btn" id="clearBtn" aria-label="Clear search">✕</button>
+      </div>
+      <div class="result-count" id="resultCount"></div>
     </div>
-    <div class="result-count" id="resultCount"></div>
+
+    <div class="index-bar" id="indexBar"></div>
+
+    <div class="term-list" id="termList"></div>
+
+    <footer id="footerText">Definitions for educational reference only</footer>
   </div>
 
-  <div class="index-bar" id="indexBar"></div>
+  <div id="view-forum" class="view-section">
+    <header class="section-header">
+      <div class="eyebrow">Community</div>
+      <h1 class="title" style="font-size:24px;">FORUM</h1>
+      <div class="subtitle">Progress logs, routines &amp; questions</div>
+    </header>
 
-  <div class="term-list" id="termList"></div>
+    <div class="forum-toolbar">
+      <div class="forum-tabs" id="forumTabs"></div>
+      <button class="new-thread-btn" id="newThreadBtn">+ New Thread</button>
+    </div>
 
-  <footer id="footerText">Definitions for educational reference only</footer>
+    <div class="thread-list" id="threadList"></div>
+  </div>
+
+  <div id="view-courses" class="view-section">
+    <header class="section-header">
+      <div class="eyebrow">Marketplace</div>
+      <h1 class="title" style="font-size:24px;">COURSES</h1>
+      <div class="subtitle">Learn from creators in the community</div>
+    </header>
+
+    <div class="courses-toolbar">
+      <button class="sell-course-btn" id="sellCourseBtn">🎓 Sell Your Course</button>
+      <button class="dashboard-btn" id="dashboardBtn">📊 Creator Dashboard</button>
+    </div>
+
+    <div class="course-grid" id="courseGrid"></div>
+  </div>
+
 </div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="nav-tab active" data-view="dictionary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <span>Dictionary</span>
+    </button>
+    <button class="nav-tab" data-view="forum">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span>Forum</span>
+    </button>
+    <button class="nav-tab" data-view="courses">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>
+      <span>Courses</span>
+    </button>
+  </div>
+</nav>
 
 <div class="paywall-overlay" id="paywallOverlay">
   <div class="paywall-sheet">
@@ -875,6 +1441,80 @@
     </div>
     <button class="cta-btn" id="unlockCta">Unlock All Techniques</button>
     <div class="paywall-disclaimer">Demo preview — no payment is collected. Unlocking stores a local preference on this device only.</div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="removeAdsOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="removeAdsClose" aria-label="Close">✕</button>
+    <div class="paywall-crown" style="background:linear-gradient(135deg,#cfc6ff,#8f7bff);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17131f" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </div>
+    <div class="paywall-title">Remove Ads</div>
+    <div class="paywall-sub">One-time payment. No more top banner, no more sponsored popups — ever, on this device.</div>
+    <div class="paywall-features">
+      <div class="paywall-feature"><span class="check">✓</span>Top banner ad removed permanently</div>
+      <div class="paywall-feature"><span class="check">✓</span>Sponsored popups disabled</div>
+      <div class="paywall-feature"><span class="check">✓</span>Dictionary &amp; forum stay free either way</div>
+    </div>
+    <div class="single-price">$5.00 <span>one-time</span></div>
+    <button class="cta-btn" id="removeAdsCta">Remove Ads Now — $5.00</button>
+    <div class="paywall-disclaimer">Demo preview — no payment is collected. Unlocking stores a local preference on this device only.</div>
+  </div>
+</div>
+
+<div class="popup-ad-overlay" id="popupAdOverlay">
+  <div class="popup-ad-sheet">
+    <button class="paywall-close" id="popupAdClose" aria-label="Close">✕</button>
+    <div class="popup-ad-tag">Sponsored</div>
+    <div class="popup-ad-img"></div>
+    <div class="popup-ad-title">JawGear Pro Trainer — 30% Off Today</div>
+    <div class="popup-ad-sub">Community-favorite jaw resistance trainer. Rated 4.6★ by 12,000+ users.</div>
+    <button class="cta-btn" id="popupAdCta">Shop Now (Demo)</button>
+    <button class="popup-ad-skip" id="removeAdsFromPopup">Tired of this? Remove ads for $5 →</button>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="newThreadOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="newThreadClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">New Thread</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Share a routine, ask a question, or post a progress update.</div>
+    <label class="form-label">Title</label>
+    <input type="text" class="form-input" id="newThreadTitle" placeholder="e.g. 6 weeks of consistent posture training">
+    <label class="form-label">Category</label>
+    <select class="form-select" id="newThreadCategory"></select>
+    <label class="form-label">Post</label>
+    <textarea class="form-textarea" id="newThreadBody" placeholder="Share the details..."></textarea>
+    <button class="cta-btn" id="newThreadSubmit">Post Thread</button>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="sellCourseOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="sellCourseClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">List Your Course</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Sell what you know. We handle listing and checkout — you keep the majority of every sale.</div>
+    <label class="form-label">Course Title</label>
+    <input type="text" class="form-input" id="sellCourseTitle" placeholder="e.g. Skincare Fundamentals">
+    <label class="form-label">Price (USD)</label>
+    <input type="number" class="form-input" id="sellCoursePrice" placeholder="49" min="1" step="1">
+    <label class="form-label">Description</label>
+    <textarea class="form-textarea" id="sellCourseDesc" placeholder="What will students learn?"></textarea>
+    <div class="revenue-breakdown" id="sellCourseBreakdown">Enter a price to see your payout breakdown.</div>
+    <button class="cta-btn" id="sellCourseSubmit" style="margin-top:14px;">List Course</button>
+    <div class="paywall-disclaimer">Demo preview — listing is saved locally on this device only. No real payment processing is connected.</div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="dashboardOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="dashboardClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">Creator Dashboard</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Demo view of platform-wide course performance.</div>
+    <div class="dashboard-stats" id="dashboardStats"></div>
+    <div class="dashboard-list" id="dashboardList"></div>
+    <div class="paywall-disclaimer">Demo figures based on locally stored course data — not real transactions.</div>
   </div>
 </div>
 
@@ -2482,12 +3122,497 @@
     renderList();
   });
 
+  /* ---------------- Tab Navigation ---------------- */
+  const viewSections = {
+    dictionary: document.getElementById("view-dictionary"),
+    forum: document.getElementById("view-forum"),
+    courses: document.getElementById("view-courses")
+  };
+  const navTabs = document.querySelectorAll(".nav-tab");
+
+  function switchView(view) {
+    Object.keys(viewSections).forEach(key => {
+      viewSections[key].classList.toggle("active", key === view);
+    });
+    navTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.view === view));
+    window.scrollTo(0, 0);
+    if (view === "forum") maybeShowPopupAd();
+  }
+
+  navTabs.forEach(tab => {
+    tab.addEventListener("click", () => switchView(tab.dataset.view));
+  });
+
+  /* ---------------- Ads ---------------- */
+  let adsRemoved = localStorage.getItem("looksmax_noads") === "true";
+
+  const adEls = {
+    banner: document.getElementById("adBanner"),
+    removeBtn: document.getElementById("adBannerRemove"),
+    removeAdsOverlay: document.getElementById("removeAdsOverlay"),
+    removeAdsClose: document.getElementById("removeAdsClose"),
+    removeAdsCta: document.getElementById("removeAdsCta"),
+    popupOverlay: document.getElementById("popupAdOverlay"),
+    popupClose: document.getElementById("popupAdClose"),
+    popupCta: document.getElementById("popupAdCta"),
+    removeAdsFromPopup: document.getElementById("removeAdsFromPopup"),
+    appEl: document.getElementById("app")
+  };
+
+  function applyAdState() {
+    if (adsRemoved) {
+      adEls.banner.classList.add("hidden");
+      adEls.appEl.classList.add("ads-removed");
+    } else {
+      adEls.banner.classList.remove("hidden");
+      adEls.appEl.classList.remove("ads-removed");
+    }
+  }
+
+  function openRemoveAds() { adEls.removeAdsOverlay.classList.add("show"); }
+  function closeRemoveAds() { adEls.removeAdsOverlay.classList.remove("show"); }
+
+  function unlockRemoveAds() {
+    adsRemoved = true;
+    localStorage.setItem("looksmax_noads", "true");
+    applyAdState();
+    closeRemoveAds();
+    closePopupAd();
+    showToast("Ads removed on this device.");
+  }
+
+  adEls.removeBtn.addEventListener("click", openRemoveAds);
+  adEls.removeAdsClose.addEventListener("click", closeRemoveAds);
+  adEls.removeAdsOverlay.addEventListener("click", (e) => { if (e.target === adEls.removeAdsOverlay) closeRemoveAds(); });
+  adEls.removeAdsCta.addEventListener("click", unlockRemoveAds);
+
+  function openPopupAd() { if (!adsRemoved) adEls.popupOverlay.classList.add("show"); }
+  function closePopupAd() { adEls.popupOverlay.classList.remove("show"); }
+
+  adEls.popupClose.addEventListener("click", closePopupAd);
+  adEls.popupOverlay.addEventListener("click", (e) => { if (e.target === adEls.popupOverlay) closePopupAd(); });
+  adEls.popupCta.addEventListener("click", () => { showToast("Demo: no real purchase made."); closePopupAd(); });
+  adEls.removeAdsFromPopup.addEventListener("click", () => { closePopupAd(); openRemoveAds(); });
+
+  let popupShownThisSession = false;
+  function maybeShowPopupAd() {
+    if (adsRemoved || popupShownThisSession) return;
+    popupShownThisSession = true;
+    setTimeout(openPopupAd, 1200);
+  }
+
+  applyAdState();
+
+  /* ---------------- Forum ---------------- */
+  const FORUM_CATEGORIES = ["All", "Skincare", "Mewing & Jaw", "Fitness", "Grooming", "Progress Logs", "Questions"];
+  let activeForumCategory = "All";
+  let openThreadId = null;
+
+  const DEFAULT_THREADS = [
+    {
+      id: 1,
+      title: "3 months of consistent SPF + retinoid — texture finally changed",
+      category: "Skincare",
+      author: "clearskinjourney",
+      body: "Started retinoid 3x/week and daily SPF back in May. Texture and a few dark spots have noticeably faded. Sticking with it, will update at 6 months.",
+      replies: [
+        { author: "duneshadow", text: "This is the way. Consistency beats any single 'miracle' product." },
+        { author: "glowpilled", text: "What retinoid concentration did you start at?" }
+      ],
+      likes: 42
+    },
+    {
+      id: 2,
+      title: "Mewing 8 months in — realistic update, no exaggeration",
+      category: "Mewing & Jaw",
+      author: "quietjawline",
+      body: "Posture feels natural now, no conscious effort needed. Can't say for sure if my jaw actually changed or if it's just better posture and less puffiness. Managing expectations here.",
+      replies: [
+        { author: "orthobound", text: "Appreciate the honest update, most posts here overclaim." }
+      ],
+      likes: 67
+    },
+    {
+      id: 3,
+      title: "Best beginner-friendly compound lift program?",
+      category: "Fitness",
+      author: "newframe22",
+      body: "Trying to build a base V-taper. Currently doing a basic PPL split. Anyone have a program recommendation for someone new to structured lifting?",
+      replies: [
+        { author: "barbellbasics", text: "StrongLifts 5x5 or Starting Strength, both are solid for a true beginner." },
+        { author: "duneshadow", text: "Just be consistent for 6 months before switching programs, that matters more than which one you pick." }
+      ],
+      likes: 29
+    },
+    {
+      id: 4,
+      title: "Sunscreen recs for oily, acne-prone skin?",
+      category: "Skincare",
+      author: "matte_or_bust",
+      body: "Every sunscreen I try breaks me out or leaves a white cast. Looking for something lightweight that actually works under makeup.",
+      replies: [],
+      likes: 15
+    },
+    {
+      id: 5,
+      title: "Grooming routine that actually moved the needle for me",
+      category: "Grooming",
+      author: "tailored_up",
+      body: "Got clothes actually tailored, switched to one signature fragrance instead of five random ones, and started getting consistent haircuts every 3 weeks. Small stuff but it compounds.",
+      replies: [
+        { author: "glowpilled", text: "Tailoring is so underrated, more impactful than most people think." }
+      ],
+      likes: 51
+    },
+    {
+      id: 6,
+      title: "Is buccal fat removal worth it for a mild case, or overkill?",
+      category: "Questions",
+      author: "midface_qs",
+      body: "Considering it but my cheeks aren't that full. Has anyone regretted going a bit too far with it?",
+      replies: [
+        { author: "orthobound", text: "Talk to multiple surgeons before deciding — it's permanent and easy to overdo." }
+      ],
+      likes: 22
+    }
+  ];
+
+  let threads = loadThreads();
+
+  function loadThreads() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_threads"));
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(DEFAULT_THREADS));
+  }
+
+  function saveThreads() {
+    localStorage.setItem("looksmax_threads", JSON.stringify(threads));
+  }
+
+  function renderForumTabs() {
+    const wrap = document.getElementById("forumTabs");
+    wrap.innerHTML = "";
+    FORUM_CATEGORIES.forEach(cat => {
+      const chip = document.createElement("div");
+      chip.className = "index-chip" + (cat === activeForumCategory ? " active" : "");
+      chip.textContent = cat;
+      chip.addEventListener("click", () => {
+        activeForumCategory = cat;
+        renderForumTabs();
+        renderThreads();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  function timeAgoLabel(id) {
+    const hours = (id * 7) % 72 + 1;
+    return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+  }
+
+  function renderThreads() {
+    const list = document.getElementById("threadList");
+    const filtered = activeForumCategory === "All" ? threads : threads.filter(t => t.category === activeForumCategory);
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><div class="glyph">💬</div><p>No threads in this category yet.<br>Start the first one.</p></div>`;
+      return;
+    }
+    list.innerHTML = "";
+    filtered.slice().reverse().forEach(t => {
+      const card = document.createElement("div");
+      card.className = "thread-card" + (openThreadId === t.id ? " open" : "");
+      const repliesHtml = t.replies.length
+        ? t.replies.map(r => `<div class="reply-item"><span class="reply-author">${escapeHtml(r.author)}</span><span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
+        : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
+      card.innerHTML = `
+        <div class="thread-top">
+          <div class="thread-title">${escapeHtml(t.title)}</div>
+          <span class="thread-tag">${escapeHtml(t.category)}</span>
+        </div>
+        <div class="thread-meta">
+          <span class="author">@${escapeHtml(t.author)}</span>
+          <span>·</span>
+          <span>${timeAgoLabel(t.id)}</span>
+        </div>
+        <div class="thread-stats">
+          <span>💬 ${t.replies.length} replies</span>
+          <span>❤️ ${t.likes}</span>
+        </div>
+        <div class="thread-body">
+          <div class="thread-preview">${escapeHtml(t.body)}</div>
+          <div class="reply-list">${repliesHtml}</div>
+          <div class="reply-input-row">
+            <input type="text" placeholder="Write a reply..." class="reply-input">
+            <button class="reply-send-btn">Post</button>
+          </div>
+        </div>
+      `;
+      card.querySelector(".thread-top").addEventListener("click", () => {
+        openThreadId = (openThreadId === t.id) ? null : t.id;
+        renderThreads();
+      });
+      const input = card.querySelector(".reply-input");
+      const sendBtn = card.querySelector(".reply-send-btn");
+      const postReply = () => {
+        const val = input.value.trim();
+        if (!val) return;
+        t.replies.push({ author: "you", text: val });
+        saveThreads();
+        renderThreads();
+      };
+      sendBtn.addEventListener("click", (e) => { e.stopPropagation(); postReply(); });
+      input.addEventListener("click", (e) => e.stopPropagation());
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.stopPropagation(); postReply(); } });
+      list.appendChild(card);
+    });
+  }
+
+  document.getElementById("newThreadBtn").addEventListener("click", () => openNewThreadModal());
+
+  /* ---------------- New Thread Modal ---------------- */
+  const newThreadOverlay = document.getElementById("newThreadOverlay");
+  const newThreadCategorySelect = document.getElementById("newThreadCategory");
+  FORUM_CATEGORIES.filter(c => c !== "All").forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    newThreadCategorySelect.appendChild(opt);
+  });
+
+  function openNewThreadModal() { newThreadOverlay.classList.add("show"); }
+  function closeNewThreadModal() { newThreadOverlay.classList.remove("show"); }
+  document.getElementById("newThreadClose").addEventListener("click", closeNewThreadModal);
+  newThreadOverlay.addEventListener("click", (e) => { if (e.target === newThreadOverlay) closeNewThreadModal(); });
+
+  document.getElementById("newThreadSubmit").addEventListener("click", () => {
+    const titleInput = document.getElementById("newThreadTitle");
+    const bodyInput = document.getElementById("newThreadBody");
+    const title = titleInput.value.trim();
+    const category = newThreadCategorySelect.value;
+    const body = bodyInput.value.trim();
+    if (!title || !body) { showToast("Add a title and a post before submitting."); return; }
+    const newId = Math.max(0, ...threads.map(t => t.id)) + 1;
+    threads.push({ id: newId, title, category, author: "you", body, replies: [], likes: 0 });
+    saveThreads();
+    titleInput.value = "";
+    bodyInput.value = "";
+    closeNewThreadModal();
+    activeForumCategory = "All";
+    renderForumTabs();
+    renderThreads();
+    showToast("Thread posted.");
+  });
+
+  /* ---------------- Courses ---------------- */
+  const PLATFORM_CUT_PCT = 15;
+
+  const DEFAULT_COURSES = [
+    {
+      id: 1,
+      title: "The Complete Mewing & Orthotropics Blueprint",
+      creator: "dr.facegains",
+      price: 79,
+      sales: 340,
+      rating: 4.7,
+      gradient: "linear-gradient(135deg,#8f7bff,#4b3f8f)",
+      desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking."
+    },
+    {
+      id: 2,
+      title: "Skin Science 101: Building a Routine That Works",
+      creator: "derma.simplified",
+      price: 39,
+      sales: 512,
+      rating: 4.8,
+      gradient: "linear-gradient(135deg,#d4af7a,#8a6b3d)",
+      desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type."
+    },
+    {
+      id: 3,
+      title: "Frame Foundations: Training for a Broader Silhouette",
+      creator: "coach.leanmax",
+      price: 59,
+      sales: 208,
+      rating: 4.6,
+      gradient: "linear-gradient(135deg,#6bffb0,#1f7a52)",
+      desc: "A 16-week compound-lift program built around deltoid, trap, and lat development for a stronger V-taper."
+    },
+    {
+      id: 4,
+      title: "Grooming & Style Fundamentals for Men",
+      creator: "tailored.by.max",
+      price: 29,
+      sales: 176,
+      rating: 4.5,
+      gradient: "linear-gradient(135deg,#ff8a6b,#8a3d2f)",
+      desc: "Fit, fragrance, grooming routines, and color analysis basics — the fundamentals most guys skip."
+    }
+  ];
+
+  let courses = loadCourses();
+
+  function loadCourses() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_courses"));
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(DEFAULT_COURSES));
+  }
+
+  function saveCourses() {
+    localStorage.setItem("looksmax_courses", JSON.stringify(courses));
+  }
+
+  function renderCourses() {
+    const grid = document.getElementById("courseGrid");
+    grid.innerHTML = "";
+    courses.slice().reverse().forEach(c => {
+      const yourCut = (c.price * (1 - PLATFORM_CUT_PCT / 100)).toFixed(2);
+      const platformCut = (c.price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
+      const card = document.createElement("div");
+      card.className = "course-card";
+      card.innerHTML = `
+        <div class="course-thumb" style="background:${c.gradient}">
+          <div class="course-price-tag">$${c.price}</div>
+        </div>
+        <div class="course-body">
+          <div class="course-title">${escapeHtml(c.title)}</div>
+          <div class="course-creator">by ${escapeHtml(c.creator)}</div>
+          <div class="course-desc">${escapeHtml(c.desc)}</div>
+          <div class="course-footer">
+            <div class="course-rating">⭐ ${c.rating.toFixed(1)} · ${c.sales} sold</div>
+            <button class="buy-course-btn">Enroll</button>
+          </div>
+          <div class="revenue-breakdown">Creator keeps <b>$${yourCut}</b> (${100 - PLATFORM_CUT_PCT}%) · Platform fee <b>$${platformCut}</b> (${PLATFORM_CUT_PCT}%)</div>
+        </div>
+      `;
+      card.querySelector(".buy-course-btn").addEventListener("click", () => {
+        showToast(`Demo: "${c.title}" enrollment simulated, no real charge.`);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById("sellCourseBtn").addEventListener("click", () => openSellCourseModal());
+  document.getElementById("dashboardBtn").addEventListener("click", () => openDashboardModal());
+
+  /* ---------------- Sell Course Modal ---------------- */
+  const sellCourseOverlay = document.getElementById("sellCourseOverlay");
+
+  function openSellCourseModal() {
+    sellCourseOverlay.classList.add("show");
+    updateSellCourseBreakdown();
+  }
+  function closeSellCourseModal() { sellCourseOverlay.classList.remove("show"); }
+  document.getElementById("sellCourseClose").addEventListener("click", closeSellCourseModal);
+  sellCourseOverlay.addEventListener("click", (e) => { if (e.target === sellCourseOverlay) closeSellCourseModal(); });
+
+  function updateSellCourseBreakdown() {
+    const price = parseFloat(document.getElementById("sellCoursePrice").value);
+    const el = document.getElementById("sellCourseBreakdown");
+    if (!price || price <= 0) {
+      el.innerHTML = "Enter a price to see your payout breakdown.";
+      return;
+    }
+    const yourCut = (price * (1 - PLATFORM_CUT_PCT / 100)).toFixed(2);
+    const platformCut = (price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
+    el.innerHTML = `At $${price.toFixed(2)}/sale: you keep <b>$${yourCut}</b> (${100 - PLATFORM_CUT_PCT}%) · platform fee <b>$${platformCut}</b> (${PLATFORM_CUT_PCT}%)`;
+  }
+  document.getElementById("sellCoursePrice").addEventListener("input", updateSellCourseBreakdown);
+
+  const courseGradients = [
+    "linear-gradient(135deg,#8f7bff,#4b3f8f)",
+    "linear-gradient(135deg,#d4af7a,#8a6b3d)",
+    "linear-gradient(135deg,#6bffb0,#1f7a52)",
+    "linear-gradient(135deg,#ff8a6b,#8a3d2f)",
+    "linear-gradient(135deg,#ff6b9d,#8a2f5c)"
+  ];
+
+  document.getElementById("sellCourseSubmit").addEventListener("click", () => {
+    const titleInput = document.getElementById("sellCourseTitle");
+    const priceInput = document.getElementById("sellCoursePrice");
+    const descInput = document.getElementById("sellCourseDesc");
+    const title = titleInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const desc = descInput.value.trim();
+    if (!title || !price || price <= 0 || !desc) { showToast("Fill in a title, price, and description."); return; }
+    const newId = Math.max(0, ...courses.map(c => c.id)) + 1;
+    courses.push({
+      id: newId,
+      title,
+      creator: "you",
+      price: Math.round(price),
+      sales: 0,
+      rating: 5.0,
+      gradient: courseGradients[newId % courseGradients.length],
+      desc
+    });
+    saveCourses();
+    titleInput.value = "";
+    priceInput.value = "";
+    descInput.value = "";
+    closeSellCourseModal();
+    renderCourses();
+    showToast("Course listed — it's live in the marketplace.");
+  });
+
+  /* ---------------- Creator Dashboard Modal ---------------- */
+  const dashboardOverlay = document.getElementById("dashboardOverlay");
+
+  function openDashboardModal() {
+    renderDashboard();
+    dashboardOverlay.classList.add("show");
+  }
+  function closeDashboardModal() { dashboardOverlay.classList.remove("show"); }
+  document.getElementById("dashboardClose").addEventListener("click", closeDashboardModal);
+  dashboardOverlay.addEventListener("click", (e) => { if (e.target === dashboardOverlay) closeDashboardModal(); });
+
+  function renderDashboard() {
+    const totalRevenue = courses.reduce((sum, c) => sum + c.price * c.sales, 0);
+    const platformTotal = totalRevenue * (PLATFORM_CUT_PCT / 100);
+    const creatorTotal = totalRevenue - platformTotal;
+
+    document.getElementById("dashboardStats").innerHTML = `
+      <div class="stat-tile">
+        <div class="stat-tile-label">Total Sales Volume</div>
+        <div class="stat-tile-value">$${totalRevenue.toLocaleString()}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-label">Platform Earnings (${PLATFORM_CUT_PCT}%)</div>
+        <div class="stat-tile-value gold">$${platformTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-label">Paid to Creators</div>
+        <div class="stat-tile-value green">$${creatorTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-label">Courses Listed</div>
+        <div class="stat-tile-value">${courses.length}</div>
+      </div>
+    `;
+
+    document.getElementById("dashboardList").innerHTML = courses
+      .slice()
+      .sort((a, b) => (b.price * b.sales) - (a.price * a.sales))
+      .map(c => {
+        const revenue = c.price * c.sales;
+        const cut = revenue * (PLATFORM_CUT_PCT / 100);
+        return `<div class="dashboard-row"><span class="name">${escapeHtml(c.title)}</span><span class="cut">$${cut.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>`;
+      })
+      .join("");
+  }
+
   /* ---------------- Init ---------------- */
   els.footerText.textContent = `${TERMS.length} terms & growing · Definitions always free`;
   updatePremiumPill();
   renderTotd();
   renderIndexBar();
   renderList();
+  renderForumTabs();
+  renderThreads();
+  renderCourses();
 })();
 </script>
 </body>
