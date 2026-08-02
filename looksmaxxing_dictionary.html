@@ -881,6 +881,16 @@
 
   /* ---------- Forum ---------- */
   /* ---------- Profile / Tiers ---------- */
+  .breadcrumb {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0 16px 10px;
+  }
+
   .profile-wrap { padding: 4px 16px 12px; }
 
   .profile-card {
@@ -1165,6 +1175,25 @@
     color: var(--ink-mute);
   }
   .thread-meta .author { color: var(--coral); font-weight: 800; }
+
+  .thread-last-activity {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--ink-mute);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+  .thread-last-activity .author { color: var(--coral); font-weight: 800; }
+
+  .tier-badge.staff {
+    background: #FFFFFF;
+    color: #0D0D0D;
+    border: 1.5px dashed #0D0D0D;
+  }
 
   .thread-preview { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
 
@@ -1536,6 +1565,8 @@
       <h1 class="title" style="font-size:24px;">FORUM</h1>
       <div class="subtitle">Progress logs, routines &amp; questions</div>
     </header>
+
+    <div class="breadcrumb" id="forumBreadcrumb">Forum Home / All Threads</div>
 
     <div class="profile-wrap">
       <div class="profile-card" id="profileCard"></div>
@@ -5767,6 +5798,16 @@
     return `<span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>`;
   }
 
+  const STAFF_MEMBERS = new Set(["orthobound", "derma.simplified"]);
+  function staffBadgeHtml(name) {
+    if (!STAFF_MEMBERS.has(name)) return "";
+    return `<span class="tier-badge staff">🛡 STAFF</span>`;
+  }
+
+  function lastActivityAuthor(t) {
+    return t.replies.length ? t.replies[t.replies.length - 1].author : null;
+  }
+
   function renderProfileCard() {
     const { threadCount, replyCount, score } = authorStats(username);
     const { current, next } = tierForScore(score);
@@ -5847,6 +5888,8 @@
       });
       wrap.appendChild(chip);
     });
+    document.getElementById("forumBreadcrumb").textContent =
+      `Forum Home / ${activeForumCategory === "All" ? "All Threads" : activeForumCategory}`;
   }
 
   function timeAgoLabel(id) {
@@ -6018,11 +6061,16 @@
           ${avatarHtml(t.author)}
           <span class="author">@${escapeHtml(t.author)}</span>
           ${tierBadgeHtml(t.author)}
+          ${staffBadgeHtml(t.author)}
           <span>·</span>
           <span>${timeAgoLabel(t.id)}</span>
           <span>·</span>
           <span>👁 ${formatViews(views)}</span>
         </div>
+        ${lastActivityAuthor(t) ? `
+        <div class="thread-last-activity">
+          ↳ Last reply: ${avatarHtml(lastActivityAuthor(t))}<span class="author">@${escapeHtml(lastActivityAuthor(t))}</span>
+        </div>` : ""}
         <div class="thread-stats">
           <span>💬 ${t.replies.length} replies</span>
           <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
