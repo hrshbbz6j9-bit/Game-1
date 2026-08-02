@@ -833,6 +833,88 @@
   .nav-tab.active { color: var(--lime); }
 
   /* ---------- Forum ---------- */
+  /* ---------- Profile / Tiers ---------- */
+  .profile-wrap { padding: 4px 16px 12px; }
+
+  .profile-card {
+    background: var(--card);
+    border: 3px solid var(--ink);
+    padding: 14px 15px;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .profile-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .profile-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .profile-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tier-badge {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border: 1.5px solid var(--ink);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .tier-badge.vip { background: var(--yellow); color: var(--ink); }
+
+  .edit-profile-btn {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    padding: 6px 11px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .edit-profile-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+
+  .profile-stats {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 2px dashed var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  .profile-progress-label {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .profile-progress-label b { color: var(--ink); }
+
   .forum-toolbar {
     display: flex;
     align-items: center;
@@ -933,6 +1015,7 @@
   .reply-list { display: flex; flex-direction: column; gap: 10px; }
   .reply-item { font-family: var(--font-body); font-size: 12.5px; line-height: 1.5; }
   .reply-author { font-family: var(--font-mono); color: var(--coral); font-weight: 800; margin-right: 6px; }
+  .reply-item .tier-badge { margin-right: 6px; }
   .reply-text { color: var(--ink-soft); }
 
   .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
@@ -1266,6 +1349,10 @@
       <div class="subtitle">Progress logs, routines &amp; questions</div>
     </header>
 
+    <div class="profile-wrap">
+      <div class="profile-card" id="profileCard"></div>
+    </div>
+
     <div class="forum-toolbar">
       <div class="forum-tabs" id="forumTabs"></div>
       <button class="new-thread-btn" id="newThreadBtn">+ New Thread</button>
@@ -1408,6 +1495,17 @@
     <div class="dashboard-stats" id="dashboardStats"></div>
     <div class="dashboard-list" id="dashboardList"></div>
     <div class="paywall-disclaimer">Demo figures based on locally stored course data — not real transactions.</div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="profileOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="profileClose" aria-label="Close">✕</button>
+    <div class="paywall-title" style="text-align:left;">Edit Profile</div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Your username shows on every thread and reply you post.</div>
+    <label class="form-label">Username</label>
+    <input type="text" class="form-input" id="profileUsernameInput" placeholder="e.g. jawline_journey" maxlength="24">
+    <button class="cta-btn" id="profileSave">Save Profile</button>
   </div>
 </div>
 
@@ -3374,6 +3472,141 @@
       difficulty: 1,
       definition: "Slang telling someone to step away from their screen and get outside — used as a lighthearted reset reminder when doomscrolling or online comparison starts affecting mood.",
       gear: "Community Glossary"
+    },
+    {
+      term: "Micellar Water",
+      category: "Skin",
+      difficulty: 1,
+      definition: "A gentle no-rinse cleansing water that lifts dirt, oil, and light makeup using suspended micelle molecules — a quick first cleanse step before a full face wash.",
+      gear: "Micellar Water"
+    },
+    {
+      term: "Occlusive vs Humectant",
+      category: "Skin",
+      difficulty: 2,
+      definition: "Humectants (like hyaluronic acid) draw water into skin, while occlusives (like petrolatum or squalane) seal that moisture in — an effective routine typically layers both rather than relying on one.",
+      gear: "Moisture-Sealing Duo"
+    },
+    {
+      term: "Patch Testing",
+      category: "Skin",
+      difficulty: 1,
+      definition: "Applying a small amount of a new product to a discreet area of skin for a few days before using it on the full face, to catch irritation or allergic reactions early.",
+      gear: "Patch Test Guide",
+      premium: true,
+      technique: "1) Apply a small amount to your inner forearm or behind the ear. 2) Wait 24-48 hours without washing the area. 3) Check for redness, itching, or bumps before applying to your face. 4) If clear, introduce the product slowly — a few times a week at first."
+    },
+    {
+      term: "Scalp Buildup",
+      category: "Hair",
+      difficulty: 1,
+      definition: "A layer of excess oil, dead skin, and product residue on the scalp that can weigh hair down and, left unaddressed, may interfere with healthy follicle function over time.",
+      gear: "Clarifying Shampoo"
+    },
+    {
+      term: "Hair Growth Cycle",
+      category: "Hair",
+      difficulty: 2,
+      definition: "Hair grows in phases — anagen (growth), catagen (transition), and telogen (shedding) — and understanding this cycle helps set realistic timelines for any hair-focused treatment to show results.",
+      gear: "Hair Growth Tracker"
+    },
+    {
+      term: "Bulking",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "A structured phase of eating in a calorie surplus alongside resistance training, aimed at maximizing muscle gain while accepting some accompanying fat gain.",
+      gear: "Bulking Meal Plan"
+    },
+    {
+      term: "Cutting",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "A structured phase of eating in a calorie deficit while maintaining training intensity, aimed at reducing body fat while preserving as much muscle as possible.",
+      gear: "Cutting Meal Plan"
+    },
+    {
+      term: "Training Split",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "How weekly workouts are organized by muscle group or movement pattern — push/pull/legs, upper/lower, full body — chosen based on available training frequency and recovery capacity.",
+      gear: "Training Split Guide"
+    },
+    {
+      term: "Rest-Pause Training",
+      category: "Body & Frame",
+      difficulty: 3,
+      definition: "A technique that extends a set past normal failure by taking short 10-20 second rests and squeezing out a few more reps, used to add intensity without adding more total sets.",
+      gear: "Rest-Pause Training Guide"
+    },
+    {
+      term: "Veneers vs Bonding",
+      category: "Dental & Orthodontic",
+      difficulty: 3,
+      definition: "Veneers are thin custom shells requiring enamel removal for a permanent result, while bonding uses composite resin directly on the tooth — faster, cheaper, and reversible, but less durable long-term.",
+      gear: "Consult a Cosmetic Dentist"
+    },
+    {
+      term: "Underbite Correction",
+      category: "Jaw & Chin",
+      difficulty: 4,
+      definition: "Treatment for a lower jaw that sits forward of the upper jaw, ranging from orthodontic appliances in growing patients to jaw surgery in fully developed adults.",
+      gear: "Consult an Orthodontist"
+    },
+    {
+      term: "Overbite Correction",
+      category: "Jaw & Chin",
+      difficulty: 3,
+      definition: "Treatment for an upper jaw or upper teeth that sit significantly forward of the lower ones, commonly addressed with braces, aligners, or in severe cases, jaw surgery.",
+      gear: "Consult an Orthodontist"
+    },
+    {
+      term: "Face Yoga Roller",
+      category: "Skin",
+      difficulty: 1,
+      definition: "A handheld massage tool used alongside facial yoga or massage routines to add light resistance and stimulate circulation across cheeks and jaw.",
+      gear: "Facial Massage Roller"
+    },
+    {
+      term: "Retinization",
+      category: "Skin",
+      difficulty: 2,
+      definition: "The adjustment period skin goes through when starting a retinoid, often involving temporary dryness, peeling, or sensitivity before the skin builds tolerance over several weeks.",
+      gear: "Retinoid Starter Kit"
+    },
+    {
+      term: "Rizz Maxxing",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Playful slang for deliberately practicing charisma, conversation skills, and social confidence — the charisma equivalent of looksmaxxing.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Slay",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang used to praise someone for looking or doing exceptionally well, as in 'that outfit slays' — casual, high-energy approval.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Ate (Slang)",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang meaning someone did something exceptionally well, as in 'you ate that skincare routine breakdown' — similar in spirit to 'slay' but often used about a specific effort or post.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Lock Tf In",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "An emphatic version of 'locked in,' used to tell yourself or someone else to drop distractions and commit fully to a goal, routine, or grind.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Rank (Forum)",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "A member's standing on a forum, usually earned through post count and activity — Newcomer, Regular, Veteran, Elite, Legend — displayed next to their username as a badge of tenure.",
+      gear: "Community Glossary"
     }
   ];
 
@@ -3697,7 +3930,10 @@
     });
     navTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.view === view));
     window.scrollTo(0, 0);
-    if (view === "forum") maybeShowPopupAd();
+    if (view === "forum") {
+      maybeShowPopupAd();
+      renderProfileCard();
+    }
   }
 
   navTabs.forEach(tab => {
@@ -3903,6 +4139,29 @@
         { author: "derma.simplified", text: "Cica first for pure redness/barrier issues, snail mucin is more of a hydration/repair layer on top." }
       ],
       likes: 27
+    },
+    {
+      id: 13,
+      title: "Rank system is actually motivating me to post more, ngl",
+      category: "Progress Logs",
+      author: "duneshadow",
+      body: "Didn't expect a little tier badge to be this effective but here we are. Locked in on posting weekly updates now instead of just lurking.",
+      replies: [
+        { author: "tailored_up", text: "Same, seeing the 'pts to next tier' thing is weirdly addictive in a good way." },
+        { author: "orthobound", text: "Gamification works, no shame in admitting it." }
+      ],
+      likes: 36
+    },
+    {
+      id: 14,
+      title: "Bulk vs cut first — genuine question for a skinny-fat starting point",
+      category: "Questions",
+      author: "newframe22",
+      body: "Around 15% body fat but not much muscle either. Everyone says something different. What actually made sense for people who started in a similar spot?",
+      replies: [
+        { author: "coach.leanmax", text: "At that body fat, a slow cut first usually reveals more of what you're actually working with before bulking." }
+      ],
+      likes: 24
     }
   ];
 
@@ -3919,6 +4178,97 @@
   function saveThreads() {
     localStorage.setItem("looksmax_threads", JSON.stringify(threads));
   }
+
+  /* ---------------- Username & Member Tiers ---------------- */
+  let username = localStorage.getItem("looksmax_username") || "you";
+
+  function saveUsername(name) {
+    username = name;
+    localStorage.setItem("looksmax_username", name);
+  }
+
+  const TIERS = [
+    { name: "Newcomer", min: 0, color: "#8A8572", fg: "#FFFFFF" },
+    { name: "Regular", min: 3, color: "#2F5AFF", fg: "#FFFFFF" },
+    { name: "Veteran", min: 8, color: "#2EC4B6", fg: "#14120F" },
+    { name: "Elite", min: 16, color: "#FF8A3D", fg: "#14120F" },
+    { name: "Legend", min: 30, color: "#E83D8A", fg: "#FFFFFF" }
+  ];
+
+  function authorStats(name) {
+    let threadCount = 0;
+    let replyCount = 0;
+    threads.forEach(t => {
+      if (t.author === name) threadCount++;
+      t.replies.forEach(r => { if (r.author === name) replyCount++; });
+    });
+    const score = threadCount * 3 + replyCount;
+    return { threadCount, replyCount, score };
+  }
+
+  function tierForScore(score) {
+    let current = TIERS[0];
+    for (const tier of TIERS) {
+      if (score >= tier.min) current = tier;
+    }
+    const idx = TIERS.indexOf(current);
+    const next = TIERS[idx + 1] || null;
+    return { current, next };
+  }
+
+  function tierBadgeHtml(name) {
+    const { score } = authorStats(name);
+    const { current } = tierForScore(score);
+    return `<span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>`;
+  }
+
+  function renderProfileCard() {
+    const { threadCount, replyCount, score } = authorStats(username);
+    const { current, next } = tierForScore(score);
+    const vipHtml = isPremium ? `<span class="tier-badge vip">👑 VIP</span>` : "";
+    const progressHtml = next
+      ? `<div class="profile-progress-label">${next.min - score} pts to <b>${next.name}</b></div>`
+      : `<div class="profile-progress-label">Max tier reached</div>`;
+    document.getElementById("profileCard").innerHTML = `
+      <div class="profile-top">
+        <div>
+          <div class="profile-name">@${escapeHtml(username)}</div>
+          <div class="profile-badges">
+            <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+            ${vipHtml}
+          </div>
+        </div>
+        <button class="edit-profile-btn" id="editProfileBtn">Edit</button>
+      </div>
+      <div class="profile-stats">
+        <span>${threadCount} thread${threadCount === 1 ? "" : "s"}</span>
+        <span>·</span>
+        <span>${replyCount} repl${replyCount === 1 ? "y" : "ies"}</span>
+        <span>·</span>
+        <span>${score} pts</span>
+      </div>
+      ${progressHtml}
+    `;
+    document.getElementById("editProfileBtn").addEventListener("click", openProfileModal);
+  }
+
+  const profileOverlay = document.getElementById("profileOverlay");
+  function openProfileModal() {
+    document.getElementById("profileUsernameInput").value = username;
+    profileOverlay.classList.add("show");
+  }
+  function closeProfileModal() { profileOverlay.classList.remove("show"); }
+  document.getElementById("profileClose").addEventListener("click", closeProfileModal);
+  profileOverlay.addEventListener("click", (e) => { if (e.target === profileOverlay) closeProfileModal(); });
+  document.getElementById("profileSave").addEventListener("click", () => {
+    const val = document.getElementById("profileUsernameInput").value.trim();
+    if (!val) { showToast("Enter a username first."); return; }
+    saveUsername(val);
+    closeProfileModal();
+    renderProfileCard();
+    renderThreads();
+    showToast("Profile updated.");
+  });
 
   function renderForumTabs() {
     const wrap = document.getElementById("forumTabs");
@@ -3967,7 +4317,7 @@
       const card = document.createElement("div");
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "");
       const repliesHtml = t.replies.length
-        ? t.replies.map(r => `<div class="reply-item"><span class="reply-author">${escapeHtml(r.author)}</span><span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
+        ? t.replies.map(r => `<div class="reply-item"><span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
       card.innerHTML = `
         <div class="thread-top">
@@ -3976,6 +4326,7 @@
         </div>
         <div class="thread-meta">
           <span class="author">@${escapeHtml(t.author)}</span>
+          ${tierBadgeHtml(t.author)}
           <span>·</span>
           <span>${timeAgoLabel(t.id)}</span>
         </div>
@@ -4001,9 +4352,10 @@
       const postReply = () => {
         const val = input.value.trim();
         if (!val) return;
-        t.replies.push({ author: "you", text: val });
+        t.replies.push({ author: username, text: val });
         saveThreads();
         renderThreads();
+        renderProfileCard();
       };
       sendBtn.addEventListener("click", (e) => { e.stopPropagation(); postReply(); });
       input.addEventListener("click", (e) => e.stopPropagation());
@@ -4037,7 +4389,7 @@
     const body = bodyInput.value.trim();
     if (!title || !body) { showToast("Add a title and a post before submitting."); return; }
     const newId = Math.max(0, ...threads.map(t => t.id)) + 1;
-    threads.push({ id: newId, title, category, author: "you", body, replies: [], likes: 0 });
+    threads.push({ id: newId, title, category, author: username, body, replies: [], likes: 0 });
     saveThreads();
     titleInput.value = "";
     bodyInput.value = "";
@@ -4045,6 +4397,7 @@
     activeForumCategory = "All";
     renderForumTabs();
     renderThreads();
+    renderProfileCard();
     showToast("Thread posted.");
   });
 
@@ -4151,6 +4504,26 @@
       rating: 4.6,
       gradient: "#FF8A3D",
       desc: "Toner, essence, serum, moisturizer — the correct order, timing, and product weights so multi-step routines actually absorb properly."
+    },
+    {
+      id: 11,
+      title: "Bulk/Cut Framework: Knowing Which Phase You Actually Need",
+      creator: "coach.leanmax",
+      price: 29,
+      sales: 172,
+      rating: 4.7,
+      gradient: "#E83D8A",
+      desc: "A decision framework for choosing between bulking and cutting based on your current body fat, training age, and goals — no more guessing."
+    },
+    {
+      id: 12,
+      title: "Charisma & Conversation: The Rizzmaxxing Course",
+      creator: "tailored.by.max",
+      price: 39,
+      sales: 201,
+      rating: 4.5,
+      gradient: "#2EC4B6",
+      desc: "Practical conversation frameworks, body language, and confidence habits — because presence matters as much as any single feature."
     }
   ];
 
@@ -4310,6 +4683,7 @@
   renderForumTabs();
   renderThreads();
   renderCourses();
+  renderProfileCard();
 })();
 </script>
 </body>
