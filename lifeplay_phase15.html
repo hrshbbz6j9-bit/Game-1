@@ -907,7 +907,7 @@ function prisonActivity(kind){
   if(kind==='escape'){
     state.escapePlan += rand(10,30);
     if(state.escapePlan>=100){
-      if(chance(40)){ state.inPrison=false; state.prisonYearsLeft=0; state.escapePlan=0; log(`You successfully escaped prison!`,'good'); checkAchievement('escaped'); }
+      if(chance(40)){ state.inPrison=false; state.prisonYearsLeft=0; state.escapePlan=0; state.flags.everEscaped=true; log(`You successfully escaped prison!`,'good'); checkAchievement('escaped'); }
       else { state.prisonYearsLeft+=5; state.escapePlan=0; log(`Your escape attempt failed. 5 years added to your sentence.`,'bad'); }
     } else {
       log(`You worked on your escape plan (${state.escapePlan}% ready).`,'neutral');
@@ -2364,6 +2364,22 @@ checkAchievementsPassive = function(){
   if(state.criminalRecord.length>0 && state.job && state.job.tier>=3) checkAchievement('reformed');
   if(netWorth()>=1000000 && state.job && state.job.tier<=2) checkAchievement('self_made');
 };
+
+/* ---------------------------------------------------------------------
+   EXPANDED CRIME LIST — the original pool was only 6 crimes.
+   --------------------------------------------------------------------- */
+CRIMES.push(
+  {name:'Burglary', risk:30, reward:[500,4000], sentence:2},
+  {name:'Carjacking', risk:40, reward:[1500,6000], sentence:3},
+  {name:'Cybercrime', risk:38, reward:[2000,25000], sentence:4},
+  {name:'Arson', risk:50, reward:[500,5000], sentence:6},
+  {name:'Bank Heist', risk:60, reward:[10000,80000], sentence:8},
+  {name:'Extortion', risk:35, reward:[1000,10000], sentence:3},
+  {name:'Counterfeiting', risk:42, reward:[2000,15000], sentence:4},
+  {name:'Money Laundering', risk:33, reward:[3000,20000], sentence:5},
+  {name:'Kidnapping', risk:58, reward:[5000,30000], sentence:10},
+  {name:'Smuggling', risk:37, reward:[2000,12000], sentence:3}
+);
 </script>
 </body>
 </html>
