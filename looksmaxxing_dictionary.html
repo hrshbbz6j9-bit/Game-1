@@ -1479,6 +1479,14 @@
       <div class="profile-card" id="profileCard"></div>
     </div>
 
+    <div class="search-wrap" style="position:static;">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="forumSearchInput" placeholder="Search threads..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="clear-btn" id="forumClearBtn" aria-label="Clear search">✕</button>
+      </div>
+    </div>
+
     <div class="forum-toolbar">
       <div class="forum-tabs" id="forumTabs"></div>
       <button class="new-thread-btn" id="newThreadBtn">+ New Thread</button>
@@ -4388,6 +4396,363 @@
       difficulty: 1,
       definition: "Slang for a quick self-assessment of how one's skin, energy, or overall appearance is looking that day — casual, not a formal rating.",
       gear: "Community Glossary"
+    },
+    {
+      term: "Rosacea Management",
+      category: "Skin",
+      difficulty: 2,
+      definition: "A chronic condition causing facial redness and visible blood vessels, typically managed with gentle skincare, trigger avoidance (sun, heat, spicy food), and prescription treatments from a dermatologist.",
+      gear: "Consult a Dermatologist"
+    },
+    {
+      term: "Eczema Care",
+      category: "Skin",
+      difficulty: 2,
+      definition: "Managing atopic dermatitis flare-ups with fragrance-free moisturizers, avoiding known irritants, and using prescribed topical treatments during active flares.",
+      gear: "Consult a Dermatologist"
+    },
+    {
+      term: "Psoriasis Basics",
+      category: "Skin",
+      difficulty: 2,
+      definition: "An autoimmune condition causing scaly, raised patches of skin, managed long-term through a dermatologist with topical, light-based, or systemic treatments depending on severity.",
+      gear: "Consult a Dermatologist"
+    },
+    {
+      term: "Blackhead Extraction",
+      category: "Skin",
+      difficulty: 2,
+      definition: "Removing oxidized, clogged pores using gentle pressure or a comedone extractor tool, ideally done on softened skin to minimize irritation and scarring risk.",
+      gear: "Comedone Extractor Tool"
+    },
+    {
+      term: "Whitehead Treatment",
+      category: "Skin",
+      difficulty: 1,
+      definition: "Treating closed, clogged pores with salicylic acid or benzoyl peroxide to help clear them from the surface rather than manually extracting, which carries higher scarring risk.",
+      gear: "Salicylic Acid Spot Treatment"
+    },
+    {
+      term: "Milia Removal",
+      category: "Skin",
+      difficulty: 3,
+      definition: "Professional extraction of milia — small, hard white bumps caused by trapped keratin beneath the skin — typically requiring a sterile needle technique rather than home extraction.",
+      gear: "Consult a Licensed Esthetician"
+    },
+    {
+      term: "Keratosis Pilaris",
+      category: "Skin",
+      difficulty: 2,
+      definition: "A common condition causing small, rough bumps, often on the arms or thighs, from excess keratin around hair follicles — managed with gentle exfoliation and consistent moisturizing rather than a permanent cure.",
+      gear: "AHA Body Lotion"
+    },
+    {
+      term: "Hair Vitamins",
+      category: "Hair",
+      difficulty: 1,
+      definition: "Multivitamin supplements marketed for hair growth, generally most effective for people with an actual nutrient deficiency rather than as a universal growth booster.",
+      gear: "Hair Growth Vitamins"
+    },
+    {
+      term: "Scalp pH Balance",
+      category: "Hair",
+      difficulty: 2,
+      definition: "Maintaining the scalp's naturally slightly acidic pH through gentle, balanced cleansers, since overly alkaline products can disrupt the scalp barrier and contribute to irritation.",
+      gear: "pH-Balanced Shampoo"
+    },
+    {
+      term: "Cold Water Rinse",
+      category: "Hair",
+      difficulty: 1,
+      definition: "Finishing a hair wash with cool water to help smooth the hair cuticle, which can add shine and reduce frizz compared to rinsing with hot water alone.",
+      gear: "Shower Filter"
+    },
+    {
+      term: "Silicone-Free Shampoo",
+      category: "Hair",
+      difficulty: 1,
+      definition: "Shampoo formulated without silicones, which some find prevents product buildup and keeps hair feeling lighter, especially for finer hair types.",
+      gear: "Silicone-Free Shampoo"
+    },
+    {
+      term: "Hair Bleaching Damage",
+      category: "Hair",
+      difficulty: 3,
+      definition: "Structural weakening of the hair shaft caused by lightening treatments, managed with protein treatments, deep conditioning, and spacing out further chemical services.",
+      gear: "Bond-Repair Hair Treatment"
+    },
+    {
+      term: "Bench Press Form",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Proper setup for the bench press — retracted shoulder blades, stable foot position, controlled bar path — which protects the shoulders and improves force output more than raw effort alone.",
+      gear: "Bench Press Form Guide"
+    },
+    {
+      term: "Squat Depth",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "How low a squat descends relative to parallel, which affects which muscles are emphasized and should be matched to individual mobility rather than forced to an arbitrary standard.",
+      gear: "Squat Mobility Guide"
+    },
+    {
+      term: "Deadlift Lockout",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Fully standing upright with hips extended at the top of a deadlift, a detail often rushed that matters for both safety and getting credit for a complete rep.",
+      gear: "Deadlift Form Guide"
+    },
+    {
+      term: "Overhead Press Technique",
+      category: "Body & Frame",
+      difficulty: 2,
+      definition: "Pressing a weight directly overhead with a stable core and controlled bar path, a key compound movement for shoulder size and pressing strength.",
+      gear: "Overhead Press Program"
+    },
+    {
+      term: "Isolation Exercise",
+      category: "Body & Frame",
+      difficulty: 1,
+      definition: "A movement that targets a single muscle group across one joint, like a bicep curl, used to add focused volume beyond what compound lifts provide.",
+      gear: "Isolation Exercise Guide"
+    },
+    {
+      term: "Compound vs Isolation",
+      category: "Body & Frame",
+      difficulty: 1,
+      definition: "Compound lifts work multiple joints and muscle groups at once and build the base of most programs, while isolation exercises fine-tune specific muscles on top of that base.",
+      gear: "Training Split Guide"
+    },
+    {
+      term: "Warm-Up Sets",
+      category: "Body & Frame",
+      difficulty: 1,
+      definition: "Progressively heavier lighter-weight sets performed before working sets to prepare joints and the nervous system, reducing injury risk and improving performance on the actual working weight.",
+      gear: "Warm-Up Protocol Guide"
+    },
+    {
+      term: "Cool Down Stretching",
+      category: "Body & Frame",
+      difficulty: 1,
+      definition: "Light stretching performed after a workout to gradually lower heart rate and maintain flexibility in the muscles that were just trained.",
+      gear: "Post-Workout Stretch Routine"
+    },
+    {
+      term: "Electrolyte Drink",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "A beverage formulated with sodium, potassium, and other minerals to replace what's lost through sweat during intense or prolonged training sessions.",
+      gear: "Electrolyte Drink Mix"
+    },
+    {
+      term: "Pre-Workout Supplement",
+      category: "Nutrition & Recovery",
+      difficulty: 2,
+      definition: "A caffeine-based supplement taken before training to boost energy and focus, best cycled periodically to avoid building excessive tolerance.",
+      gear: "Pre-Workout Supplement"
+    },
+    {
+      term: "BCAA",
+      category: "Nutrition & Recovery",
+      difficulty: 2,
+      definition: "Branched-Chain Amino Acids, once popular as a standalone supplement, now considered largely unnecessary for anyone already eating adequate total daily protein.",
+      gear: "Consult a Nutritionist"
+    },
+    {
+      term: "Glutamine",
+      category: "Nutrition & Recovery",
+      difficulty: 2,
+      definition: "An amino acid supplement marketed for recovery and gut health, though evidence for meaningful benefit in well-fed, healthy individuals is limited.",
+      gear: "Consult a Nutritionist"
+    },
+    {
+      term: "Collagen Peptides",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "An oral supplement providing collagen protein building blocks, studied for potential skin elasticity and joint support benefits, distinct from topical collagen-boosting skincare.",
+      gear: "Collagen Peptide Supplement"
+    },
+    {
+      term: "Probiotic Foods",
+      category: "Nutrition & Recovery",
+      difficulty: 1,
+      definition: "Naturally fermented foods like yogurt, kefir, and sauerkraut that introduce beneficial bacteria to the gut, supporting the same microbiome goals as a probiotic supplement.",
+      gear: "Fermented Foods Guide"
+    },
+    {
+      term: "Wisdom Teeth Removal",
+      category: "Dental & Orthodontic",
+      difficulty: 3,
+      definition: "Surgical extraction of the third molars, often recommended when they're impacted or crowding other teeth, typically performed in the late teens or early twenties.",
+      gear: "Consult an Oral Surgeon"
+    },
+    {
+      term: "Root Canal",
+      category: "Dental & Orthodontic",
+      difficulty: 3,
+      definition: "A procedure that removes infected pulp from inside a tooth to save it from extraction, followed by sealing and often a protective crown.",
+      gear: "Consult a Dentist"
+    },
+    {
+      term: "Dental Crown",
+      category: "Dental & Orthodontic",
+      difficulty: 3,
+      definition: "A custom cap placed over a damaged or weakened tooth to restore its shape, strength, and appearance, often following a root canal or significant decay.",
+      gear: "Consult a Dentist"
+    },
+    {
+      term: "Space Maintainer",
+      category: "Dental & Orthodontic",
+      difficulty: 2,
+      definition: "A small orthodontic device that holds open the space left by a prematurely lost baby tooth, preventing neighboring teeth from drifting before the permanent tooth arrives.",
+      gear: "Consult a Pediatric Dentist"
+    },
+    {
+      term: "Canthopexy",
+      category: "Eye Aesthetics",
+      difficulty: 4,
+      definition: "A less invasive alternative to canthoplasty that tightens and repositions the outer corner of the eye using sutures rather than cutting and reattaching tissue.",
+      gear: "Consult a Licensed Surgeon"
+    },
+    {
+      term: "Orbital Fat Repositioning",
+      category: "Eye Aesthetics",
+      difficulty: 5,
+      definition: "A surgical technique used during blepharoplasty that redistributes rather than removes under-eye fat, smoothing the transition between the lower lid and cheek instead of leaving a hollow.",
+      gear: "Consult a Licensed Surgeon"
+    },
+    {
+      term: "Filler Migration",
+      category: "Eye Aesthetics",
+      difficulty: 3,
+      definition: "A risk where injected filler shifts from its original placement over time, sometimes causing puffiness or lumps under the eyes — a reason to choose an experienced injector and appropriate filler type.",
+      gear: "Consult a Licensed Injector"
+    },
+    {
+      term: "Chin Cup",
+      category: "Jaw & Chin",
+      difficulty: 3,
+      definition: "An orthodontic device worn to apply gentle backward pressure on a protruding lower jaw in growing children, used far less commonly today than modern orthodontic alternatives.",
+      gear: "Consult an Orthodontist"
+    },
+    {
+      term: "Jaw Wiring",
+      category: "Jaw & Chin",
+      difficulty: 5,
+      definition: "Temporarily fixing the upper and lower jaw together with wires, most often used post-surgery or after a significant jaw fracture to allow proper healing — not a weight-loss method.",
+      gear: "Consult an Oral & Maxillofacial Surgeon"
+    },
+    {
+      term: "Bite Splint",
+      category: "Jaw & Chin",
+      difficulty: 2,
+      definition: "A custom oral appliance worn to reduce teeth grinding and jaw clenching, protecting teeth and easing TMJ strain, typically worn overnight.",
+      gear: "Custom Bite Splint"
+    },
+    {
+      term: "Zygomatic Arch",
+      category: "Skull Shape",
+      difficulty: 3,
+      definition: "The bony arch connecting the cheekbone to the skull near the ear, whose width and projection contribute significantly to overall facial width and cheekbone prominence.",
+      gear: "Facial Structure Guide"
+    },
+    {
+      term: "Temporal Hollowing",
+      category: "Skull Shape",
+      difficulty: 3,
+      definition: "A sunken appearance at the temples, common with aging or low body fat, sometimes addressed with temple filler to restore a smoother transition from forehead to hairline.",
+      gear: "Consult a Licensed Injector"
+    },
+    {
+      term: "Nasal Septum",
+      category: "Nose",
+      difficulty: 3,
+      definition: "The cartilage and bone wall dividing the two nostrils; a deviated septum can affect both breathing and the external symmetry of the nose.",
+      gear: "Consult an ENT Specialist"
+    },
+    {
+      term: "Turbinate Reduction",
+      category: "Nose",
+      difficulty: 4,
+      definition: "A procedure that reduces the size of swollen internal nasal structures to improve airflow, often performed alongside septoplasty or rhinoplasty for breathing-related concerns.",
+      gear: "Consult an ENT Specialist"
+    },
+    {
+      term: "Nostril Symmetry",
+      category: "Nose",
+      difficulty: 2,
+      definition: "The degree to which the left and right nostrils match in size and shape, one of several proportional factors assessed in rhinoplasty planning.",
+      gear: "Facial Proportion Guide"
+    },
+    {
+      term: "Skincare for Men",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "Framing around building a skincare routine tailored to typically oilier, thicker skin and daily shaving irritation — the core steps are the same as any routine, just adjusted for those factors.",
+      gear: "Men's Skincare Starter Set"
+    },
+    {
+      term: "Beard Oil",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "A lightweight oil applied to facial hair and the skin beneath it to soften the beard, reduce itchiness during growth, and add a subtle sheen.",
+      gear: "Beard Oil"
+    },
+    {
+      term: "Beard Balm",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "A thicker, wax-based beard product that offers more hold and shaping control than oil alone, useful for taming longer or coarser beards.",
+      gear: "Beard Balm"
+    },
+    {
+      term: "Sock Game",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "Slang for the small styling choice of coordinating sock color and pattern with the rest of an outfit, especially when cuffed pants or shorts make them visible.",
+      gear: "Style Consultation"
+    },
+    {
+      term: "Accessory Minimalism",
+      category: "Grooming & Style",
+      difficulty: 1,
+      definition: "Sticking to one or two intentional accessories — a watch, a ring — rather than layering many at once, generally reading as more polished and put-together.",
+      gear: "Style Consultation"
+    },
+    {
+      term: "Comeback Season",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for a period of intentional self-improvement after a rough patch, framed as a personal resurgence rather than starting from scratch.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Villain Era",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Playful slang for a phase of prioritizing yourself unapologetically — routine, boundaries, goals — framed with self-aware humor rather than literal negativity.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Healing Era",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for a deliberate phase of slowing down to focus on mental health, rest, and self-care before resuming a more intense self-improvement push.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Aura Farming",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "Slang for deliberately building up one's 'aura' or perceived presence through small confident actions and habits, treated half-jokingly like accumulating points.",
+      gear: "Community Glossary"
+    },
+    {
+      term: "Delulu Is The Solulu",
+      category: "Community & Slang",
+      difficulty: 1,
+      definition: "A tongue-in-cheek phrase meaning unrealistic optimism ('delusion') is sometimes the actual solution — used to poke fun at manifesting confidence before it's fully earned.",
+      gear: "Community Glossary"
     }
   ];
 
@@ -4785,6 +5150,7 @@
   const FORUM_CATEGORIES = ["All", "Skincare", "Mewing & Jaw", "Fitness", "Grooming", "Progress Logs", "Questions"];
   let activeForumCategory = "All";
   let openThreadId = null;
+  let forumSearchTerm = "";
 
   const DEFAULT_THREADS = [
     {
@@ -5000,6 +5366,40 @@
         { author: "derma.simplified", text: "Love seeing routine consistency talked about like self-care instead of a chore." }
       ],
       likes: 39
+    },
+    {
+      id: 20,
+      title: "Warm-up sets — how many is actually enough before working weight?",
+      category: "Fitness",
+      author: "barbellbasics",
+      body: "I used to skip warm-ups entirely, now I do 3-4 ramping sets before anything heavy. Curious what everyone else's warm-up protocol looks like.",
+      replies: [
+        { author: "coach.leanmax", text: "2-3 ramping sets is usually plenty unless it's your very first exercise of the day, then I'd do a couple extra." }
+      ],
+      likes: 14
+    },
+    {
+      id: 21,
+      title: "Rosacea flared up bad this winter, what's actually helping people",
+      category: "Skincare",
+      author: "matte_or_bust",
+      body: "Cold weather triggers mine every year. Switched to fragrance-free everything and it's helping some but still pretty red most days.",
+      replies: [
+        { author: "derma.simplified", text: "Definitely worth seeing a dermatologist if it's this persistent, over-the-counter changes can only do so much." },
+        { author: "clearskinjourney", text: "Azelaic acid has been a game changer for my rosacea specifically, might be worth asking about." }
+      ],
+      likes: 28
+    },
+    {
+      id: 22,
+      title: "Villain era or just burnout? Genuinely can't tell anymore",
+      category: "Questions",
+      author: "restedandready",
+      body: "Been saying I'm in my villain era for prioritizing myself but honestly might just be tired. Anyone else blur that line lately?",
+      replies: [
+        { author: "quietjawline", text: "Real. Sometimes 'villain era' is just code for finally getting enough sleep." }
+      ],
+      likes: 31
     }
   ];
 
@@ -5111,6 +5511,21 @@
     showToast("Profile updated.");
   });
 
+  const forumSearchInput = document.getElementById("forumSearchInput");
+  const forumClearBtn = document.getElementById("forumClearBtn");
+  forumSearchInput.addEventListener("input", (e) => {
+    forumSearchTerm = e.target.value;
+    forumClearBtn.classList.toggle("show", forumSearchTerm.length > 0);
+    renderThreads();
+  });
+  forumClearBtn.addEventListener("click", () => {
+    forumSearchTerm = "";
+    forumSearchInput.value = "";
+    forumClearBtn.classList.remove("show");
+    forumSearchInput.focus();
+    renderThreads();
+  });
+
   function renderForumTabs() {
     const wrap = document.getElementById("forumTabs");
     wrap.innerHTML = "";
@@ -5210,9 +5625,14 @@
 
   function renderThreads() {
     const list = document.getElementById("threadList");
-    const filtered = activeForumCategory === "All" ? threads : threads.filter(t => t.category === activeForumCategory);
+    const q = forumSearchTerm.trim().toLowerCase();
+    const filtered = threads
+      .filter(t => activeForumCategory === "All" || t.category === activeForumCategory)
+      .filter(t => !q || t.title.toLowerCase().includes(q) || t.body.toLowerCase().includes(q) || t.author.toLowerCase().includes(q));
     if (!filtered.length) {
-      list.innerHTML = `<div class="empty-state"><div class="glyph">💬</div><p>No threads in this category yet.<br>Start the first one.</p></div>`;
+      list.innerHTML = q
+        ? `<div class="empty-state"><div class="glyph">◎</div><p>No threads match "<strong>${escapeHtml(forumSearchTerm)}</strong>".<br>Try a different keyword.</p></div>`
+        : `<div class="empty-state"><div class="glyph">💬</div><p>No threads in this category yet.<br>Start the first one.</p></div>`;
       return;
     }
     list.innerHTML = "";
@@ -5228,7 +5648,7 @@
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
       card.innerHTML = `
         <div class="thread-top">
-          <div class="thread-title">${escapeHtml(t.title)}</div>
+          <div class="thread-title">${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
           <span class="thread-tag" style="${categoryTagStyle(t.category)}">${escapeHtml(t.category)}</span>
         </div>
         <div class="thread-meta">
@@ -5243,7 +5663,7 @@
           <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
         </div>
         <div class="thread-body">
-          <div class="thread-preview">${escapeHtml(t.body)}</div>
+          <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
           <div class="reply-list">${repliesHtml}</div>
           <div class="reply-input-row">
             <input type="text" placeholder="Write a reply..." class="reply-input">
@@ -5486,6 +5906,36 @@
       rating: 4.5,
       gradient: "#0D0D0D",
       desc: "The small style details that separate a put-together look from a good one — coordination, proportion, and layering basics."
+    },
+    {
+      id: 18,
+      title: "Compound Lift Technique: Bench, Squat, Deadlift, Press",
+      creator: "coach.leanmax",
+      price: 45,
+      sales: 89,
+      rating: 4.8,
+      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+      desc: "Deep-dive form breakdowns for the four foundational lifts, with common mistake fixes and progressive warm-up protocols."
+    },
+    {
+      id: 19,
+      title: "Managing Rosacea & Reactive Skin: A Practical Guide",
+      creator: "derma.simplified",
+      price: 38,
+      sales: 71,
+      rating: 4.7,
+      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+      desc: "A calm, evidence-based approach to managing rosacea and reactive skin — triggers, gentle actives, and when to see a dermatologist."
+    },
+    {
+      id: 20,
+      title: "Supplement Reality Check: What's Worth Your Money",
+      creator: "coach.leanmax",
+      price: 15,
+      sales: 154,
+      rating: 4.6,
+      gradient: "#8A8A8A",
+      desc: "A blunt rundown of which supplements have real evidence behind them and which are mostly marketing — creatine to BCAAs and everything between."
     }
   ];
 
