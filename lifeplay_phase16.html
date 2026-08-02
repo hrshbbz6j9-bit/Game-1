@@ -3110,6 +3110,37 @@ WORLD_EVENTS_P16.push(
   {text:"A wildfire smoke haze blanketed the region for days.", type:'bad', fx:s=>{s.stats.health-=3; s.stats.happiness-=2;}},
   {text:"A national holiday was added to the calendar, and everyone loved the extra day off.", type:'good', fx:s=>{s.stats.happiness+=3;}},
 );
+
+/* ---------------------------------------------------------------------
+   EXPANDED POLITICS CONTENT — a long political career (multiple terms,
+   multiple offices) can run through debates and scandals many times over;
+   the original 4 questions / 3 scandal cards repeated fast.
+   --------------------------------------------------------------------- */
+DEBATE_QUESTIONS_P16.push(
+  {q:"Where do you stand on expanding public healthcare?", choices:[
+    {label:'Back a bold expansion plan', d:6}, {label:'Support modest, incremental reform', d:2}, {label:'Oppose it as too costly', d:-2}]},
+  {q:"How would you fix the local school system?", choices:[
+    {label:'Propose a major funding increase', d:6}, {label:'Push for accountability reforms instead', d:1}, {label:'Dodge with a platitude about "our children"', d:-3}]},
+  {q:"What's your position on immigration policy?", choices:[
+    {label:'Lay out a detailed, humane reform plan', d:6}, {label:'Stick to talking points from your party', d:0}, {label:'Get visibly flustered and pivot', d:-4}]},
+  {q:"Would you raise taxes to cover the budget shortfall?", choices:[
+    {label:'Propose targeted taxes on the wealthy', d:5}, {label:'Promise to "find efficiencies" instead', d:1}, {label:'Flatly refuse to answer', d:-3}]},
+  {q:"How do you plan to create jobs in this district?", choices:[
+    {label:'Present a concrete infrastructure plan', d:6}, {label:'Promise vague "business-friendly" policies', d:0}, {label:'Blame the previous administration', d:-1}]},
+  {q:"What's your stance on gun policy?", choices:[
+    {label:'Lay out a careful, detailed position', d:5}, {label:'Stick strictly to your party line', d:1}, {label:'Refuse to engage with the question at all', d:-4}]},
+  {q:"How should the city handle the ongoing housing shortage?", choices:[
+    {label:'Push a serious affordable-housing plan', d:6}, {label:'Suggest a task force to "study it"', d:0}, {label:'Blame developers and move on', d:-1}]},
+  {q:"What's your plan for protecting personal data and privacy?", choices:[
+    {label:'Propose real regulation with teeth', d:5}, {label:'Say you\'ll "look into it"', d:0}, {label:'Admit you don\'t really understand the issue', d:-4}]},
+);
+SCANDAL_CARDS_P16.push(
+  {title:'Affair Scandal', text:'Tabloids published claims about your personal life that you can\'t fully deny.'},
+  {title:'Plagiarism Scandal', text:'A journalist found your policy speech lifted whole paragraphs from another politician.'},
+  {title:'Nepotism Scandal', text:'Reporters discovered you hired a family member for a well-paid, do-nothing role.'},
+  {title:'Foreign Influence Scandal', text:'Questions are swirling about a foreign donor tied to your campaign.'},
+  {title:'Old Tweets Scandal', text:'A decade-old social media post of yours resurfaced and it has not aged well.'},
+);
 </script>
 </body>
 </html>
