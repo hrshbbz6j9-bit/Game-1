@@ -150,23 +150,6 @@
     margin-top: 16px;
   }
 
-  .theme-toggle-btn {
-    flex-shrink: 0;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    background: var(--card);
-    border: 3px solid var(--ink);
-    color: var(--ink);
-    cursor: pointer;
-    box-shadow: 3px 3px 0 var(--ink);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-  .theme-toggle-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
-
   .premium-pill {
     display: inline-flex;
     align-items: center;
@@ -931,12 +914,13 @@
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 800;
-    padding: 6px 16px;
+    padding: 6px 10px;
     cursor: pointer;
     text-transform: uppercase;
     transition: color 0.15s ease;
   }
   .nav-tab.active { color: var(--lime); }
+  .nav-tab-emoji { font-size: 19px; line-height: 20px; height: 20px; }
 
   /* ---------- Forum ---------- */
   /* ---------- Profile / Tiers ---------- */
@@ -2079,7 +2063,6 @@
       <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
       <div class="premium-pill-wrap">
         <div class="premium-pill" id="premiumPill"></div>
-        <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">🌙</button>
       </div>
     </header>
 
@@ -2182,6 +2165,10 @@
     <button class="nav-tab" data-view="courses">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>
       <span>Courses</span>
+    </button>
+    <button class="nav-tab" id="themeToggleBtn" aria-label="Toggle dark mode">
+      <span class="nav-tab-emoji" id="themeToggleIcon">🌙</span>
+      <span>Theme</span>
     </button>
   </div>
 </nav>
@@ -5701,14 +5688,15 @@
   /* ---------------- Theme Toggle ---------------- */
   let isDarkMode = document.documentElement.getAttribute("data-theme") === "dark";
   const themeToggleBtn = document.getElementById("themeToggleBtn");
+  const themeToggleIcon = document.getElementById("themeToggleIcon");
 
   function applyTheme() {
     if (isDarkMode) {
       document.documentElement.setAttribute("data-theme", "dark");
-      themeToggleBtn.textContent = "☀️";
+      themeToggleIcon.textContent = "☀️";
     } else {
       document.documentElement.removeAttribute("data-theme");
-      themeToggleBtn.textContent = "🌙";
+      themeToggleIcon.textContent = "🌙";
     }
   }
 
@@ -6028,6 +6016,7 @@
   }
 
   navTabs.forEach(tab => {
+    if (!tab.dataset.view) return;
     tab.addEventListener("click", () => switchView(tab.dataset.view));
   });
 
