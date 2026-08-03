@@ -1485,6 +1485,25 @@
     color: var(--ink-soft);
   }
 
+  .report-panel {
+    flex-direction: column;
+    align-items: stretch;
+    border-color: var(--ink-mute);
+  }
+  .report-reasons-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .report-reason-btn {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border: 1.5px solid var(--ink);
+    background: var(--card);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .report-reason-btn:active { background: var(--ink); color: var(--card); }
+  .owner-btn.reported { opacity: 0.35; cursor: default; }
+
   .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
 
   .reply-input-row input {
@@ -7082,6 +7101,34 @@
     showToast("Reply deleted.");
   }
 
+  /* ---------------- Reporting ---------------- */
+  const REPORT_REASONS = ["Spam", "Harassment", "Misinformation", "Other"];
+  let reportedItems = loadReportedItems();
+
+  function loadReportedItems() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_reported"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+  function saveReportedItems() {
+    localStorage.setItem("looksmax_reported", JSON.stringify([...reportedItems]));
+  }
+
+  function submitThreadReport(t, reason) {
+    reportedItems.add(`thread:${t.id}`);
+    saveReportedItems();
+    clearThreadMode(t.id);
+    showToast(`Reported for "${reason}". Moderators will review this.`);
+  }
+  function submitReplyReport(t, idx, reason) {
+    reportedItems.add(`reply:${t.id}:${idx}`);
+    saveReportedItems();
+    clearReplyMode(`${t.id}:${idx}`);
+    showToast(`Reported for "${reason}". Moderators will review this.`);
+  }
+
   function setQuote(threadId, author, text) {
     pendingQuote = { threadId, author, text };
     renderThreads();
@@ -7167,6 +7214,23 @@
                 </div>
               `;
             }
+            if (rMode === "report") {
+              return `
+                <div class="reply-item">
+                  ${avatarHtml(r.author)}
+                  <div class="reply-item-body">
+                    <div class="delete-confirm-row report-panel" data-reply-report-idx="${idx}">
+                      <span>Report this reply — why?</span>
+                      <div class="report-reasons-row">
+                        ${REPORT_REASONS.map(rs => `<button class="report-reason-btn" data-reason="${rs}">${rs}</button>`).join("")}
+                      </div>
+                      <button class="delete-cancel-btn" data-cancel-reply-report="${idx}" style="align-self:flex-start;">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+            const replyReportedKey = `reply:${t.id}:${idx}`;
             return `
             <div class="reply-item">
               ${avatarHtml(r.author)}
@@ -7176,7 +7240,11 @@
               </div>
               <div class="reply-actions">
                 <button class="quote-btn" data-quote-idx="${idx}" aria-label="Quote">❝</button>
-                ${isOwnReply ? `<button class="owner-btn" data-edit-reply="${idx}" aria-label="Edit reply">✎</button><button class="owner-btn" data-delete-reply="${idx}" aria-label="Delete reply">🗑</button>` : ""}
+                ${isOwnReply
+                  ? `<button class="owner-btn" data-edit-reply="${idx}" aria-label="Edit reply">✎</button><button class="owner-btn" data-delete-reply="${idx}" aria-label="Delete reply">🗑</button>`
+                  : (reportedItems.has(replyReportedKey)
+                      ? `<button class="owner-btn reported" disabled aria-label="Reported">🚩</button>`
+                      : `<button class="owner-btn" data-report-reply="${idx}" aria-label="Report reply">🚩</button>`)}
               </div>
             </div>
           `;
@@ -7208,6 +7276,14 @@
             <button class="delete-confirm-btn" data-confirm-delete-thread="1">Delete</button>
             <button class="delete-cancel-btn" data-cancel-delete-thread="1">Cancel</button>
           </div>
+        ` : threadMode === "report" ? `
+          <div class="delete-confirm-row report-panel" data-thread-report="1">
+            <span>Report this thread — why?</span>
+            <div class="report-reasons-row">
+              ${REPORT_REASONS.map(rs => `<button class="report-reason-btn" data-reason="${rs}">${rs}</button>`).join("")}
+            </div>
+            <button class="delete-cancel-btn" data-cancel-thread-report="1" style="align-self:flex-start;">Cancel</button>
+          </div>
         ` : `
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
           ${signatureHtml(t.author)}
@@ -7233,7 +7309,11 @@
           ${isOwnThread && !isLocked ? `
             <button class="owner-btn" data-edit-thread="1" aria-label="Edit thread">✎</button>
             <button class="owner-btn" data-delete-thread="1" aria-label="Delete thread">🗑</button>
-          ` : ""}
+          ` : !isOwnThread ? (
+            reportedItems.has(`thread:${t.id}`)
+              ? `<button class="owner-btn reported" disabled aria-label="Reported">🚩</button>`
+              : `<button class="owner-btn" data-report-thread="1" aria-label="Report thread">🚩</button>`
+          ) : ""}
           <button class="watch-btn ${watchedThreads.has(t.id) ? "active" : ""}" data-watch="1" aria-label="Watch thread">${watchedThreads.has(t.id) ? "🔖" : "📑"}</button>
           <span class="thread-tag ${isLocked ? "locked-tag" : ""}" style="${isLocked ? "" : categoryTagStyle(t.category)}">${isLocked ? "LOCKED" : escapeHtml(t.category)}</span>
         </div>
@@ -7342,6 +7422,14 @@
         el.addEventListener("click", (e) => e.stopPropagation());
       });
 
+      const reportThreadBtn = card.querySelector("[data-report-thread]");
+      if (reportThreadBtn) reportThreadBtn.addEventListener("click", (e) => { e.stopPropagation(); setThreadMode(t.id, "report"); });
+      card.querySelectorAll("[data-thread-report] .report-reason-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); submitThreadReport(t, btn.dataset.reason); });
+      });
+      const cancelThreadReportBtn = card.querySelector("[data-cancel-thread-report]");
+      if (cancelThreadReportBtn) cancelThreadReportBtn.addEventListener("click", (e) => { e.stopPropagation(); clearThreadMode(t.id); });
+
       card.querySelectorAll("[data-edit-reply]").forEach(btn => {
         btn.addEventListener("click", (e) => { e.stopPropagation(); setReplyMode(`${t.id}:${btn.dataset.editReply}`, "edit"); });
       });
@@ -7369,6 +7457,19 @@
       });
       card.querySelectorAll(".edit-reply-input").forEach(el => {
         el.addEventListener("click", (e) => e.stopPropagation());
+      });
+
+      card.querySelectorAll("[data-report-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); setReplyMode(`${t.id}:${btn.dataset.reportReply}`, "report"); });
+      });
+      card.querySelectorAll("[data-reply-report-idx]").forEach(wrap => {
+        const idx = parseInt(wrap.dataset.replyReportIdx, 10);
+        wrap.querySelectorAll(".report-reason-btn").forEach(btn => {
+          btn.addEventListener("click", (e) => { e.stopPropagation(); submitReplyReport(t, idx, btn.dataset.reason); });
+        });
+      });
+      card.querySelectorAll("[data-cancel-reply-report]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); clearReplyMode(`${t.id}:${btn.dataset.cancelReplyReport}`); });
       });
 
       list.appendChild(card);
