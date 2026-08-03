@@ -378,6 +378,7 @@ function freshState(){
     bestFriendId:null,
     mafia:null,
     acting:{stage:0, fame:0, roles:0, oscars:0},
+    music:{stage:0, fame:0, songs:0, grammys:0},
   };
 }
 
@@ -4059,6 +4060,84 @@ openActivitiesPanel = function(){
   btn.className = 'btn btn-block';
   btn.textContent = '🎬 Audition for a Role';
   btn.onclick = auditionForRoleP35;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   P36 — Music: a rockstar career track, same shape as acting (a fame-
+   driven stage ladder, independent of state.job), themed around
+   writing/releasing songs instead of auditioning for roles.
+   --------------------------------------------------------------------- */
+const MUSIC_STAGES_P36 = ['Amateur','Garage Band','Local Act','Touring Musician','Chart Topper','Icon'];
+Object.assign(ACHIEVEMENTS, {
+  musician_ach:'Released your first song',
+  grammy_ach:'Won a Grammy',
+  music_icon_ach:'Became a music icon',
+});
+function writeSongP36(){
+  if(!state.music) state.music = {stage:0, fame:0, songs:0, grammys:0};
+  const m = state.music;
+  const chanceToHit = clamp(20 + (state.stats.smarts-50)*0.3 + (state.stats.happiness-50)*0.3 + m.fame*0.3, 5, 90);
+  if(chance(chanceToHit)){
+    m.songs++;
+    const pay = rand(400,2500)*(m.stage+1);
+    state.money += pay;
+    m.fame = clamp(m.fame+rand(3,8),0,100);
+    log(`Your new track is getting real buzz. Paid ${fmtMoney(pay)} in royalties.`,'good');
+    checkAchievement('musician_ach');
+    if(m.fame >= (m.stage+1)*18 && m.stage<MUSIC_STAGES_P36.length-1){
+      m.stage++;
+      log(`Your music career advanced to: ${MUSIC_STAGES_P36[m.stage]}!`,'good');
+      newspaper(`${state.name.toUpperCase()} BREAKS OUT ON THE MUSIC SCENE`, `Now billed as a ${MUSIC_STAGES_P36[m.stage]}.`, 'Entertainment Desk');
+      if(m.stage===MUSIC_STAGES_P36.length-1) checkAchievement('music_icon_ach');
+    }
+  } else {
+    log(`The track didn't land. Back to the studio.`,'bad');
+    state.stats.happiness = clamp(state.stats.happiness-2,0,100);
+  }
+  closePanel(); render();
+}
+function tickMusicEventsP36(){
+  const m = state.music; if(!m || m.stage<3) return;
+  if(chance(10)){
+    m.fame = clamp(m.fame+5,0,100);
+    if(chance(40)){
+      m.grammys++;
+      checkAchievement('grammy_ach');
+      state.stats.happiness = clamp(state.stats.happiness+10,0,100);
+      newspaper(`${state.name.toUpperCase()} WINS A GRAMMY`, `A career-defining night at the awards.`, 'Entertainment Desk');
+    } else {
+      newspaper(`${state.name.toUpperCase()} NOMINATED FOR A GRAMMY`, `Industry buzz keeps building.`, 'Entertainment Desk');
+    }
+  }
+  if(chance(5)){
+    m.fame = clamp(m.fame-15,0,100);
+    newspaper(`${state.name.toUpperCase()}'S LATEST ALBUM FLOPS`, `Critics were not kind this time around.`, 'Entertainment Desk');
+  }
+}
+const _origAgeUp_P36 = ageUp;
+ageUp = function(){
+  _origAgeUp_P36();
+  if(!state || !state.alive) return;
+  tickMusicEventsP36();
+  render();
+};
+const _origOpenActivitiesPanel_P36 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P36();
+  if(state.inPrison || state.age<10) return;
+  if(!state.music) state.music = {stage:0, fame:0, songs:0, grammys:0};
+  const m = state.music;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b');
+  label.textContent = `Music (${MUSIC_STAGES_P36[m.stage]}${m.stage>0?` · Fame ${m.fame}%`:''}${m.grammys?` · 🏆×${m.grammys}`:''})`;
+  body.appendChild(label);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎤 Write & Release a Song';
+  btn.onclick = writeSongP36;
   body.appendChild(btn);
 };
 </script>
