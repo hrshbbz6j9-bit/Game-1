@@ -1599,6 +1599,7 @@
   }
   .sell-course-btn { background: var(--lime); color: var(--ink-fixed); }
   .sell-course-btn:active, .dashboard-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  .dashboard-btn.active { background: var(--lime); color: var(--ink-fixed); }
 
   .course-grid { padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -1629,6 +1630,26 @@
     padding: 4px 10px;
     border: 2px solid var(--card);
   }
+
+  .wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-fixed);
+    color: var(--ink-fixed);
+    border: 2px solid var(--card);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .wishlist-btn.active { background: var(--ink-fixed); color: var(--card-fixed); }
+  .wishlist-btn:active { transform: scale(1.15); }
 
   .course-body { padding: 14px 15px 15px; }
   .course-title { font-family: var(--font-display); font-size: 15.5px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
@@ -2137,6 +2158,9 @@
     <div class="courses-toolbar">
       <button class="sell-course-btn" id="sellCourseBtn">🎓 Sell Your Course</button>
       <button class="dashboard-btn" id="dashboardBtn">📊 Creator Dashboard</button>
+    </div>
+    <div class="courses-toolbar" style="padding-top:0;">
+      <button class="dashboard-btn" id="wishlistToggleBtn">🔖 Wishlist (<span id="wishlistCount">0</span>)</button>
     </div>
 
     <div class="course-grid" id="courseGrid"></div>
@@ -7812,6 +7836,25 @@
 
   let openCourseId = null;
   let selectedReviewRating = 5;
+  let showWishlistOnly = false;
+
+  function loadCourseWishlist() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_course_wishlist"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+  let courseWishlist = loadCourseWishlist();
+  function saveCourseWishlist() {
+    localStorage.setItem("looksmax_course_wishlist", JSON.stringify([...courseWishlist]));
+  }
+  function toggleCourseWishlist(courseId) {
+    if (courseWishlist.has(courseId)) courseWishlist.delete(courseId);
+    else courseWishlist.add(courseId);
+    saveCourseWishlist();
+    renderCourses();
+  }
 
   function recalcRating(c) {
     if (!c.reviews || !c.reviews.length) return;
@@ -7838,8 +7881,15 @@
   function renderCourses() {
     const grid = document.getElementById("courseGrid");
     grid.innerHTML = "";
+    document.getElementById("wishlistCount").textContent = courseWishlist.size;
+    document.getElementById("wishlistToggleBtn").classList.toggle("active", showWishlistOnly);
     const bestsellerId = courses.reduce((best, c) => (c.sales > (best ? best.sales : -1) ? c : best), null)?.id;
-    courses.slice().reverse().forEach(c => {
+    const visibleCourses = showWishlistOnly ? courses.filter(c => courseWishlist.has(c.id)) : courses;
+    if (showWishlistOnly && !visibleCourses.length) {
+      grid.innerHTML = `<div class="empty-state"><div class="glyph">🔖</div><p>No courses saved yet.<br>Tap the bookmark on a course to save it here.</p></div>`;
+      return;
+    }
+    visibleCourses.slice().reverse().forEach(c => {
       const yourCut = (c.price * (1 - PLATFORM_CUT_PCT / 100)).toFixed(2);
       const platformCut = (c.price * (PLATFORM_CUT_PCT / 100)).toFixed(2);
       const card = document.createElement("div");
@@ -7864,6 +7914,7 @@
       card.innerHTML = `
         <div class="course-thumb" style="background:${c.gradient}">
           ${c.id === bestsellerId ? `<div class="bestseller-tag">🔥 Bestseller</div>` : ""}
+          <button class="wishlist-btn ${courseWishlist.has(c.id) ? "active" : ""}" data-wishlist="1" aria-label="Save to wishlist">${courseWishlist.has(c.id) ? "★" : "☆"}</button>
           <div class="course-price-tag">$${c.price}</div>
         </div>
         <div class="course-body">
@@ -7890,6 +7941,10 @@
       card.querySelector(".buy-course-btn").addEventListener("click", () => {
         showToast(`Demo: "${c.title}" enrollment simulated, no real charge.`);
       });
+      card.querySelector("[data-wishlist]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleCourseWishlist(c.id);
+      });
       card.querySelector("[data-reviews-toggle]").addEventListener("click", () => {
         openCourseId = isOpen ? null : c.id;
         selectedReviewRating = 5;
@@ -7913,6 +7968,10 @@
 
   document.getElementById("sellCourseBtn").addEventListener("click", () => openSellCourseModal());
   document.getElementById("dashboardBtn").addEventListener("click", () => openDashboardModal());
+  document.getElementById("wishlistToggleBtn").addEventListener("click", () => {
+    showWishlistOnly = !showWishlistOnly;
+    renderCourses();
+  });
 
   /* ---------------- Sell Course Modal ---------------- */
   const sellCourseOverlay = document.getElementById("sellCourseOverlay");
