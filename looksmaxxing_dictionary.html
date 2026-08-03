@@ -6532,6 +6532,69 @@
     toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
   }
 
+  /* ---------------- Celebration queue (prevents toasts stepping on each other) ---------------- */
+  let celebrationQueue = [];
+  let celebrationRunning = false;
+  function queueCelebration(fn) {
+    celebrationQueue.push(fn);
+    if (!celebrationRunning) runCelebrationQueue();
+  }
+  function runCelebrationQueue() {
+    if (!celebrationQueue.length) { celebrationRunning = false; return; }
+    celebrationRunning = true;
+    const fn = celebrationQueue.shift();
+    setTimeout(() => {
+      fn();
+      runCelebrationQueue();
+    }, 2400);
+  }
+
+  function fireConfetti() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:fixed;inset:0;z-index:500;pointer-events:none;";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    const colors = ["#FF3E7F", "#B84FFF", "#3D5AFE", "#14E0C4", "#FFC530", "#FF7A33"];
+    const pieces = Array.from({ length: 70 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height * 0.3,
+      w: 6 + Math.random() * 5,
+      h: 4 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 3,
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random() - 0.5) * 0.3
+    }));
+    let frame = 0;
+    const maxFrames = 130;
+    function tick() {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (frame < maxFrames) {
+        requestAnimationFrame(tick);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
   /* ---------------- Search ---------------- */
   els.searchInput.addEventListener("input", (e) => {
     searchTerm = e.target.value;
@@ -7272,6 +7335,28 @@
     { icon: "📅", name: "Consistent", desc: "Visit 7 days in a row", check: () => currentStreak >= 7 }
   ];
 
+  function checkAchievementUnlocks() {
+    const stored = localStorage.getItem("looksmax_unlocked_achievements");
+    const nowUnlockedNames = ACHIEVEMENTS.filter(a => a.check()).map(a => a.name);
+    if (stored === null) {
+      localStorage.setItem("looksmax_unlocked_achievements", JSON.stringify(nowUnlockedNames));
+      return;
+    }
+    const prevUnlocked = new Set(JSON.parse(stored));
+    const newlyUnlocked = ACHIEVEMENTS.filter(a => nowUnlockedNames.includes(a.name) && !prevUnlocked.has(a.name));
+    if (newlyUnlocked.length) {
+      localStorage.setItem("looksmax_unlocked_achievements", JSON.stringify(nowUnlockedNames));
+      newlyUnlocked.forEach(a => {
+        queueCelebration(() => {
+          showToast(`🏆 Achievement unlocked: ${a.icon} ${a.name}!`);
+          fireConfetti();
+        });
+      });
+    } else if (nowUnlockedNames.length !== prevUnlocked.size) {
+      localStorage.setItem("looksmax_unlocked_achievements", JSON.stringify(nowUnlockedNames));
+    }
+  }
+
   function openAchievements() {
     renderAchievements();
     document.getElementById("achievementsOverlay").classList.add("show");
@@ -7535,10 +7620,14 @@
       const prevIdx = TIERS.findIndex(t => t.name === prevTierName);
       const curIdx = TIERS.indexOf(current);
       if (curIdx > prevIdx) {
-        setTimeout(() => showToast(`🎉 Ranked up to ${current.icon} ${current.name}!`), 2400);
+        queueCelebration(() => {
+          showToast(`🎉 Ranked up to ${current.icon} ${current.name}!`);
+          fireConfetti();
+        });
       }
     }
     localStorage.setItem("looksmax_last_tier", current.name);
+    checkAchievementUnlocks();
 
     document.getElementById("profileCard").innerHTML = `
       <div class="profile-top">
