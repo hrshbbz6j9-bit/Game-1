@@ -3329,7 +3329,7 @@ function makeNewFriendP23(){
 function groupedRelationshipsP23(){
   const living = state.relationships.filter(r=>r.alive);
   const immediateTypes = ['parent','sibling','spouse','child','datingpartner','exspouse'];
-  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','godparent'];
+  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','godparent','grandchild'];
   return {
     immediate: living.filter(r=>immediateTypes.includes(r.type)),
     extended: living.filter(r=>extendedTypes.includes(r.type)),
@@ -3391,6 +3391,7 @@ relLabel = (function(_orig){
   return function(type){
     if(type==='niece_nephew') return 'Niece/Nephew';
     if(type==='godparent') return 'Godparent';
+    if(type==='grandchild') return 'Grandchild';
     return _orig(type);
   };
 })(relLabel);
@@ -3500,6 +3501,7 @@ function openFamilyTreeP25(){
   const parentsGen = rel.filter(r=>r.type==='parent' || r.type==='aunt_uncle' || r.type==='godparent');
   const selfGenOthers = rel.filter(r=>['spouse','sibling','cousin','in_law','datingpartner'].includes(r.type));
   const childGen = rel.filter(r=>r.type==='child' || r.type==='niece_nephew');
+  const grandchildGen = rel.filter(r=>r.type==='grandchild');
   let html = `<div class="family-tree">`;
   if(grandparents.length){
     html += `<div class="ft-gen"><div class="ft-gen-label">The Elders</div><div class="ft-row">${grandparents.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
@@ -3510,6 +3512,9 @@ function openFamilyTreeP25(){
   html += `<div class="ft-gen"><div class="ft-gen-label">Your Generation</div><div class="ft-row">${familyTreeNodeP25({name:state.name, age:state.age, gender:state.gender, alive:state.alive, looks:state.stats.looks}, true)}${selfGenOthers.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
   if(childGen.length){
     html += `<div class="ft-gen"><div class="ft-gen-label">The Next Generation</div><div class="ft-row">${childGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  }
+  if(grandchildGen.length){
+    html += `<div class="ft-gen"><div class="ft-gen-label">The Grandchildren</div><div class="ft-row">${grandchildGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
   }
   html += `</div><button class="btn btn-block" onclick="openRelationshipsPanel()" style="margin-top:12px;">← Back to People</button>`;
   openPanel('Family Tree', html);
@@ -4553,6 +4558,37 @@ CHOICE_EVENTS.adult.push(
     {label:'Hire help to manage it all', type:'neutral', fx:s=>{s.money=clamp(s.money-rand(2000,5000),0,999999999); s.stats.happiness=clamp(s.stats.happiness+5,0,100);}, result:'Not cheap, but suddenly there are enough hours in the day again.'},
   ]},
 );
+
+/* ---------------------------------------------------------------------
+   P45 — Grandchildren: "grandchild" was only ever flavor text in a
+   random event and a choice event before this — there was no actual
+   mechanic behind it. Adult children now have a small yearly chance of
+   starting families of their own, extending the family tree a full
+   generation past what was reachable before.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, { grandparent_ach:'Became a grandparent' });
+function makeGrandchildP45(child){
+  const gender = pick(['Male','Female']);
+  const surname = child.name.split(' ').slice(-1)[0];
+  const gc = newRelationship('grandchild', {gender, age:0, rel:rand(60,85), last:surname});
+  gc.parentChildId = child.id;
+  state.relationships.push(gc);
+  log(`${child.name} had a baby! You're a grandparent to ${gc.name}.`,'good');
+  checkAchievement('grandparent_ach');
+}
+function tickGrandchildrenP45(){
+  state.relationships.filter(r=>r.alive && r.type==='child' && r.age>=22 && r.age<=45).forEach(child=>{
+    const existing = state.relationships.filter(r=>r.alive && r.type==='grandchild' && r.parentChildId===child.id).length;
+    if(existing<3 && chance(6)) makeGrandchildP45(child);
+  });
+}
+const _origAgeUp_P45 = ageUp;
+ageUp = function(){
+  _origAgeUp_P45();
+  if(!state || !state.alive) return;
+  tickGrandchildrenP45();
+  render();
+};
 </script>
 </body>
 </html>
