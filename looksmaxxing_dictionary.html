@@ -1504,6 +1504,25 @@
   .report-reason-btn:active { background: var(--ink); color: var(--card); }
   .owner-btn.reported { opacity: 0.35; cursor: default; }
 
+  .reply-item.best-answer {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 8px;
+  }
+  .best-answer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--ink);
+    color: var(--card);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    padding: 3px 8px;
+    margin-bottom: 6px;
+  }
+
   .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
 
   .reply-input-row input {
@@ -7095,10 +7114,29 @@
   function deleteReply(t, idx) {
     t.replies.splice(idx, 1);
     Object.keys(replyEditMode).forEach(k => { if (k.startsWith(`${t.id}:`)) delete replyEditMode[k]; });
+    const prefix = `reply:${t.id}:`;
+    const shiftedReported = new Set();
+    reportedItems.forEach(key => {
+      if (!key.startsWith(prefix)) { shiftedReported.add(key); return; }
+      const i = parseInt(key.slice(prefix.length), 10);
+      if (i === idx) return;
+      shiftedReported.add(i > idx ? `${prefix}${i - 1}` : key);
+    });
+    reportedItems = shiftedReported;
+    saveReportedItems();
+    if (t.bestAnswerIdx === idx) t.bestAnswerIdx = null;
+    else if (t.bestAnswerIdx != null && t.bestAnswerIdx > idx) t.bestAnswerIdx -= 1;
     saveThreads();
     renderThreads();
     renderProfileCard();
     showToast("Reply deleted.");
+  }
+
+  function toggleBestAnswer(t, idx) {
+    t.bestAnswerIdx = t.bestAnswerIdx === idx ? null : idx;
+    saveThreads();
+    renderThreads();
+    showToast(t.bestAnswerIdx === idx ? "Marked as best answer." : "Best answer unmarked.");
   }
 
   /* ---------------- Reporting ---------------- */
@@ -7179,8 +7217,13 @@
       const card = document.createElement("div");
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
       card.dataset.threadId = t.id;
+      const isOwnThread = t.author === username;
+      const repliesOrder = t.replies.map((r, idx) => ({ r, idx }));
+      if (t.bestAnswerIdx != null) {
+        repliesOrder.sort((a, b) => (a.idx === t.bestAnswerIdx ? -1 : b.idx === t.bestAnswerIdx ? 1 : 0));
+      }
       const repliesHtml = t.replies.length
-        ? t.replies.map((r, idx) => {
+        ? repliesOrder.map(({ r, idx }) => {
             const rKey = `${t.id}:${idx}`;
             const rMode = replyEditMode[rKey];
             const isOwnReply = r.author === username;
@@ -7231,10 +7274,12 @@
               `;
             }
             const replyReportedKey = `reply:${t.id}:${idx}`;
+            const isBestAnswer = t.bestAnswerIdx === idx;
             return `
-            <div class="reply-item">
+            <div class="reply-item ${isBestAnswer ? "best-answer" : ""}">
               ${avatarHtml(r.author)}
               <div class="reply-item-body">
+                ${isBestAnswer ? `<div class="best-answer-badge">✓ BEST ANSWER</div>` : ""}
                 <span class="reply-author" data-author="${escapeHtml(r.author)}">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span>${r.edited ? '<span class="edited-tag">(edited)</span>' : ""}
                 ${signatureHtml(r.author)}
               </div>
@@ -7245,6 +7290,7 @@
                   : (reportedItems.has(replyReportedKey)
                       ? `<button class="owner-btn reported" disabled aria-label="Reported">🚩</button>`
                       : `<button class="owner-btn" data-report-reply="${idx}" aria-label="Report reply">🚩</button>`)}
+                ${isOwnThread ? `<button class="owner-btn" data-mark-best="${idx}" aria-label="${isBestAnswer ? "Unmark best answer" : "Mark as best answer"}">${isBestAnswer ? "⭐" : "☆"}</button>` : ""}
               </div>
             </div>
           `;
@@ -7259,7 +7305,6 @@
         return `<button class="reaction-btn ${active ? "active" : ""}" data-react="${r.key}">${r.emoji} ${count}</button>`;
       }).join("");
       const quotedHere = pendingQuote && pendingQuote.threadId === t.id ? pendingQuote : null;
-      const isOwnThread = t.author === username;
       const threadMode = threadEditMode[t.id];
       const bodyContent = threadMode === "edit" ? `
           <div class="edit-post-form">
@@ -7470,6 +7515,9 @@
       });
       card.querySelectorAll("[data-cancel-reply-report]").forEach(btn => {
         btn.addEventListener("click", (e) => { e.stopPropagation(); clearReplyMode(`${t.id}:${btn.dataset.cancelReplyReport}`); });
+      });
+      card.querySelectorAll("[data-mark-best]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); toggleBestAnswer(t, parseInt(btn.dataset.markBest, 10)); });
       });
 
       list.appendChild(card);
