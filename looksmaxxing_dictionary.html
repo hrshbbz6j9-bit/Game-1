@@ -1121,6 +1121,35 @@
     box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ink);
     margin-right: 3px;
   }
+  .avatar.avatar-photo { padding: 0; overflow: hidden; }
+  .avatar.avatar-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .photo-edit-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .photo-preview {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-edit-actions { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .photo-upload-btn, .photo-remove-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+    padding: 9px 12px;
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .photo-upload-btn { background: var(--ink); color: var(--card); }
+  .photo-remove-btn { background: var(--card); color: var(--ink); }
 
   /* ---------- Like Button ---------- */
   .like-btn {
@@ -2315,6 +2344,14 @@
     <button class="paywall-close" id="profileClose" aria-label="Close">✕</button>
     <div class="paywall-title" style="text-align:left;">Edit Profile</div>
     <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Your username shows on every thread and reply you post.</div>
+    <div class="photo-edit-row">
+      <div class="photo-preview" id="profilePhotoPreview"></div>
+      <div class="photo-edit-actions">
+        <label class="photo-upload-btn" for="profilePhotoInput">Upload Photo</label>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
+        <button class="photo-remove-btn" id="profilePhotoRemove">Remove Photo</button>
+      </div>
+    </div>
     <label class="form-label">Username</label>
     <input type="text" class="form-input" id="profileUsernameInput" placeholder="e.g. jawline_journey" maxlength="24">
     <label class="form-label">Signature</label>
@@ -6446,6 +6483,20 @@
   /* ---------------- Username & Member Tiers ---------------- */
   let username = localStorage.getItem("looksmax_username") || "you";
   let signature = localStorage.getItem("looksmax_signature") || "";
+  let profilePhoto = localStorage.getItem("looksmax_profile_photo") || null;
+
+  function savePhoto(dataUrl) {
+    profilePhoto = dataUrl;
+    try {
+      localStorage.setItem("looksmax_profile_photo", dataUrl);
+    } catch (e) {
+      showToast("Photo too large to save on this device.");
+    }
+  }
+  function clearPhoto() {
+    profilePhoto = null;
+    localStorage.removeItem("looksmax_profile_photo");
+  }
 
   function saveUsername(name) {
     username = name;
@@ -6840,10 +6891,65 @@
     renderNotifBadge();
   }
 
+  function renderPhotoPreview() {
+    const el = document.getElementById("profilePhotoPreview");
+    if (profilePhoto) {
+      el.innerHTML = `<img src="${profilePhoto}" alt="">`;
+      return;
+    }
+    const color = avatarColor(username);
+    const fg = AVATAR_LIGHT_BGS.has(color) ? "#0D0D0D" : "#FFFFFF";
+    const letter = escapeHtml((username[0] || "?").toUpperCase());
+    el.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${color};color:${fg};font-family:var(--font-mono);font-weight:800;font-size:26px;">${letter}</div>`;
+  }
+
+  function resizeImageFile(file, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 160;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+        callback(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById("profilePhotoInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { showToast("Please choose an image file."); return; }
+    resizeImageFile(file, (dataUrl) => {
+      savePhoto(dataUrl);
+      renderPhotoPreview();
+      renderProfileCard();
+      renderThreads();
+      showToast("Photo updated.");
+    });
+    e.target.value = "";
+  });
+  document.getElementById("profilePhotoRemove").addEventListener("click", () => {
+    clearPhoto();
+    renderPhotoPreview();
+    renderProfileCard();
+    renderThreads();
+    showToast("Photo removed.");
+  });
+
   const profileOverlay = document.getElementById("profileOverlay");
   function openProfileModal() {
     document.getElementById("profileUsernameInput").value = username;
     document.getElementById("profileSignatureInput").value = signature;
+    renderPhotoPreview();
     profileOverlay.classList.add("show");
   }
   function closeProfileModal() { profileOverlay.classList.remove("show"); }
@@ -6930,10 +7036,13 @@
   }
 
   function avatarHtml(name, large) {
+    const rot = avatarRotation(name);
+    if (name === username && profilePhoto) {
+      return `<span class="avatar${large ? " large" : ""} avatar-photo" data-author="${escapeHtml(name)}" style="transform:rotate(${rot}deg);"><img src="${profilePhoto}" alt=""></span>`;
+    }
     const color = avatarColor(name);
     const fg = AVATAR_LIGHT_BGS.has(color) ? "#0D0D0D" : "#FFFFFF";
     const letter = escapeHtml((name[0] || "?").toUpperCase());
-    const rot = avatarRotation(name);
     return `<span class="avatar${large ? " large" : ""}" data-author="${escapeHtml(name)}" style="background:${color};color:${fg};transform:rotate(${rot}deg);">${letter}</span>`;
   }
 
