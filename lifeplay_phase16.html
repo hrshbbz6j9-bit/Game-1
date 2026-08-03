@@ -137,8 +137,11 @@
   #panel-body{padding:6px 16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:0;}
   .close-x{background:none;border:1px solid var(--ink-line);border-radius:50%;width:24px;height:24px;color:var(--text);font-size:1em;cursor:pointer;line-height:1;}
   .list-item{background:none;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:none;}
+  .list-item .li-main{flex:1;min-width:0;}
   .list-item .li-main b{display:block;font-family:var(--font-display);font-weight:700;}
   .list-item .li-main span{font-size:.75em;color:var(--sub);font-family:var(--font-caption);}
+  .li-portrait{width:34px;height:34px;flex-shrink:0;border:1.5px solid var(--ink-line);background:var(--panel2);overflow:hidden;}
+  .li-portrait svg{display:block;width:100%;height:100%;}
   #panel-body > .btn{margin:5px 0;}
   .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
   .letter{padding:10px 0 10px 14px;border-left:3px solid var(--border);border-bottom:1px solid var(--border);font-style:italic;font-size:.9em;line-height:1.45;color:var(--sub);}
@@ -374,30 +377,66 @@ const STAT_BADGES = {
 
 /* Engraved-silhouette portrait, cameo style — replaces the plain emoji avatar
    with original hand-authored art that fits the Gazette's paper-and-ink world. */
-function avatarSVG(){
-  if(!state.alive){
-    return `<svg viewBox="0 0 64 64" width="100%" height="100%"><path d="M32,10 C20,10 12,19 12,31 C12,40 17,46 21,50 L21,56 L27,56 L27,52 L30,52 L30,56 L34,56 L34,52 L37,52 L37,56 L43,56 L43,50 C47,46 52,40 52,31 C52,19 44,10 32,10 Z" fill="var(--ink-line)"/><circle cx="24" cy="30" r="4" fill="var(--panel2)"/><circle cx="40" cy="30" r="4" fill="var(--panel2)"/></svg>`;
+const DEAD_AVATAR_SVG = `<svg viewBox="0 0 64 64" width="100%" height="100%"><path d="M32,10 C20,10 12,19 12,31 C12,40 17,46 21,50 L21,56 L27,56 L27,52 L30,52 L30,56 L34,56 L34,52 L37,52 L37,56 L43,56 L43,50 C47,46 52,40 52,31 C52,19 44,10 32,10 Z" fill="var(--ink-line)"/><circle cx="24" cy="30" r="4" fill="var(--panel2)"/><circle cx="40" cy="30" r="4" fill="var(--panel2)"/></svg>`;
+
+/* Deterministic string hash — same person always gets the same look, different
+   people (almost) always look different, no randomness/state needed. */
+function seedFromString(str){
+  let h = 5381;
+  str = String(str||'anon');
+  for(let i=0;i<str.length;i++){ h = ((h*33) ^ str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+const FEMALE_HAIR = [
+  cy=>`<ellipse cx="20" cy="${cy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><ellipse cx="44" cy="${cy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><circle cx="32" cy="${cy-8}" r="9" fill="var(--ink-line)"/>`,
+  cy=>`<ellipse cx="19" cy="${cy+10}" rx="6" ry="15" fill="var(--ink-line)"/><ellipse cx="45" cy="${cy+10}" rx="6" ry="15" fill="var(--ink-line)"/><circle cx="32" cy="${cy-8}" r="9" fill="var(--ink-line)"/>`,
+  cy=>`<circle cx="32" cy="${cy-8}" r="9" fill="var(--ink-line)"/><ellipse cx="47" cy="${cy+8}" rx="4" ry="9" fill="var(--ink-line)"/>`,
+  cy=>`<circle cx="32" cy="${cy-9}" r="7.5" fill="var(--ink-line)"/>`,
+  cy=>`<circle cx="20" cy="${cy-4}" r="5" fill="var(--ink-line)"/><circle cx="44" cy="${cy-4}" r="5" fill="var(--ink-line)"/><circle cx="26" cy="${cy-11}" r="5.5" fill="var(--ink-line)"/><circle cx="38" cy="${cy-11}" r="5.5" fill="var(--ink-line)"/><circle cx="32" cy="${cy-13}" r="5" fill="var(--ink-line)"/>`,
+];
+const MALE_HAIR = [
+  cy=>`<circle cx="32" cy="${cy-8}" r="9" fill="var(--ink-line)"/>`,
+  cy=>``,
+  cy=>`<ellipse cx="29" cy="${cy-9}" rx="10" ry="7" fill="var(--ink-line)"/>`,
+  cy=>`<path d="M20,${cy-10} Q32,${cy-16} 44,${cy-10} L44,${cy-6} Q32,${cy-11} 20,${cy-6} Z" fill="var(--ink-line)"/>`,
+  cy=>`<circle cx="32" cy="${cy-9}" r="12" fill="var(--ink-line)"/>`,
+];
+const NEUTRAL_HAIR = [
+  cy=>``,
+  cy=>`<circle cx="32" cy="${cy-9}" r="7" fill="var(--ink-line)"/>`,
+  cy=>`<ellipse cx="21" cy="${cy+2}" rx="4.5" ry="7" fill="var(--ink-line)"/><ellipse cx="43" cy="${cy+2}" rx="4.5" ry="7" fill="var(--ink-line)"/>`,
+];
+function accessoryPoolFor(bracket, gender){
+  const pool = [ cy=>'' ];
+  pool.push(cy=>`<circle cx="26.5" cy="${cy+1}" r="3" fill="none" stroke="var(--panel2)" stroke-width="1.3"/><circle cx="37.5" cy="${cy+1}" r="3" fill="none" stroke="var(--panel2)" stroke-width="1.3"/><line x1="29.5" y1="${cy+1}" x2="34.5" y2="${cy+1}" stroke="var(--panel2)" stroke-width="1.3"/>`);
+  pool.push(cy=>`<path d="M18,${cy-10} Q32,${cy-22} 46,${cy-10} L46,${cy-6} L18,${cy-6} Z" fill="var(--ink-line)"/><ellipse cx="32" cy="${cy-6}" rx="16" ry="2.5" fill="var(--ink-line)"/>`);
+  if(bracket!=='child'){
+    if(gender==='Male') pool.push(cy=>`<ellipse cx="32" cy="${cy+9}" rx="5" ry="1.6" fill="var(--ink-line)"/>`);
+    else pool.push(cy=>`<circle cx="19" cy="${cy+3}" r="1.6" fill="var(--gold)"/><circle cx="45" cy="${cy+3}" r="1.6" fill="var(--gold)"/>`);
   }
-  const a = state.age, g = state.gender;
+  if(bracket==='elder') pool.push(cy=>`<line x1="46" y1="42" x2="49" y2="61" stroke="var(--ink-line)" stroke-width="2.6" stroke-linecap="round"/><circle cx="45.5" cy="41" r="2.2" fill="var(--ink-line)"/>`);
+  return pool;
+}
+/* Renders any person's portrait (player or a relationship): {name, age, gender, alive} */
+function personAvatarSVG(person){
+  if(person.alive===false) return DEAD_AVATAR_SVG;
+  const a = person.age, g = person.gender || 'Nonbinary';
   const bracket = a<2 ? 'baby' : a<13 ? 'child' : a<60 ? 'adult' : 'elder';
+  const seed = seedFromString(person.name);
   const body = `<path d="M12,62 C12,45 20,39 32,39 C44,39 52,45 52,62 Z" fill="var(--ink-line)"/>`;
   const headR = bracket==='baby' ? 15 : 13;
   const headCy = bracket==='baby' ? 30 : 25;
   const head = `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>`;
-  let hair = '';
+  let hair = '', accessory = '';
   if(bracket!=='baby'){
-    if(g==='Female'){
-      hair = `<ellipse cx="20" cy="${headCy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><ellipse cx="44" cy="${headCy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><circle cx="32" cy="${headCy-8}" r="9" fill="var(--ink-line)"/>`;
-    } else if(g==='Male'){
-      hair = `<circle cx="32" cy="${headCy-8}" r="9" fill="var(--ink-line)"/>`;
-    }
+    const styles = g==='Female' ? FEMALE_HAIR : g==='Male' ? MALE_HAIR : NEUTRAL_HAIR;
+    hair = styles[seed % styles.length](headCy);
+    const accPool = accessoryPoolFor(bracket, g);
+    accessory = accPool[Math.floor(seed/7) % accPool.length](headCy);
   }
-  let extra = '';
-  if(bracket==='elder'){
-    extra = `<line x1="46" y1="42" x2="49" y2="61" stroke="var(--ink-line)" stroke-width="2.6" stroke-linecap="round"/><circle cx="45.5" cy="41" r="2.2" fill="var(--ink-line)"/>`;
-  }
-  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${extra}</svg>`;
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${accessory}</svg>`;
 }
+function avatarSVG(){ return personAvatarSVG(state); }
 
 const WEATHER_LINES = [
   {ic:'☀️', text:'Fair skies and mild temps'}, {ic:'🌧️', text:'Showers expected this edition'},
@@ -3054,6 +3093,140 @@ ageUp = function(){
   if(!state || !state.alive) return;
   if(chance(22)) rollChoiceEvent();
   render();
+};
+
+/* ---------------------------------------------------------------------
+   EXTENDED FAMILY — grandparents, aunts/uncles, cousins at birth;
+   in-laws on marriage. Real relationships in state.relationships, not
+   just flavor text.
+   --------------------------------------------------------------------- */
+const _origRelLabel_P23 = relLabel;
+relLabel = function(type){
+  const extra = {grandparent:'Grandparent', aunt_uncle:'Aunt/Uncle', cousin:'Cousin', in_law:'In-Law'};
+  return extra[type] || _origRelLabel_P23(type);
+};
+
+function addAuntsUnclesAndCousinsP23(parent, surname){
+  if(!parent) return;
+  const count = rand(0,2);
+  for(let i=0;i<count;i++){
+    const gender = pick(['Male','Female']);
+    const au = newRelationship('aunt_uncle', {gender, age:clamp(parent.age+rand(-8,8),18,90), rel:rand(40,85), last:surname});
+    au.name = randomFirstName(gender)+' '+surname;
+    state.relationships.push(au);
+    if(chance(55)){
+      const cousinCount = rand(1,2);
+      for(let j=0;j<cousinCount;j++){
+        const cg = pick(['Male','Female']);
+        const cousin = newRelationship('cousin', {gender:cg, age:rand(0,16), rel:rand(40,80), last:surname});
+        cousin.name = randomFirstName(cg)+' '+surname;
+        state.relationships.push(cousin);
+      }
+    }
+  }
+}
+function generateExtendedFamilyP23(){
+  const dad = state.relationships.find(r=>r.type==='parent' && r.gender==='Male');
+  const mom = state.relationships.find(r=>r.type==='parent' && r.gender==='Female');
+  const maternalSurname = pick(LAST_NAMES);
+  if(dad && chance(65)){ const g=newRelationship('grandparent',{gender:'Male', age:dad.age+rand(24,34), rel:rand(50,90), last:state.last}); g.name=randomFirstName('Male')+' '+state.last; state.relationships.push(g); }
+  if(dad && chance(65)){ const g=newRelationship('grandparent',{gender:'Female', age:dad.age+rand(22,32), rel:rand(50,90), last:state.last}); g.name=randomFirstName('Female')+' '+state.last; state.relationships.push(g); }
+  if(mom && chance(65)){ const g=newRelationship('grandparent',{gender:'Male', age:mom.age+rand(24,34), rel:rand(50,90), last:maternalSurname}); g.name=randomFirstName('Male')+' '+maternalSurname; state.relationships.push(g); }
+  if(mom && chance(65)){ const g=newRelationship('grandparent',{gender:'Female', age:mom.age+rand(22,32), rel:rand(50,90), last:maternalSurname}); g.name=randomFirstName('Female')+' '+maternalSurname; state.relationships.push(g); }
+  addAuntsUnclesAndCousinsP23(dad, state.last);
+  addAuntsUnclesAndCousinsP23(mom, maternalSurname);
+}
+const _origStartNewLife_P23 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P23();
+  if(state) generateExtendedFamilyP23();
+};
+
+const _origProposeMarriage_P23 = proposeMarriage;
+proposeMarriage = function(id){
+  const wasSpouseId = state.spouseId;
+  _origProposeMarriage_P23(id);
+  if(state.spouseId && state.spouseId!==wasSpouseId){
+    const spouse = state.relationships.find(r=>r.id===state.spouseId);
+    const inLawSurname = spouse.name.split(' ').slice(-1)[0];
+    if(chance(60)){ const il=newRelationship('in_law',{gender:'Male', age:spouse.age+rand(20,32), rel:rand(40,75), last:inLawSurname}); il.name=randomFirstName('Male')+' '+inLawSurname; state.relationships.push(il); }
+    if(chance(60)){ const il=newRelationship('in_law',{gender:'Female', age:spouse.age+rand(18,30), rel:rand(40,75), last:inLawSurname}); il.name=randomFirstName('Female')+' '+inLawSurname; state.relationships.push(il); }
+  }
+};
+
+/* Make a new friend — a dedicated action, not just the rare random "New Kid" event */
+const FRIEND_MAKE_SCENES_P23 = [
+  'You struck up a conversation in line at the coffee shop and really hit it off.',
+  'A mutual friend introduced you at a get-together, and you clicked immediately.',
+  'You met through a hobby group and started hanging out regularly.',
+  'You bonded over a shared complaint about the weather while waiting for the bus.',
+  'You started talking at the gym and it turned into an actual friendship.',
+];
+function makeNewFriendP23(){
+  const gender = pick(['Male','Female']);
+  const friend = newRelationship('friend', {gender, age:clamp(state.age+rand(-4,4),1,110), rel:rand(45,70)});
+  state.relationships.push(friend);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  log(`${pick(FRIEND_MAKE_SCENES_P23)} Meet ${friend.name}.`,'good');
+}
+
+/* ---------------------------------------------------------------------
+   PEOPLE PANEL — grouped into Immediate Family / Extended Family /
+   Friends, each entry with a portrait thumbnail, like a society-page
+   photo directory. Folds in everything the earlier append-only layers
+   added (rival/mentor, couples counseling, AI chat) since a flat
+   append can't reorganize content that renders before it — the same
+   limitation that required full reimplementations of renderLog().
+   --------------------------------------------------------------------- */
+function groupedRelationshipsP23(){
+  const living = state.relationships.filter(r=>r.alive);
+  const immediateTypes = ['parent','sibling','spouse','child','datingpartner','exspouse'];
+  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law'];
+  return {
+    immediate: living.filter(r=>immediateTypes.includes(r.type)),
+    extended: living.filter(r=>extendedTypes.includes(r.type)),
+    friends: living.filter(r=>r.type==='friend'),
+  };
+}
+function personListItemP23(r){
+  return `<div class="list-item"><div class="li-portrait">${personAvatarSVG(r)}</div><div class="li-main"><b>${r.name}</b><span>${relLabel(r.type)} · Age ${r.age} · Rel ${Math.round(r.rel)}%</span></div>
+    <button class="btn" onclick='interactWith(${JSON.stringify(r.id)})'>Interact</button></div>`;
+}
+const _origOpenRelationshipsPanel_P23 = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  const groups = groupedRelationshipsP23();
+  let html = '';
+  if(!groups.immediate.length && !groups.extended.length && !groups.friends.length){
+    html += `<p style="color:var(--sub)">No relationships yet.</p>`;
+  }
+  if(groups.immediate.length){ html += `<b>Immediate Family</b>`; groups.immediate.forEach(r=>{ html+=personListItemP23(r); }); }
+  if(groups.extended.length){ html += `<hr style="border-color:var(--border)"><b>Extended Family</b>`; groups.extended.forEach(r=>{ html+=personListItemP23(r); }); }
+  if(groups.friends.length){ html += `<hr style="border-color:var(--border)"><b>Friends</b>`; groups.friends.forEach(r=>{ html+=personListItemP23(r); }); }
+  html += `<hr style="border-color:var(--border)">`;
+  html += `<button class="btn btn-block" onclick="makeNewFriendP23()">Make a New Friend</button>`;
+  if(state.age>=16 && !state.spouseId) html += `<button class="btn btn-block btn-accent" onclick="findDate()">Find a Date</button>`;
+  const datingPartner = state.relationships.find(r=>r.alive && r.type==='datingpartner');
+  if(datingPartner){
+    html += `<button class="btn btn-block btn-primary" onclick='proposeMarriage(${JSON.stringify(datingPartner.id)})'>Propose Marriage</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick='breakUp(${JSON.stringify(datingPartner.id)})'>Break Up</button>`;
+  }
+  if(state.spouseId){
+    html += `<button class="btn btn-block" onclick="goOnDateNight()">Date Night</button>`;
+    html += `<button class="btn btn-block btn-accent" onclick="coupleCounselingP15()">💑 Couples Counseling ($200)</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick="fileDivorce()">File for Divorce</button>`;
+    if(state.age>=18) html += `<button class="btn btn-block" onclick="tryForBaby()">Try for a Baby</button>`;
+  }
+  html += `<button class="btn btn-block" onclick="openTherapyPanel()">Book Therapy Session</button>`;
+  html += `<hr style="border-color:var(--border)">`;
+  html += `<button class="btn btn-block${state.rival?' btn-danger':''}" onclick="openRivalPanelP15()">${state.rival?('😠 Rival: '+state.rival.name):'😠 Rival'}</button>`;
+  html += `<button class="btn btn-block${(state.mentor&&state.mentor.alive)?' btn-accent':''}" onclick="openMentorPanelP15()">${(state.mentor&&state.mentor.alive)?('🌟 Mentor: '+state.mentor.name):'🌟 Mentor'}</button>`;
+  const allLiving = groups.immediate.concat(groups.extended, groups.friends);
+  if(allLiving.length){
+    html += `<hr style="border-color:var(--border)"><b>💬 AI Conversations</b>`;
+    allLiving.forEach(r=>{ html += `<button class="btn btn-block" onclick='openFamilyChatP15(${JSON.stringify(r.id)})'>Chat with ${r.name}</button>`; });
+  }
+  html += `<button class="btn btn-block btn-accent" onclick="openApiSettingsPanelP15()">🔑 AI Chat Settings</button>`;
+  openPanel('People', html);
 };
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
