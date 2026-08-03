@@ -1320,6 +1320,23 @@
   .like-btn.liked { color: var(--coral-ink); font-weight: 800; }
   .like-btn:active { transform: scale(1.2); }
 
+  /* ---------- Share Button ---------- */
+  .share-btn {
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .share-btn:active { transform: scale(1.2); color: var(--violet); }
+
   /* ---------- Bestseller Badge ---------- */
   .bestseller-tag {
     position: absolute;
@@ -6467,6 +6484,7 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3.5a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             Recommended Gear: ${escapeHtml(t.gear)}
           </button>
+          <button class="share-btn" data-share-term="1">📤 Share this term</button>
         </div>
       `;
 
@@ -6488,6 +6506,11 @@
       card.querySelector(".gear-btn").addEventListener("click", (e) => {
         e.stopPropagation();
         showToast(`"${t.gear}" — product page coming soon.`);
+      });
+
+      card.querySelector("[data-share-term]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        shareContent(`${t.term} — Looksmaxing Dictionary`, t.definition);
       });
 
       const unlockBtn = card.querySelector("[data-unlock]");
@@ -6593,6 +6616,21 @@
       }
     }
     requestAnimationFrame(tick);
+  }
+
+  /* ---------------- Share (native share sheet with clipboard fallback) ---------------- */
+  function shareContent(title, text) {
+    if (navigator.share) {
+      navigator.share({ title, text }).catch(() => {});
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(`${title}\n\n${text}`)
+        .then(() => showToast("Copied to clipboard."))
+        .catch(() => showToast("Couldn't copy — try again."));
+    } else {
+      showToast("Sharing isn't supported on this browser.");
+    }
   }
 
   /* ---------------- Search ---------------- */
@@ -8396,6 +8434,7 @@
         <div class="thread-stats">
           <span>💬 ${t.replies.length} replies</span>
           <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
+          <button class="share-btn" data-share-thread="1">📤 Share</button>
         </div>
         <div class="reaction-bar">${reactionsHtml}</div>
         <div class="thread-body">${bodyContent}</div>
@@ -8422,6 +8461,10 @@
       card.querySelector("[data-like]").addEventListener("click", (e) => {
         e.stopPropagation();
         toggleLike(t);
+      });
+      card.querySelector("[data-share-thread]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        shareContent(t.title, `${t.body}\n\n— @${t.author} on Looksmaxing Dictionary Forum`);
       });
       card.querySelectorAll("[data-react]").forEach(btn => {
         btn.addEventListener("click", (e) => {
