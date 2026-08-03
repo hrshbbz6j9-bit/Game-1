@@ -48,6 +48,8 @@
   button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--gold-deep); outline-offset:2px;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
   .masthead{text-align:center;padding:14px 14px 8px;background:var(--panel);}
+  .crest{display:block;margin:0 auto 4px;}
+  #screen-loading .crest-big{margin-bottom:10px;}
   .masthead-title{font-family:var(--font-display);font-weight:700;font-size:1.7em;letter-spacing:.03em;text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;}
   .masthead-sub{font-family:var(--font-caption);font-size:.62em;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:5px;font-weight:600;}
   /* Loading */
@@ -74,8 +76,9 @@
   #screen-game{display:flex;flex-direction:column;height:100vh;background:var(--bg);}
   #header{padding:10px 14px 12px;background:var(--panel);border-bottom:2px solid var(--ink-line);}
   #header .who{display:flex;align-items:center;gap:10px;}
-  .avatar-ring{width:46px;height:46px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--ink-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  #header .avatar{font-size:1.6em;line-height:1;filter:grayscale(35%);}
+  .avatar-ring{width:46px;height:46px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--ink-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  #header .avatar{width:100%;height:100%;line-height:1;}
+  #header .avatar svg{display:block;width:100%;height:100%;}
   #header .who-info{flex:1;min-width:0;}
   #header .who-info b{font-size:1.05em;font-family:var(--font-display);font-weight:700;display:block;}
   #header .who-info span{display:block;font-size:.68em;color:var(--sub);font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
@@ -160,6 +163,15 @@
 <div id="phone">
 
   <div id="screen-loading">
+    <svg class="crest crest-big" viewBox="-3 -3 40 40" width="72" height="72">
+      <circle cx="17" cy="17" r="15" fill="none" stroke="var(--gold)" stroke-width="1.6"/>
+      <circle cx="17" cy="17" r="11" fill="none" stroke="var(--gold)" stroke-width="1"/>
+      <line x1="32" y1="17" x2="36" y2="17" stroke="var(--gold)" stroke-width="1.6"/>
+      <line x1="17" y1="32" x2="17" y2="36" stroke="var(--gold)" stroke-width="1.6"/>
+      <line x1="2" y1="17" x2="-2" y2="17" stroke="var(--gold)" stroke-width="1.6"/>
+      <line x1="17" y1="2" x2="17" y2="-2" stroke="var(--gold)" stroke-width="1.6"/>
+      <text x="17" y="22" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="13" fill="var(--text)">LP</text>
+    </svg>
     <h1>LifePlay</h1>
     <p>a life simulator</p>
     <div class="loadbar-track"><div class="loadbar-fill" id="loadbar-fill"></div></div>
@@ -193,6 +205,15 @@
 
   <div id="screen-game" class="hidden">
     <div class="masthead">
+      <svg class="crest" viewBox="-3 -3 40 40" width="28" height="28">
+        <circle cx="17" cy="17" r="15" fill="none" stroke="var(--gold)" stroke-width="1.6"/>
+        <circle cx="17" cy="17" r="11" fill="none" stroke="var(--gold)" stroke-width="1"/>
+        <line x1="32" y1="17" x2="36" y2="17" stroke="var(--gold)" stroke-width="1.6"/>
+        <line x1="17" y1="32" x2="17" y2="36" stroke="var(--gold)" stroke-width="1.6"/>
+        <line x1="2" y1="17" x2="-2" y2="17" stroke="var(--gold)" stroke-width="1.6"/>
+        <line x1="17" y1="2" x2="17" y2="-2" stroke="var(--gold)" stroke-width="1.6"/>
+        <text x="17" y="22" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="13" fill="var(--text)">LP</text>
+      </svg>
       <div class="masthead-title" id="masthead-title">The Gazette</div>
       <div class="masthead-sub" id="masthead-sub">Chronicling One Life, Daily</div>
     </div>
@@ -337,14 +358,31 @@ const STAT_BADGES = {
   karma:{ic:'Karma', color:'var(--life-green)'},
 };
 
-function avatarFor(){
-  const a = state.age;
-  if(!state.alive) return '💀';
-  if(a<2) return '👶';
-  if(a<13) return state.gender==='Female'?'👧':(state.gender==='Male'?'👦':'🧒');
-  if(a<20) return state.gender==='Female'?'👩‍🦱':(state.gender==='Male'?'👨‍🦱':'🧑');
-  if(a<60) return state.gender==='Female'?'👩':(state.gender==='Male'?'👨':'🧑');
-  return state.gender==='Female'?'👵':(state.gender==='Male'?'👴':'🧓');
+/* Engraved-silhouette portrait, cameo style — replaces the plain emoji avatar
+   with original hand-authored art that fits the Gazette's paper-and-ink world. */
+function avatarSVG(){
+  if(!state.alive){
+    return `<svg viewBox="0 0 64 64" width="100%" height="100%"><path d="M32,10 C20,10 12,19 12,31 C12,40 17,46 21,50 L21,56 L27,56 L27,52 L30,52 L30,56 L34,56 L34,52 L37,52 L37,56 L43,56 L43,50 C47,46 52,40 52,31 C52,19 44,10 32,10 Z" fill="var(--ink-line)"/><circle cx="24" cy="30" r="4" fill="var(--panel2)"/><circle cx="40" cy="30" r="4" fill="var(--panel2)"/></svg>`;
+  }
+  const a = state.age, g = state.gender;
+  const bracket = a<2 ? 'baby' : a<13 ? 'child' : a<60 ? 'adult' : 'elder';
+  const body = `<path d="M12,62 C12,45 20,39 32,39 C44,39 52,45 52,62 Z" fill="var(--ink-line)"/>`;
+  const headR = bracket==='baby' ? 15 : 13;
+  const headCy = bracket==='baby' ? 30 : 25;
+  const head = `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>`;
+  let hair = '';
+  if(bracket!=='baby'){
+    if(g==='Female'){
+      hair = `<ellipse cx="20" cy="${headCy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><ellipse cx="44" cy="${headCy+5}" rx="5.5" ry="10" fill="var(--ink-line)"/><circle cx="32" cy="${headCy-8}" r="9" fill="var(--ink-line)"/>`;
+    } else if(g==='Male'){
+      hair = `<circle cx="32" cy="${headCy-8}" r="9" fill="var(--ink-line)"/>`;
+    }
+  }
+  let extra = '';
+  if(bracket==='elder'){
+    extra = `<line x1="46" y1="42" x2="49" y2="61" stroke="var(--ink-line)" stroke-width="2.6" stroke-linecap="round"/><circle cx="45.5" cy="41" r="2.2" fill="var(--ink-line)"/>`;
+  }
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${extra}</svg>`;
 }
 
 const WEATHER_LINES = [
@@ -364,7 +402,7 @@ function render(){
   if(!state) return;
   if(!state.alive){ renderDeathScreen(); return; }
   showScreen('game');
-  $('hd-avatar').textContent = avatarFor();
+  $('hd-avatar').innerHTML = avatarSVG();
   $('hd-name').textContent = state.name;
   let sub = '🇺🇸 Age '+state.age+' · '+state.city;
   if(state.job) sub += ' · '+state.job.title;
