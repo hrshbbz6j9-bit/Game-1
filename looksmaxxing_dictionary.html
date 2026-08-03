@@ -1442,6 +1442,69 @@
   }
   .thread-photo img { width: 100%; height: auto; display: block; }
 
+  .poll-option-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .poll-option-row .form-input { margin-bottom: 0; }
+  .poll-option-remove {
+    flex-shrink: 0;
+    background: none;
+    border: 1.5px solid var(--ink-mute);
+    color: var(--ink-mute);
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .poll-widget {
+    margin-top: 10px;
+    padding: 12px;
+    border: 2px solid var(--ink);
+  }
+  .poll-question {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .poll-option {
+    position: relative;
+    border: 1.5px solid var(--ink);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    background: var(--card-fixed);
+  }
+  .poll-option:last-child { margin-bottom: 0; }
+  .poll-option-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: var(--lime);
+    z-index: 0;
+    transition: width 0.4s ease;
+  }
+  .poll-option.voted-for .poll-option-fill { background: var(--yellow); }
+  .poll-option-row-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-fixed);
+  }
+  .poll-option-pct { font-family: var(--font-mono); font-weight: 800; flex-shrink: 0; }
+  .poll-total-votes {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 8px;
+  }
+
   .thread-stats {
     display: flex;
     gap: 14px;
@@ -2575,6 +2638,16 @@
       <input type="file" id="newThreadPhotoInput" accept="image/*" style="display:none;">
       <button class="photo-remove-btn" id="newThreadPhotoRemove" style="display:none;">Remove Photo</button>
     </div>
+
+    <button class="photo-remove-btn" id="newThreadPollToggle" style="margin-bottom:14px;">+ Add Poll</button>
+    <div id="newThreadPollBuilder" style="display:none;">
+      <label class="form-label">Poll Question</label>
+      <input type="text" class="form-input" id="newThreadPollQuestion" placeholder="e.g. Which routine should I commit to?">
+      <label class="form-label">Options</label>
+      <div id="newThreadPollOptions"></div>
+      <button class="photo-remove-btn" id="newThreadPollAddOption" style="margin-bottom:18px;">+ Add Option</button>
+    </div>
+
     <button class="cta-btn" id="newThreadSubmit">Post Thread</button>
   </div>
 </div>
@@ -7719,6 +7792,41 @@
     return engagement / (hoursOld + 2);
   }
 
+  /* ---------------- Polls ---------------- */
+  function voteInPoll(t, optionIdx) {
+    if (!t.poll || Object.prototype.hasOwnProperty.call(t.poll.voters, username)) return;
+    t.poll.options[optionIdx].votes += 1;
+    t.poll.voters[username] = optionIdx;
+    saveThreads();
+    renderThreads();
+  }
+
+  function pollHtml(t) {
+    const poll = t.poll;
+    const totalVotes = poll.options.reduce((s, o) => s + o.votes, 0);
+    const hasVoted = Object.prototype.hasOwnProperty.call(poll.voters, username);
+    const myVoteIdx = hasVoted ? poll.voters[username] : -1;
+    return `
+      <div class="poll-widget">
+        <div class="poll-question">📊 ${escapeHtml(poll.question)}</div>
+        ${poll.options.map((o, idx) => {
+          const pct = totalVotes ? Math.round((o.votes / totalVotes) * 100) : 0;
+          const isMyVote = hasVoted && myVoteIdx === idx;
+          return `
+            <div class="poll-option ${isMyVote ? "voted-for" : ""}" data-poll-vote="${idx}">
+              ${hasVoted ? `<div class="poll-option-fill" style="width:${pct}%;"></div>` : ""}
+              <div class="poll-option-row-inner">
+                <span>${escapeHtml(o.text)}${isMyVote ? " ✓" : ""}</span>
+                ${hasVoted ? `<span class="poll-option-pct">${pct}%</span>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("")}
+        <div class="poll-total-votes">${totalVotes} vote${totalVotes === 1 ? "" : "s"}${hasVoted ? "" : " · tap an option to vote"}</div>
+      </div>
+    `;
+  }
+
   /* ---------------- Sort ---------------- */
   let threadSort = "newest";
   let pendingQuote = null;
@@ -7981,6 +8089,7 @@
         ` : `
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
           ${t.image ? `<div class="thread-photo"><img src="${t.image}" alt="Attached photo"></div>` : ""}
+          ${t.poll ? pollHtml(t) : ""}
           ${signatureHtml(t.author)}
           <div class="reply-list">${repliesHtml}</div>
           ${isLocked ? `
@@ -8169,6 +8278,9 @@
       card.querySelectorAll("[data-mark-best]").forEach(btn => {
         btn.addEventListener("click", (e) => { e.stopPropagation(); toggleBestAnswer(t, parseInt(btn.dataset.markBest, 10)); });
       });
+      card.querySelectorAll("[data-poll-vote]").forEach(opt => {
+        opt.addEventListener("click", (e) => { e.stopPropagation(); voteInPoll(t, parseInt(opt.dataset.pollVote, 10)); });
+      });
 
       list.appendChild(card);
     });
@@ -8217,7 +8329,46 @@
   });
   newThreadPhotoRemove.addEventListener("click", resetNewThreadPhoto);
 
-  function openNewThreadModal() { resetNewThreadPhoto(); newThreadPrefixSelect.value = ""; newThreadOverlay.classList.add("show"); }
+  const newThreadPollToggle = document.getElementById("newThreadPollToggle");
+  const newThreadPollBuilder = document.getElementById("newThreadPollBuilder");
+  const newThreadPollQuestion = document.getElementById("newThreadPollQuestion");
+  const newThreadPollOptions = document.getElementById("newThreadPollOptions");
+  const newThreadPollAddOption = document.getElementById("newThreadPollAddOption");
+  let pollBuilderOpen = false;
+
+  function addPollOptionRow(value) {
+    if (newThreadPollOptions.children.length >= 5) { showToast("Max 5 options per poll."); return; }
+    const row = document.createElement("div");
+    row.className = "poll-option-row";
+    row.innerHTML = `
+      <input type="text" class="form-input" placeholder="Option ${newThreadPollOptions.children.length + 1}" value="${value ? escapeHtml(value) : ""}">
+      <button type="button" class="poll-option-remove" aria-label="Remove option">✕</button>
+    `;
+    row.querySelector(".poll-option-remove").addEventListener("click", () => {
+      if (newThreadPollOptions.children.length <= 2) { showToast("A poll needs at least 2 options."); return; }
+      row.remove();
+    });
+    newThreadPollOptions.appendChild(row);
+  }
+
+  function resetPollBuilder() {
+    pollBuilderOpen = false;
+    newThreadPollBuilder.style.display = "none";
+    newThreadPollToggle.textContent = "+ Add Poll";
+    newThreadPollQuestion.value = "";
+    newThreadPollOptions.innerHTML = "";
+    addPollOptionRow();
+    addPollOptionRow();
+  }
+
+  newThreadPollToggle.addEventListener("click", () => {
+    pollBuilderOpen = !pollBuilderOpen;
+    newThreadPollBuilder.style.display = pollBuilderOpen ? "block" : "none";
+    newThreadPollToggle.textContent = pollBuilderOpen ? "− Remove Poll" : "+ Add Poll";
+  });
+  newThreadPollAddOption.addEventListener("click", () => addPollOptionRow());
+
+  function openNewThreadModal() { resetNewThreadPhoto(); resetPollBuilder(); newThreadPrefixSelect.value = ""; newThreadOverlay.classList.add("show"); }
   function closeNewThreadModal() { newThreadOverlay.classList.remove("show"); }
   document.getElementById("newThreadClose").addEventListener("click", closeNewThreadModal);
   newThreadOverlay.addEventListener("click", (e) => { if (e.target === newThreadOverlay) closeNewThreadModal(); });
@@ -8230,15 +8381,28 @@
     const prefix = newThreadPrefixSelect.value || undefined;
     const body = bodyInput.value.trim();
     if (!title || !body) { showToast("Add a title and a post before submitting."); return; }
+    if (pollBuilderOpen) {
+      const pollQuestion = newThreadPollQuestion.value.trim();
+      const pollOptionTexts = [...newThreadPollOptions.querySelectorAll("input")].map(inp => inp.value.trim()).filter(Boolean);
+      if (pollQuestion && pollOptionTexts.length < 2) { showToast("A poll needs at least 2 filled-in options."); return; }
+    }
     const newId = Math.max(0, ...threads.map(t => t.id)) + 1;
     const newThread = { id: newId, title, category, author: username, body, replies: [], likes: 0 };
     if (prefix) newThread.prefix = prefix;
     if (newThreadPhoto) newThread.image = newThreadPhoto;
+    if (pollBuilderOpen) {
+      const pollQuestion = newThreadPollQuestion.value.trim();
+      const pollOptionTexts = [...newThreadPollOptions.querySelectorAll("input")].map(inp => inp.value.trim()).filter(Boolean);
+      if (pollQuestion && pollOptionTexts.length >= 2) {
+        newThread.poll = { question: pollQuestion, options: pollOptionTexts.map(text => ({ text, votes: 0 })), voters: {} };
+      }
+    }
     threads.push(newThread);
     saveThreads();
     titleInput.value = "";
     bodyInput.value = "";
     resetNewThreadPhoto();
+    resetPollBuilder();
     closeNewThreadModal();
     activeForumCategory = "All";
     renderForumTabs();
