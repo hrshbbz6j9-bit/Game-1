@@ -3401,6 +3401,54 @@ function openFamilyTreeP25(){
   html += `</div><button class="btn btn-block" onclick="openRelationshipsPanel()" style="margin-top:12px;">← Back to People</button>`;
   openPanel('Family Tree', html);
 }
+
+/* ---------------------------------------------------------------------
+   P26 — Procedural pet portraits, same ink-silhouette family as the
+   human avatars, so the Pet Care panel stops being a plain text list.
+   --------------------------------------------------------------------- */
+const PET_DEAD_SVG = `<svg viewBox="0 0 64 64" width="100%" height="100%"><path d="M20,50 Q20,58 28,58 L36,58 Q44,58 44,50 Q44,40 32,40 Q20,40 20,50 Z" fill="var(--ink-line)"/><circle cx="24" cy="30" r="5" fill="var(--ink-line)"/><circle cx="32" cy="24" r="6" fill="var(--ink-line)"/><circle cx="40" cy="30" r="5" fill="var(--ink-line)"/><circle cx="20" cy="40" r="5" fill="var(--ink-line)"/><circle cx="44" cy="40" r="5" fill="var(--ink-line)"/></svg>`;
+const PET_BASE_SHAPES = {
+  Dog: ()=>`<path d="M14,52 Q14,36 32,36 Q50,36 50,52 L50,58 L14,58 Z" fill="var(--ink-line)"/><ellipse cx="20" cy="30" rx="6" ry="10" fill="var(--ink-line)"/><ellipse cx="44" cy="30" rx="6" ry="10" fill="var(--ink-line)"/><circle cx="32" cy="32" r="13" fill="var(--ink-line)"/><ellipse cx="32" cy="38" rx="4" ry="3" fill="var(--panel2)"/>`,
+  Cat: ()=>`<path d="M16,54 Q16,38 32,38 Q48,38 48,54 L48,58 L16,58 Z" fill="var(--ink-line)"/><path d="M18,26 L24,34 L14,34 Z" fill="var(--ink-line)"/><path d="M46,26 L50,34 L40,34 Z" fill="var(--ink-line)"/><circle cx="32" cy="32" r="12" fill="var(--ink-line)"/><path d="M20,55 Q10,50 8,40" fill="none" stroke="var(--ink-line)" stroke-width="3" stroke-linecap="round"/>`,
+  Parrot: ()=>`<path d="M22,58 L22,40 Q22,24 34,24 Q46,24 46,38 Q46,48 36,50 L36,58 Z" fill="var(--ink-line)"/><path d="M44,32 L54,35 L44,39 Z" fill="var(--gold)"/><circle cx="38" cy="30" r="2" fill="var(--panel2)"/>`,
+  Hamster: ()=>`<ellipse cx="32" cy="40" rx="20" ry="16" fill="var(--ink-line)"/><circle cx="18" cy="26" r="5" fill="var(--ink-line)"/><circle cx="42" cy="24" r="6" fill="var(--ink-line)"/><ellipse cx="41" cy="42" rx="3" ry="2.2" fill="var(--panel2)"/>`,
+  Snake: ()=>`<path d="M12,56 Q16,44 28,46 Q42,48 40,36 Q38,26 26,28" fill="none" stroke="var(--ink-line)" stroke-width="9" stroke-linecap="round"/><circle cx="24" cy="28" r="6" fill="var(--ink-line)"/><circle cx="22" cy="27" r="1" fill="var(--panel2)"/>`,
+  Rabbit: ()=>`<path d="M16,56 Q16,40 32,40 Q48,40 48,56 L48,58 L16,58 Z" fill="var(--ink-line)"/><ellipse cx="24" cy="16" rx="4" ry="14" fill="var(--ink-line)"/><ellipse cx="38" cy="14" rx="4" ry="15" fill="var(--ink-line)"/><circle cx="32" cy="34" r="12" fill="var(--ink-line)"/><circle cx="32" cy="40" r="2" fill="var(--panel2)"/>`,
+};
+const PET_MARK_POOL = [
+  ()=>'',
+  ()=>`<circle cx="24" cy="46" r="2.2" fill="var(--panel2)"/><circle cx="40" cy="50" r="1.8" fill="var(--panel2)"/><circle cx="34" cy="44" r="1.6" fill="var(--panel2)"/>`,
+  ()=>`<rect x="16" y="46" width="32" height="4" fill="var(--panel2)"/>`,
+];
+const PET_COLLAR_POOL = [
+  ()=>'',
+  ()=>`<rect x="19" y="42" width="26" height="3" rx="1.5" fill="var(--gold)"/><circle cx="32" cy="47" r="2" fill="var(--gold)"/>`,
+];
+function petAvatarSVG(pet){
+  if(!pet.alive) return PET_DEAD_SVG;
+  const shapeFn = PET_BASE_SHAPES[pet.type] || PET_BASE_SHAPES.Dog;
+  const seed = seedFromString(pet.name+pet.type);
+  const marks = PET_MARK_POOL[seed % PET_MARK_POOL.length]();
+  const collar = (pet.type!=='Snake' && pet.type!=='Parrot') ? PET_COLLAR_POOL[Math.floor(seed/5) % PET_COLLAR_POOL.length]() : '';
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${shapeFn()}${marks}${collar}</svg>`;
+}
+const _origOpenPetCarePanelP15_P26 = openPetCarePanelP15;
+openPetCarePanelP15 = function(){
+  _origOpenPetCarePanelP15_P26();
+  const body = $('panel-body');
+  body.querySelectorAll('.list-item').forEach(el=>{
+    if(el.querySelector('.li-portrait')) return;
+    const nameEl = el.querySelector('.li-main b');
+    if(!nameEl) return;
+    const nameText = nameEl.textContent;
+    const pet = state.pets.find(p=>p.name===nameText);
+    if(!pet) return;
+    const portrait = document.createElement('div');
+    portrait.className = 'li-portrait';
+    portrait.innerHTML = petAvatarSVG(pet);
+    el.insertBefore(portrait, el.firstChild);
+  });
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
