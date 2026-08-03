@@ -1380,6 +1380,67 @@
 
   .thread-tag.locked-tag { background: var(--coral); color: #fff; }
 
+  .owner-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .owner-btn:active { transform: scale(1.2); }
+
+  .reply-actions { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+
+  .edited-tag {
+    font-family: var(--font-mono);
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 10px;
+    margin-left: 4px;
+  }
+
+  .edit-post-form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .edit-post-form input, .edit-post-form textarea {
+    background: var(--card);
+    border: 2px solid var(--ink);
+    padding: 9px 12px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    outline: none;
+    resize: vertical;
+    width: 100%;
+  }
+  .edit-post-form textarea { min-height: 70px; }
+  .edit-post-actions { display: flex; gap: 8px; }
+
+  .edit-save-btn, .edit-cancel-btn, .delete-confirm-btn, .delete-cancel-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 7px 14px;
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+  }
+  .edit-save-btn { background: var(--ink); color: var(--card); }
+  .edit-cancel-btn, .delete-cancel-btn { background: var(--card); color: var(--ink); }
+  .delete-confirm-btn { background: var(--coral); color: #fff; border-color: var(--coral); }
+
+  .delete-confirm-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 10px;
+    border: 1.5px dashed var(--coral);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
   .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
 
   .reply-input-row input {
@@ -6828,6 +6889,51 @@
   let threadSort = "newest";
   let pendingQuote = null;
 
+  /* ---------------- Edit / Delete own posts ---------------- */
+  let threadEditMode = {};
+  let replyEditMode = {};
+
+  function setThreadMode(id, mode) { threadEditMode[id] = mode; openThreadId = id; renderThreads(); }
+  function clearThreadMode(id) { delete threadEditMode[id]; renderThreads(); }
+  function setReplyMode(key, mode) { replyEditMode[key] = mode; renderThreads(); }
+  function clearReplyMode(key) { delete replyEditMode[key]; renderThreads(); }
+
+  function saveThreadEdit(t, title, body) {
+    t.title = title;
+    t.body = body;
+    t.edited = true;
+    clearThreadMode(t.id);
+    saveThreads();
+    renderThreads();
+  }
+
+  function deleteThread(t) {
+    threads = threads.filter(x => x.id !== t.id);
+    if (openThreadId === t.id) openThreadId = null;
+    delete threadEditMode[t.id];
+    saveThreads();
+    renderThreads();
+    renderProfileCard();
+    showToast("Thread deleted.");
+  }
+
+  function saveReplyEdit(t, idx, text) {
+    t.replies[idx].text = text;
+    t.replies[idx].edited = true;
+    clearReplyMode(`${t.id}:${idx}`);
+    saveThreads();
+    renderThreads();
+  }
+
+  function deleteReply(t, idx) {
+    t.replies.splice(idx, 1);
+    Object.keys(replyEditMode).forEach(k => { if (k.startsWith(`${t.id}:`)) delete replyEditMode[k]; });
+    saveThreads();
+    renderThreads();
+    renderProfileCard();
+    showToast("Reply deleted.");
+  }
+
   function setQuote(threadId, author, text) {
     pendingQuote = { threadId, author, text };
     renderThreads();
@@ -6878,16 +6984,54 @@
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
       card.dataset.threadId = t.id;
       const repliesHtml = t.replies.length
-        ? t.replies.map((r, idx) => `
+        ? t.replies.map((r, idx) => {
+            const rKey = `${t.id}:${idx}`;
+            const rMode = replyEditMode[rKey];
+            const isOwnReply = r.author === username;
+            if (rMode === "edit") {
+              return `
+                <div class="reply-item">
+                  ${avatarHtml(r.author)}
+                  <div class="reply-item-body">
+                    <div class="edit-post-form">
+                      <input type="text" class="edit-reply-input" maxlength="300">
+                      <div class="edit-post-actions">
+                        <button class="edit-save-btn" data-save-reply="${idx}">Save</button>
+                        <button class="edit-cancel-btn" data-cancel-reply-edit="${idx}">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+            if (rMode === "delete") {
+              return `
+                <div class="reply-item">
+                  ${avatarHtml(r.author)}
+                  <div class="reply-item-body">
+                    <div class="delete-confirm-row">
+                      <span>Delete this reply?</span>
+                      <button class="delete-confirm-btn" data-confirm-delete-reply="${idx}">Delete</button>
+                      <button class="delete-cancel-btn" data-cancel-delete-reply="${idx}">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+            return `
             <div class="reply-item">
               ${avatarHtml(r.author)}
               <div class="reply-item-body">
-                <span class="reply-author" data-author="${escapeHtml(r.author)}">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span>
+                <span class="reply-author" data-author="${escapeHtml(r.author)}">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span>${r.edited ? '<span class="edited-tag">(edited)</span>' : ""}
                 ${signatureHtml(r.author)}
               </div>
-              <button class="quote-btn" data-quote-idx="${idx}" aria-label="Quote">❝</button>
+              <div class="reply-actions">
+                <button class="quote-btn" data-quote-idx="${idx}" aria-label="Quote">❝</button>
+                ${isOwnReply ? `<button class="owner-btn" data-edit-reply="${idx}" aria-label="Edit reply">✎</button><button class="owner-btn" data-delete-reply="${idx}" aria-label="Delete reply">🗑</button>` : ""}
+              </div>
             </div>
-          `).join("")
+          `;
+          }).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
       const isLocked = !!t.locked;
       const views = t.views || (t.id * 37 + 120);
@@ -6898,32 +7042,24 @@
         return `<button class="reaction-btn ${active ? "active" : ""}" data-react="${r.key}">${r.emoji} ${count}</button>`;
       }).join("");
       const quotedHere = pendingQuote && pendingQuote.threadId === t.id ? pendingQuote : null;
-      card.innerHTML = `
-        <div class="thread-top">
-          <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${isLocked ? '<span class="pin-icon">🔒</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
-          <button class="watch-btn ${watchedThreads.has(t.id) ? "active" : ""}" data-watch="1" aria-label="Watch thread">${watchedThreads.has(t.id) ? "🔖" : "📑"}</button>
-          <span class="thread-tag ${isLocked ? "locked-tag" : ""}" style="${isLocked ? "" : categoryTagStyle(t.category)}">${isLocked ? "LOCKED" : escapeHtml(t.category)}</span>
-        </div>
-        <div class="thread-meta">
-          ${avatarHtml(t.author)}
-          <span class="author" data-author="${escapeHtml(t.author)}">@${escapeHtml(t.author)}</span>
-          ${tierBadgeHtml(t.author)}
-          ${staffBadgeHtml(t.author)}
-          <span>·</span>
-          <span>${timeAgoLabel(t.id)}</span>
-          <span>·</span>
-          <span>👁 ${formatViews(views)}</span>
-        </div>
-        ${lastActivityAuthor(t) ? `
-        <div class="thread-last-activity">
-          ↳ Last reply: ${avatarHtml(lastActivityAuthor(t))}<span class="author" data-author="${escapeHtml(lastActivityAuthor(t))}">@${escapeHtml(lastActivityAuthor(t))}</span>
-        </div>` : ""}
-        <div class="thread-stats">
-          <span>💬 ${t.replies.length} replies</span>
-          <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
-        </div>
-        <div class="reaction-bar">${reactionsHtml}</div>
-        <div class="thread-body">
+      const isOwnThread = t.author === username;
+      const threadMode = threadEditMode[t.id];
+      const bodyContent = threadMode === "edit" ? `
+          <div class="edit-post-form">
+            <input type="text" class="edit-title-input" maxlength="120">
+            <textarea class="edit-body-input" maxlength="600"></textarea>
+            <div class="edit-post-actions">
+              <button class="edit-save-btn" data-save-thread="1">Save</button>
+              <button class="edit-cancel-btn" data-cancel-thread-edit="1">Cancel</button>
+            </div>
+          </div>
+        ` : threadMode === "delete" ? `
+          <div class="delete-confirm-row">
+            <span>Delete this thread permanently?</span>
+            <button class="delete-confirm-btn" data-confirm-delete-thread="1">Delete</button>
+            <button class="delete-cancel-btn" data-cancel-delete-thread="1">Cancel</button>
+          </div>
+        ` : `
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
           ${signatureHtml(t.author)}
           <div class="reply-list">${repliesHtml}</div>
@@ -6941,8 +7077,48 @@
               <button class="reply-send-btn">Post</button>
             </div>
           `}
+        `;
+      card.innerHTML = `
+        <div class="thread-top">
+          <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${isLocked ? '<span class="pin-icon">🔒</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
+          ${isOwnThread && !isLocked ? `
+            <button class="owner-btn" data-edit-thread="1" aria-label="Edit thread">✎</button>
+            <button class="owner-btn" data-delete-thread="1" aria-label="Delete thread">🗑</button>
+          ` : ""}
+          <button class="watch-btn ${watchedThreads.has(t.id) ? "active" : ""}" data-watch="1" aria-label="Watch thread">${watchedThreads.has(t.id) ? "🔖" : "📑"}</button>
+          <span class="thread-tag ${isLocked ? "locked-tag" : ""}" style="${isLocked ? "" : categoryTagStyle(t.category)}">${isLocked ? "LOCKED" : escapeHtml(t.category)}</span>
         </div>
+        <div class="thread-meta">
+          ${avatarHtml(t.author)}
+          <span class="author" data-author="${escapeHtml(t.author)}">@${escapeHtml(t.author)}</span>
+          ${tierBadgeHtml(t.author)}
+          ${staffBadgeHtml(t.author)}
+          <span>·</span>
+          <span>${timeAgoLabel(t.id)}</span>
+          <span>·</span>
+          <span>👁 ${formatViews(views)}</span>
+          ${t.edited ? '<span class="edited-tag">(edited)</span>' : ""}
+        </div>
+        ${lastActivityAuthor(t) ? `
+        <div class="thread-last-activity">
+          ↳ Last reply: ${avatarHtml(lastActivityAuthor(t))}<span class="author" data-author="${escapeHtml(lastActivityAuthor(t))}">@${escapeHtml(lastActivityAuthor(t))}</span>
+        </div>` : ""}
+        <div class="thread-stats">
+          <span>💬 ${t.replies.length} replies</span>
+          <button class="like-btn ${likedThreads.has(t.id) ? "liked" : ""}" data-like="1">❤️ ${t.likes}</button>
+        </div>
+        <div class="reaction-bar">${reactionsHtml}</div>
+        <div class="thread-body">${bodyContent}</div>
       `;
+      const titleEditInput = card.querySelector(".edit-title-input");
+      const bodyEditInput = card.querySelector(".edit-body-input");
+      if (titleEditInput) titleEditInput.value = t.title;
+      if (bodyEditInput) bodyEditInput.value = t.body;
+      card.querySelectorAll("[data-save-reply]").forEach(btn => {
+        const idx = parseInt(btn.dataset.saveReply, 10);
+        const input = btn.closest(".reply-item-body").querySelector(".edit-reply-input");
+        if (input) input.value = t.replies[idx].text;
+      });
       card.querySelector(".thread-top").addEventListener("click", () => {
         const opening = openThreadId !== t.id;
         openThreadId = opening ? t.id : null;
@@ -6991,6 +7167,60 @@
       if (cancelQuoteBtn) {
         cancelQuoteBtn.addEventListener("click", (e) => { e.stopPropagation(); clearQuote(); });
       }
+
+      const editThreadBtn = card.querySelector("[data-edit-thread]");
+      if (editThreadBtn) editThreadBtn.addEventListener("click", (e) => { e.stopPropagation(); setThreadMode(t.id, "edit"); });
+      const deleteThreadBtn = card.querySelector("[data-delete-thread]");
+      if (deleteThreadBtn) deleteThreadBtn.addEventListener("click", (e) => { e.stopPropagation(); setThreadMode(t.id, "delete"); });
+      const saveThreadBtn = card.querySelector("[data-save-thread]");
+      if (saveThreadBtn) {
+        saveThreadBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const titleVal = card.querySelector(".edit-title-input").value.trim();
+          const bodyVal = card.querySelector(".edit-body-input").value.trim();
+          if (!titleVal || !bodyVal) { showToast("Title and post can't be empty."); return; }
+          saveThreadEdit(t, titleVal, bodyVal);
+        });
+      }
+      const cancelThreadEditBtn = card.querySelector("[data-cancel-thread-edit]");
+      if (cancelThreadEditBtn) cancelThreadEditBtn.addEventListener("click", (e) => { e.stopPropagation(); clearThreadMode(t.id); });
+      const confirmDeleteThreadBtn = card.querySelector("[data-confirm-delete-thread]");
+      if (confirmDeleteThreadBtn) confirmDeleteThreadBtn.addEventListener("click", (e) => { e.stopPropagation(); deleteThread(t); });
+      const cancelDeleteThreadBtn = card.querySelector("[data-cancel-delete-thread]");
+      if (cancelDeleteThreadBtn) cancelDeleteThreadBtn.addEventListener("click", (e) => { e.stopPropagation(); clearThreadMode(t.id); });
+      card.querySelectorAll(".edit-title-input, .edit-body-input").forEach(el => {
+        el.addEventListener("click", (e) => e.stopPropagation());
+      });
+
+      card.querySelectorAll("[data-edit-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); setReplyMode(`${t.id}:${btn.dataset.editReply}`, "edit"); });
+      });
+      card.querySelectorAll("[data-delete-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); setReplyMode(`${t.id}:${btn.dataset.deleteReply}`, "delete"); });
+      });
+      card.querySelectorAll("[data-save-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.saveReply, 10);
+          const replyInput = btn.closest(".reply-item-body").querySelector(".edit-reply-input");
+          const val = replyInput.value.trim();
+          if (!val) { showToast("Reply can't be empty."); return; }
+          saveReplyEdit(t, idx, val);
+        });
+      });
+      card.querySelectorAll("[data-cancel-reply-edit]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); clearReplyMode(`${t.id}:${btn.dataset.cancelReplyEdit}`); });
+      });
+      card.querySelectorAll("[data-confirm-delete-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); deleteReply(t, parseInt(btn.dataset.confirmDeleteReply, 10)); });
+      });
+      card.querySelectorAll("[data-cancel-delete-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); clearReplyMode(`${t.id}:${btn.dataset.cancelDeleteReply}`); });
+      });
+      card.querySelectorAll(".edit-reply-input").forEach(el => {
+        el.addEventListener("click", (e) => e.stopPropagation());
+      });
+
       list.appendChild(card);
     });
   }
