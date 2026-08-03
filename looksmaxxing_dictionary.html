@@ -1099,6 +1099,21 @@
     text-shadow: 0 0 3px #FFFFFF, 0 0 3px #FFFFFF;
   }
 
+  .streak-badge {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border: 1.5px solid var(--ink);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: linear-gradient(90deg, #FF7A33, #FF3E7F);
+    color: #FFFFFF;
+    box-shadow: 0 0 10px rgba(255,122,51,0.45);
+  }
+
   .edit-profile-btn {
     flex-shrink: 0;
     font-family: var(--font-mono);
@@ -6159,6 +6174,23 @@
   let isPremium = localStorage.getItem("looksmax_premium") === "true";
   let selectedPlan = "yearly";
 
+  function computeStreak() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const lastVisit = localStorage.getItem("looksmax_last_visit_date");
+    let streak = parseInt(localStorage.getItem("looksmax_streak") || "0", 10) || 0;
+    if (lastVisit === todayStr) return streak || 1;
+    if (lastVisit) {
+      const diffDays = Math.round((new Date(todayStr + "T00:00:00") - new Date(lastVisit + "T00:00:00")) / 86400000);
+      streak = diffDays === 1 ? streak + 1 : 1;
+    } else {
+      streak = 1;
+    }
+    localStorage.setItem("looksmax_last_visit_date", todayStr);
+    localStorage.setItem("looksmax_streak", String(streak));
+    return streak;
+  }
+  const currentStreak = computeStreak();
+
   const els = {
     termList: document.getElementById("termList"),
     indexBar: document.getElementById("indexBar"),
@@ -7212,7 +7244,8 @@
     { icon: "👑", name: "VIP Member", desc: "Unlock Premium", check: () => isPremium },
     { icon: "🎓", name: "Entrepreneur", desc: "List a course for sale", check: () => courses.some(c => c.creator === username) },
     { icon: "📚", name: "Scholar", desc: "Mark 50 dictionary terms as learned", check: () => learnedTerms.size >= 50 },
-    { icon: "🤝", name: "Networker", desc: "Follow 5 members", check: () => following.size >= 5 }
+    { icon: "🤝", name: "Networker", desc: "Follow 5 members", check: () => following.size >= 5 },
+    { icon: "📅", name: "Consistent", desc: "Visit 7 days in a row", check: () => currentStreak >= 7 }
   ];
 
   function openAchievements() {
@@ -7491,6 +7524,7 @@
             <div class="profile-name">@${escapeHtml(username)} <span class="rank-number">#${globalRank || "—"}</span></div>
             <div class="profile-badges">
               <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.icon} ${current.name}</span>
+              ${currentStreak > 1 ? `<span class="streak-badge">🔥 ${currentStreak}d</span>` : ""}
               ${vipHtml}
             </div>
           </div>
