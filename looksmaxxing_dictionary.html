@@ -2143,6 +2143,7 @@
     <div class="sort-row" id="sortRow">
       <button class="sort-btn active" data-sort="newest">🕐 Newest</button>
       <button class="sort-btn" data-sort="top">🔥 Top</button>
+      <button class="sort-btn" data-sort="trending">📈 Trending</button>
     </div>
 
     <div class="thread-list" id="threadList"></div>
@@ -7095,6 +7096,15 @@
     return n.toLocaleString();
   }
 
+  function trendingScore(t) {
+    const views = t.views || (t.id * 37 + 120);
+    const reactions = t.reactions || {};
+    const reactionTotal = Object.values(reactions).reduce((s, n) => s + n, 0);
+    const engagement = views * 0.5 + t.likes * 3 + t.replies.length * 4 + reactionTotal * 2;
+    const hoursOld = (t.id * 7) % 72 + 1;
+    return engagement / (hoursOld + 2);
+  }
+
   /* ---------------- Sort ---------------- */
   let threadSort = "newest";
   let pendingQuote = null;
@@ -7234,6 +7244,7 @@
     const pinned = filtered.filter(t => t.pinned);
     const rest = filtered.filter(t => !t.pinned);
     if (threadSort === "top") rest.sort((a, b) => b.likes - a.likes);
+    else if (threadSort === "trending") rest.sort((a, b) => trendingScore(b) - trendingScore(a));
     else rest.reverse();
     const ordered = [...pinned, ...rest];
 
