@@ -143,6 +143,16 @@
   .li-portrait{width:34px;height:34px;flex-shrink:0;border:1.5px solid var(--ink-line);background:var(--panel2);overflow:hidden;}
   .li-portrait svg{display:block;width:100%;height:100%;}
   .best-friend-badge{color:var(--gold-deep, var(--gold));font-size:.85em;}
+  .family-tree{display:flex;flex-direction:column;gap:14px;}
+  .ft-gen-label{font-family:var(--font-caption);font-size:.66em;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);text-align:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin-bottom:8px;font-weight:600;}
+  .ft-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+  .ft-node{display:flex;flex-direction:column;align-items:center;width:58px;text-align:center;}
+  .ft-portrait{width:44px;height:44px;border:1.5px solid var(--ink-line);background:var(--panel2);overflow:hidden;border-radius:50%;}
+  .ft-portrait svg{display:block;width:100%;height:100%;}
+  .ft-name{font-size:.62em;font-weight:700;margin-top:3px;line-height:1.15;}
+  .ft-rel{font-size:.58em;color:var(--sub);}
+  .ft-you .ft-portrait{border:2px solid var(--gold-deep);box-shadow:0 0 0 2px var(--gold);}
+  .ft-you .ft-name{color:var(--gold-deep);}
   #panel-body > .btn{margin:5px 0;}
   .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
   .letter{padding:10px 0 10px 14px;border-left:3px solid var(--border);border-bottom:1px solid var(--border);font-style:italic;font-size:.9em;line-height:1.45;color:var(--sub);}
@@ -3231,6 +3241,7 @@ openRelationshipsPanel = function(){
   if(groups.extended.length){ html += `<hr style="border-color:var(--border)"><b>Extended Family</b>`; groups.extended.forEach(r=>{ html+=personListItemP23(r); }); }
   if(groups.friends.length){ html += `<hr style="border-color:var(--border)"><b>Friends</b>`; groups.friends.forEach(r=>{ html+=personListItemP23(r); }); }
   html += `<hr style="border-color:var(--border)">`;
+  if(groups.immediate.length || groups.extended.length) html += `<button class="btn btn-block btn-accent" onclick="openFamilyTreeP25()">🌳 View Family Tree</button>`;
   html += `<button class="btn btn-block" onclick="makeNewFriendP23()">Make a New Friend</button>`;
   if(state.age>=16 && !state.spouseId) html += `<button class="btn btn-block btn-accent" onclick="findDate()">Find a Date</button>`;
   const datingPartner = state.relationships.find(r=>r.alive && r.type==='datingpartner');
@@ -3361,6 +3372,35 @@ interactWith = function(id){
   }
   playScene({title:r.name, text:`How do you want to interact with ${r.name}?`, choices:opts});
 };
+
+/* ---------------------------------------------------------------------
+   P25 — Family Tree view: a genealogical-record-style panel laid out
+   by generation, using the same portrait art as the People list.
+   --------------------------------------------------------------------- */
+function familyTreeNodeP25(person, isYou){
+  const rel = isYou ? '' : `<div class="ft-rel">${Math.round(person.rel)}%</div>`;
+  return `<div class="ft-node${isYou?' ft-you':''}"><div class="ft-portrait">${personAvatarSVG(person)}</div><div class="ft-name">${person.name}</div>${rel}</div>`;
+}
+function openFamilyTreeP25(){
+  const rel = state.relationships.filter(r=>r.alive);
+  const grandparents = rel.filter(r=>r.type==='grandparent');
+  const parentsGen = rel.filter(r=>r.type==='parent' || r.type==='aunt_uncle');
+  const selfGenOthers = rel.filter(r=>['spouse','sibling','cousin','in_law','datingpartner'].includes(r.type));
+  const childGen = rel.filter(r=>r.type==='child' || r.type==='niece_nephew');
+  let html = `<div class="family-tree">`;
+  if(grandparents.length){
+    html += `<div class="ft-gen"><div class="ft-gen-label">The Elders</div><div class="ft-row">${grandparents.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  }
+  if(parentsGen.length){
+    html += `<div class="ft-gen"><div class="ft-gen-label">Parents &amp; Family</div><div class="ft-row">${parentsGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  }
+  html += `<div class="ft-gen"><div class="ft-gen-label">Your Generation</div><div class="ft-row">${familyTreeNodeP25({name:state.name, age:state.age, gender:state.gender, alive:state.alive}, true)}${selfGenOthers.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  if(childGen.length){
+    html += `<div class="ft-gen"><div class="ft-gen-label">The Next Generation</div><div class="ft-row">${childGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  }
+  html += `</div><button class="btn btn-block" onclick="openRelationshipsPanel()" style="margin-top:12px;">← Back to People</button>`;
+  openPanel('Family Tree', html);
+}
 </script>
 </body>
 </html>
