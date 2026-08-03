@@ -4486,6 +4486,19 @@ ageUp = function(){
   tickPrestigeCareerP41();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   P42 — Renaissance Life: a capstone secret ending for reaching the
+   top rank in three or more of the six parallel career tracks now in
+   the game (mafia, military, sports, acting, music, modeling).
+   --------------------------------------------------------------------- */
+SECRET_ENDINGS.push({
+  id:'polymath', title:'The Polymath',
+  cond:s=>{
+    const topKeys = ['mafia_don_ach','general_ach','hall_of_fame_ach','legend_actor_ach','music_icon_ach','supermodel_ach'];
+    return topKeys.filter(k=>s.achievements.has(k)).length >= 3;
+  }
+});
 </script>
 </body>
 </html>
