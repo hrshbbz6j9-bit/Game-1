@@ -153,6 +153,13 @@
   .ft-rel{font-size:.58em;color:var(--sub);}
   .ft-you .ft-portrait{border:2px solid var(--gold-deep);box-shadow:0 0 0 2px var(--gold);}
   .ft-you .ft-name{color:var(--gold-deep);}
+  .yb-header{text-align:center;font-family:var(--font-caption);font-size:.7em;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;margin-bottom:12px;font-weight:700;}
+  .yb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px;}
+  .yb-tile{display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--panel2);border:1px solid var(--border);padding:6px 3px 8px;}
+  .yb-portrait{width:48px;height:48px;border:1.5px solid var(--ink-line);background:var(--panel);overflow:hidden;border-radius:50%;margin-bottom:4px;}
+  .yb-portrait svg{display:block;width:100%;height:100%;}
+  .yb-name{font-size:.62em;font-weight:700;line-height:1.15;}
+  .yb-role{font-size:.56em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
   #panel-body > .btn{margin:5px 0;}
   .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
   .letter{padding:10px 0 10px 14px;border-left:3px solid var(--border);border-bottom:1px solid var(--border);font-style:italic;font-size:.9em;line-height:1.45;color:var(--sub);}
@@ -3448,6 +3455,37 @@ openPetCarePanelP15 = function(){
     portrait.innerHTML = petAvatarSVG(pet);
     el.insertBefore(portrait, el.firstChild);
   });
+};
+
+/* ---------------------------------------------------------------------
+   P27 — Photo Album: every portrait the player has collected, laid out
+   like a yearbook page. Pure reuse of existing art, new presentation.
+   --------------------------------------------------------------------- */
+function photoAlbumTileP27(person, roleLabel){
+  const dimmed = person.alive===false ? ' style="opacity:.55"' : '';
+  return `<div class="yb-tile"${dimmed}><div class="yb-portrait">${personAvatarSVG(person)}</div><div class="yb-name">${person.name}</div><div class="yb-role">${roleLabel}</div></div>`;
+}
+function openPhotoAlbumP27(){
+  let html = `<div class="yb-header">Class of ${state.birthYear} · ${state.city}</div>`;
+  html += `<div class="yb-grid">`;
+  html += photoAlbumTileP27({name:state.name, age:state.age, gender:state.gender, alive:state.alive}, 'Yourself');
+  state.relationships.forEach(r=>{
+    html += photoAlbumTileP27(r, relLabel(r.type));
+  });
+  const petTiles = state.pets.map(p=>`<div class="yb-tile"${p.alive===false?' style="opacity:.55"':''}><div class="yb-portrait">${petAvatarSVG(p)}</div><div class="yb-name">${p.name}</div><div class="yb-role">${p.type}</div></div>`).join('');
+  html += petTiles;
+  html += `</div>`;
+  openPanel('Photo Album', html);
+}
+const _origOpenProfilePanel_P27 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P27();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '📸 Photo Album';
+  btn.onclick = openPhotoAlbumP27;
+  body.insertBefore(btn, body.firstChild);
 };
 </script>
 </body>
