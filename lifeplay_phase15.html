@@ -377,6 +377,7 @@ function freshState(){
     murders:0,
     bestFriendId:null,
     mafia:null,
+    military:null,
     acting:{stage:0, fame:0, roles:0, oscars:0},
     music:{stage:0, fame:0, songs:0, grammys:0},
   };
@@ -4139,6 +4140,102 @@ openActivitiesPanel = function(){
   btn.textContent = '🎤 Write & Release a Song';
   btn.onclick = writeSongP36;
   body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   P37 — Military: a voluntary enlistment career (rank ladder, service
+   years, deployment/combat risk, medals), distinct from the existing
+   involuntary war-draft event which stays as its own thing.
+   --------------------------------------------------------------------- */
+const MILITARY_BRANCHES_P37 = ['Army','Navy','Air Force','Marines','Coast Guard'];
+const MILITARY_RANKS_P37 = ['Private','Corporal','Sergeant','Lieutenant','Captain','Major','Colonel','General'];
+const MILITARY_SALARY_P37 = [22000, 26000, 31000, 42000, 55000, 72000, 95000, 130000];
+Object.assign(ACHIEVEMENTS, {
+  enlisted_ach:'Enlisted in the military',
+  honorable_discharge_ach:'Honorably discharged after full service',
+  medal_valor_ach:'Earned a medal for valor',
+  general_ach:'Reached the rank of General',
+});
+function militaryJobTitleP37(branch, rank){ return MILITARY_RANKS_P37[rank]+' ('+branch+')'; }
+function enlistP37(branch){
+  if(state.military || state.inPrison || state.job || state.age<18) return;
+  state.military = {branch, rank:0, service:0, medals:0};
+  state.job = {title:militaryJobTitleP37(branch,0), salary:MILITARY_SALARY_P37[0], tier:3, years:0, isMilitary:true};
+  log(`You enlisted in the ${branch}. Basic training starts now.`,'good');
+  checkAchievement('enlisted_ach');
+  closePanel(); render();
+}
+function tickMilitaryP37(){
+  const m = state.military; if(!m || state.inPrison) return;
+  m.service++;
+  if(m.rank<MILITARY_RANKS_P37.length-1 && m.service >= (m.rank+1)*3 && chance(60)){
+    m.rank++;
+    state.job.title = militaryJobTitleP37(m.branch, m.rank);
+    state.job.salary = MILITARY_SALARY_P37[m.rank];
+    log(`You were promoted to ${MILITARY_RANKS_P37[m.rank]}.`,'good');
+    newspaper(`LOCAL SERVICE MEMBER PROMOTED TO ${MILITARY_RANKS_P37[m.rank].toUpperCase()}`, `${state.name} continues to rise through the ranks of the ${m.branch}.`, 'Military Desk');
+    if(m.rank===MILITARY_RANKS_P37.length-1) checkAchievement('general_ach');
+  }
+  if(chance(20)){
+    if(chance(88)){
+      state.stats.health = clamp(state.stats.health-rand(0,10),0,100);
+      if(chance(35)){
+        m.medals++;
+        checkAchievement('medal_valor_ach');
+        state.stats.happiness = clamp(state.stats.happiness+8,0,100);
+        newspaper(`${state.name.toUpperCase()} AWARDED MEDAL FOR VALOR`, `Recognized for bravery during an overseas deployment.`, 'Military Desk');
+      } else {
+        log(`You returned safely from deployment.`,'good');
+      }
+    } else {
+      die('killed in action during a deployment');
+    }
+  }
+}
+const _origAgeUp_P37 = ageUp;
+ageUp = function(){
+  _origAgeUp_P37();
+  if(!state || !state.alive) return;
+  tickMilitaryP37();
+  render();
+};
+function dischargeFromMilitaryP37(){
+  const m = state.military; if(!m) return;
+  const bonus = (m.rank+1)*2000 + m.medals*3000;
+  state.money += bonus;
+  const honorable = m.service>=4;
+  log(`You were discharged from the ${m.branch} after ${m.service} years of service. Separation pay: ${fmtMoney(bonus)}.`,'good');
+  if(honorable) checkAchievement('honorable_discharge_ach');
+  state.military = null;
+  if(state.job){ state.jobHistory.push(state.job); state.job = null; }
+  closePanel(); render();
+}
+const _origQuitJob_P37 = quitJob;
+quitJob = function(){
+  if(state.job && state.job.isMilitary){ dischargeFromMilitaryP37(); return; }
+  _origQuitJob_P37();
+};
+const _origOpenCareerPanel_P37 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P37();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  if(state.military){
+    body.appendChild(hr);
+    const label = document.createElement('b');
+    label.textContent = `${state.military.branch} · Service ${state.military.service} yrs · Medals ${state.military.medals}`;
+    body.appendChild(label);
+  } else if(state.age>=18 && !state.inPrison && !state.job){
+    body.appendChild(hr);
+    const label = document.createElement('b'); label.textContent = 'Military Service'; body.appendChild(label);
+    MILITARY_BRANCHES_P37.forEach(branch=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-block btn-accent';
+      btn.textContent = '🎖️ Enlist in the '+branch;
+      btn.onclick = ()=>enlistP37(branch);
+      body.appendChild(btn);
+    });
+  }
 };
 </script>
 </body>
