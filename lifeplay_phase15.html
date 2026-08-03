@@ -2613,6 +2613,57 @@ ageUp = function(){
   rollClassifiedsP18();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   Achievements for the new Gazette mechanics, plus milestone birthday
+   "anniversary editions" — reusing the newspaper() card for consistency.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, {
+  well_read: 'Read 10 horoscopes',
+  pen_pal: 'Received 5 Letters to the Editor',
+  gig_economy: 'Completed 20 classifieds gigs',
+});
+const _origReadHoroscopeP18 = readHoroscopeP18;
+readHoroscopeP18 = function(){
+  _origReadHoroscopeP18();
+  state.flags.horoscopesRead = (state.flags.horoscopesRead||0) + 1;
+  if(state.flags.horoscopesRead>=10) checkAchievement('well_read');
+};
+const _origTickLettersP18 = tickLettersP18;
+tickLettersP18 = function(){
+  const before = state.log.length;
+  _origTickLettersP18();
+  if(state.log.length>before && state.log[state.log.length-1].letter){
+    state.flags.lettersReceived = (state.flags.lettersReceived||0) + 1;
+    if(state.flags.lettersReceived>=5) checkAchievement('pen_pal');
+  }
+};
+const _origTakeClassifiedP18 = takeClassifiedP18;
+takeClassifiedP18 = function(idx){
+  _origTakeClassifiedP18(idx);
+  state.flags.classifiedsCompleted = (state.flags.classifiedsCompleted||0) + 1;
+  if(state.flags.classifiedsCompleted>=20) checkAchievement('gig_economy');
+};
+
+const MILESTONE_AGES_P19 = [16, 18, 21, 30, 40, 50, 65, 80, 100];
+const MILESTONE_HEADLINES_P19 = {
+  16: 'SIXTEEN AND COUNTING', 18: 'OFFICIALLY AN ADULT', 21: 'THE BIG TWO-ONE',
+  30: 'THIRTY: A NEW CHAPTER', 40: 'FORTY AND THRIVING', 50: 'HALF A CENTURY STRONG',
+  65: 'A LIFETIME OF STORIES', 80: 'EIGHTY YEARS ON THE FRONT PAGE', 100: 'A CENTURY OF HEADLINES',
+};
+function tickMilestoneP19(){
+  if(MILESTONE_AGES_P19.includes(state.age)){
+    const headline = MILESTONE_HEADLINES_P19[state.age] || `${state.age} YEARS AND STILL MAKING NEWS`;
+    newspaper(headline, `${state.name} celebrates a milestone birthday this edition.`, 'Anniversary Edition');
+  }
+}
+const _origAgeUp_P19 = ageUp;
+ageUp = function(){
+  _origAgeUp_P19();
+  if(!state || !state.alive) return;
+  tickMilestoneP19();
+  render();
+};
 </script>
 </body>
 </html>
