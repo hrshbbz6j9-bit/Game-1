@@ -115,6 +115,13 @@
   .list-item .li-main span{font-size:.75em;color:var(--sub);font-family:var(--font-caption);}
   #panel-body > .btn{margin:5px 0;}
   .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
+  .letter{padding:10px 0 10px 14px;border-left:3px solid var(--border);border-bottom:1px solid var(--border);font-style:italic;font-size:.9em;line-height:1.45;color:var(--sub);}
+  .letter .letter-head{display:block;font-style:normal;font-family:var(--font-caption);font-size:.62em;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:3px;}
+  .letter .letter-sig{display:block;font-style:normal;font-weight:700;color:var(--text);margin-top:4px;font-size:.85em;}
+  .classified{border:1px dashed var(--ink-line);padding:9px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .classified .cl-text{font-size:.85em;}
+  .classified .cl-text b{display:block;font-family:var(--font-display);}
+  .classified .cl-text span{color:var(--sub);font-size:.85em;font-family:var(--font-caption);}
   #modal-overlay{position:absolute;inset:0;background:rgba(28,26,22,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
   #modal-card{background:var(--panel);border:3px double var(--ink-line);border-radius:0;padding:20px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;}
   #modal-card h3{margin-top:0;font-weight:700;text-transform:uppercase;letter-spacing:.03em;text-align:center;border-bottom:1px solid var(--border);padding-bottom:8px;}
@@ -178,7 +185,7 @@
   <div id="screen-game" class="hidden">
     <div class="masthead">
       <div class="masthead-title" id="masthead-title">The Gazette</div>
-      <div class="masthead-sub">Chronicling One Life, Daily</div>
+      <div class="masthead-sub" id="masthead-sub">Chronicling One Life, Daily</div>
     </div>
     <div id="header">
       <div class="who">
@@ -2411,6 +2418,201 @@ CRIMES.push(
   {name:'Kidnapping', risk:58, reward:[5000,30000], sentence:10},
   {name:'Smuggling', risk:37, reward:[2000,12000], sentence:3}
 );
+
+/* ---------------------------------------------------------------------
+   ZODIAC & HOROSCOPE — a Gazette needs a horoscope column. Assigned at
+   birth, one reading available per year.
+   --------------------------------------------------------------------- */
+const ZODIAC_SIGNS_P18 = [
+  {name:'Aries', sym:'♈', trait:'headstrong and fearless'},
+  {name:'Taurus', sym:'♉', trait:'stubborn but dependable'},
+  {name:'Gemini', sym:'♊', trait:'quick-witted and curious'},
+  {name:'Cancer', sym:'♋', trait:'sentimental and protective'},
+  {name:'Leo', sym:'♌', trait:'confident and dramatic'},
+  {name:'Virgo', sym:'♍', trait:'meticulous and practical'},
+  {name:'Libra', sym:'♎', trait:'diplomatic and indecisive'},
+  {name:'Scorpio', sym:'♏', trait:'intense and secretive'},
+  {name:'Sagittarius', sym:'♐', trait:'restless and optimistic'},
+  {name:'Capricorn', sym:'♑', trait:'ambitious and disciplined'},
+  {name:'Aquarius', sym:'♒', trait:'eccentric and independent'},
+  {name:'Pisces', sym:'♓', trait:'dreamy and empathetic'},
+];
+const HOROSCOPE_LINES_P18 = [
+  {text:'the stars favor bold decisions this year', fx:s=>{s.stats.happiness=clamp(s.stats.happiness+3,0,100);}},
+  {text:'an old friend\'s advice will serve you well', fx:s=>{s.stats.karma=clamp(s.stats.karma+2,0,100);}},
+  {text:'financial fortune smiles on you, in small ways', fx:s=>{s.money+=rand(20,150);}},
+  {text:'trust your instincts in matters of the heart', fx:s=>{s.stats.happiness=clamp(s.stats.happiness+2,0,100);}},
+  {text:'a challenge approaches — meet it with patience', fx:s=>{s.stats.smarts=clamp(s.stats.smarts+2,0,100);}},
+  {text:'your creative energy is at its peak', fx:s=>{s.stats.looks=clamp(s.stats.looks+2,0,100);}},
+  {text:'rest is not laziness — heed your body this year', fx:s=>{s.stats.health=clamp(s.stats.health+3,0,100);}},
+  {text:'a rival\'s envy says more about them than you', fx:s=>{s.stats.karma=clamp(s.stats.karma+1,0,100);}},
+  {text:'the stars are silent on this one — make your own luck', fx:s=>{}},
+  {text:'beware overconfidence in the months ahead', fx:s=>{s.stats.happiness=clamp(s.stats.happiness-1,0,100);}},
+  {text:'a small risk taken now will pay off later', fx:s=>{s.stats.happiness=clamp(s.stats.happiness+1,0,100); s.stats.karma=clamp(s.stats.karma+1,0,100);}},
+  {text:'reconnect with someone you\'ve been meaning to call', fx:s=>{s.stats.happiness=clamp(s.stats.happiness+2,0,100);}},
+];
+const _origStartNewLife_P18 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P18();
+  if(state) state.zodiac = pick(ZODIAC_SIGNS_P18);
+};
+function openHoroscopePanel(){
+  const z = state.zodiac;
+  const alreadyRead = state.flags.horoscopeReadAge === state.age;
+  let html = `<div class="list-item"><div class="li-main"><b>${z.sym} ${z.name}</b><span>Known for being ${z.trait}</span></div></div>`;
+  if(alreadyRead){
+    html += `<p style="color:var(--sub);font-style:italic;">This year's horoscope has already been printed. Check back next edition.</p>`;
+  } else {
+    html += `<button class="btn btn-block btn-accent" onclick="readHoroscopeP18()">Read This Year's Horoscope</button>`;
+  }
+  openPanel('Horoscope', html);
+}
+function readHoroscopeP18(){
+  const z = state.zodiac;
+  const h = pick(HOROSCOPE_LINES_P18);
+  h.fx(state); clampAllStats();
+  state.flags.horoscopeReadAge = state.age;
+  log(`🔮 ${z.sym} ${z.name}: As someone ${z.trait}, ${h.text} this year.`,'neutral');
+  openHoroscopePanel();
+}
+const _origOpenWorldPanel_P18 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P18();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = (state.zodiac ? state.zodiac.sym+' ' : '🔮 ') + 'Horoscope';
+  btn.onclick = openHoroscopePanel;
+  body.appendChild(btn);
+};
+
+/* ---------------------------------------------------------------------
+   LETTERS TO THE EDITOR — occasional flavor letters from family/rivals,
+   styled distinctly from ordinary log entries.
+   --------------------------------------------------------------------- */
+const LETTER_TEMPLATES_P18 = {
+  warm: [
+    r=>`I just wanted to say how proud I am of you lately. Keep going.`,
+    r=>`We should talk more. I think about you often and I miss you.`,
+    r=>`You've really grown into yourself. It's been something to watch.`,
+    r=>`I know things have been hard, but I believe in you completely.`,
+    r=>`Thank you for always being there when it counts. It means more than you know.`,
+  ],
+  tense: [
+    r=>`We need to talk. Things haven't felt right between us for a while.`,
+    r=>`I don't say this lightly, but I'm worried about the choices you've been making.`,
+    r=>`I'm not angry, just disappointed. I hoped for better.`,
+  ],
+  rival: [
+    r=>`Don't think I've forgotten our little rivalry. I'm just getting started.`,
+    r=>`Enjoy the lead while it lasts. I'll be right behind you.`,
+    r=>`We both know how this ends — with me on top.`,
+  ],
+};
+function tickLettersP18(){
+  if(!chance(7)) return;
+  const family = state.relationships.filter(r=>r.alive && (r.type==='parent'||r.type==='sibling'||r.type==='spouse'||r.type==='child'||r.type==='friend'||r.type==='datingpartner'));
+  const rival = state.rival;
+  const candidates = [];
+  family.forEach(r=>candidates.push({r, pool: r.rel>=45 ? LETTER_TEMPLATES_P18.warm : LETTER_TEMPLATES_P18.tense}));
+  if(rival) candidates.push({r:rival, pool:LETTER_TEMPLATES_P18.rival});
+  if(!candidates.length) return;
+  const pickCand = pick(candidates);
+  const template = pick(pickCand.pool);
+  const text = template(pickCand.r);
+  state.log.push({letter:true, text, sig:pickCand.r.name, age:state.age});
+  renderLog();
+}
+const _origRenderLog_P18 = renderLog;
+renderLog = function(){
+  const el = $('log');
+  el.innerHTML = state.log.slice(-200).map(entry=>{
+    if(entry.newspaper){
+      return `<div class="newspaper"><div class="np-name">${entry.paper||'The Daily Life'}</div>
+        <h3>${entry.headline}</h3><p>${entry.sub||''}</p></div>`;
+    }
+    if(entry.letter){
+      return `<div class="letter"><span class="letter-head">Letter to the Editor · Age ${entry.age}</span>"${entry.text}"<span class="letter-sig">— ${entry.sig}</span></div>`;
+    }
+    return `<div class="logline ${entry.type||'neutral'}"><span class="age">Age ${entry.age}</span>${entry.text}</div>`;
+  }).join('');
+};
+
+/* ---------------------------------------------------------------------
+   CLASSIFIEDS — a small gig board for quick cash, refreshed each visit.
+   --------------------------------------------------------------------- */
+const CLASSIFIED_GIGS_P18 = [
+  {task:'Dog walking', pay:[40,120]},
+  {task:'Yard work', pay:[60,200]},
+  {task:'Furniture moving help', pay:[80,300]},
+  {task:'Tutoring a neighbor\'s kid', pay:[50,180], statFx:s=>{s.stats.smarts=clamp(s.stats.smarts+1,0,100);}},
+  {task:'House-sitting', pay:[100,250]},
+  {task:'Car washing', pay:[30,100]},
+  {task:'Babysitting', pay:[50,150]},
+  {task:'Garage sale help', pay:[40,140]},
+  {task:'Lawn mowing route', pay:[60,180]},
+  {task:'Errand running', pay:[30,90]},
+];
+let classifiedsTodayP18 = [];
+function rollClassifiedsP18(){
+  classifiedsTodayP18 = [pick(CLASSIFIED_GIGS_P18), pick(CLASSIFIED_GIGS_P18)];
+}
+function takeClassifiedP18(idx){
+  const g = classifiedsTodayP18[idx];
+  if(!g) return;
+  const pay = rand(g.pay[0], g.pay[1]);
+  state.money += pay;
+  state.stats.happiness = clamp(state.stats.happiness+1,0,100);
+  if(g.statFx) g.statFx(state);
+  log(`You picked up a classifieds gig — ${g.task.toLowerCase()} — and earned ${fmtMoney(pay)}.`,'good');
+  classifiedsTodayP18[idx] = pick(CLASSIFIED_GIGS_P18);
+  openClassifiedsPanelP18();
+}
+function openClassifiedsPanelP18(){
+  if(!classifiedsTodayP18.length) rollClassifiedsP18();
+  let html = `<p style="color:var(--sub);font-style:italic;">Today's listings:</p>`;
+  classifiedsTodayP18.forEach((g,i)=>{
+    html += `<div class="classified"><div class="cl-text"><b>${g.task}</b><span>Pays ${fmtMoney(g.pay[0])}–${fmtMoney(g.pay[1])}</span></div><button class="btn" onclick='takeClassifiedP18(${i})'>Take It</button></div>`;
+  });
+  openPanel('Classifieds', html);
+}
+const _origOpenActivitiesPanel_P18 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P18();
+  if(!state.inPrison){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = '📋 Classifieds';
+    btn.onclick = openClassifiedsPanelP18;
+    body.appendChild(btn);
+  }
+};
+
+/* ---------------------------------------------------------------------
+   CIRCULATION — masthead subtitle reflects the character's own fame.
+   --------------------------------------------------------------------- */
+const _origRender_P18 = render;
+render = function(){
+  if(state && state.alive){
+    const sub = $('masthead-sub');
+    if(sub){
+      const followers = (state.influencer && state.influencer.followers) || 0;
+      sub.textContent = followers>=1000 ? `Circulation: ${followers.toLocaleString()} readers` : 'Chronicling One Life, Daily';
+    }
+  }
+  _origRender_P18();
+};
+
+/* Wire horoscope reset (implicit via age comparison), letters, and daily classifieds refresh into the yearly loop */
+const _origAgeUp_P18 = ageUp;
+ageUp = function(){
+  _origAgeUp_P18();
+  if(!state || !state.alive) return;
+  tickLettersP18();
+  rollClassifiedsP18();
+  render();
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
