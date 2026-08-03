@@ -142,6 +142,7 @@
   .list-item .li-main span{font-size:.75em;color:var(--sub);font-family:var(--font-caption);}
   .li-portrait{width:34px;height:34px;flex-shrink:0;border:1.5px solid var(--ink-line);background:var(--panel2);overflow:hidden;}
   .li-portrait svg{display:block;width:100%;height:100%;}
+  .best-friend-badge{color:var(--gold-deep, var(--gold));font-size:.85em;}
   #panel-body > .btn{margin:5px 0;}
   .pill{display:inline-block;padding:2px 8px;font-size:.65em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.03em;background:none;color:var(--gold);border:1px solid var(--gold);border-radius:2px;}
   .letter{padding:10px 0 10px 14px;border-left:3px solid var(--border);border-bottom:1px solid var(--border);font-style:italic;font-size:.9em;line-height:1.45;color:var(--sub);}
@@ -348,6 +349,7 @@ function freshState(){
     loveLanguage:null,
     lastCause:null,
     murders:0,
+    bestFriendId:null,
   };
 }
 
@@ -417,24 +419,39 @@ function accessoryPoolFor(bracket, gender){
   if(bracket==='elder') pool.push(cy=>`<line x1="46" y1="42" x2="49" y2="61" stroke="var(--ink-line)" stroke-width="2.6" stroke-linecap="round"/><circle cx="45.5" cy="41" r="2.2" fill="var(--ink-line)"/>`);
   return pool;
 }
+/* Small distinguishing marks, layered on top of everything else — purely
+   cosmetic variety within the monochrome ink-silhouette style. */
+const MARK_POOL = [
+  cy=>'',
+  cy=>`<circle cx="27" cy="${cy+4}" r=".7" fill="var(--panel2)"/><circle cx="29.5" cy="${cy+6}" r=".7" fill="var(--panel2)"/><circle cx="36" cy="${cy+5}" r=".7" fill="var(--panel2)"/>`,
+  cy=>`<circle cx="38" cy="${cy+6}" r="1" fill="var(--panel2)"/>`,
+  cy=>`<path d="M27,${cy+9} Q29,${cy+11} 27,${cy+12}" fill="none" stroke="var(--panel2)" stroke-width=".8"/><path d="M37,${cy+9} Q39,${cy+11} 37,${cy+12}" fill="none" stroke="var(--panel2)" stroke-width=".8"/>`,
+];
+/* Two silhouette builds — narrow vs broad shoulders — for further variety. */
+const BODY_PATHS = [
+  `<path d="M12,62 C12,45 20,39 32,39 C44,39 52,45 52,62 Z" fill="var(--ink-line)"/>`,
+  `<path d="M9,62 C9,43 18,36 32,36 C46,36 55,43 55,62 Z" fill="var(--ink-line)"/>`,
+  `<path d="M15,62 C15,47 22,41 32,41 C42,41 49,47 49,62 Z" fill="var(--ink-line)"/>`,
+];
 /* Renders any person's portrait (player or a relationship): {name, age, gender, alive} */
 function personAvatarSVG(person){
   if(person.alive===false) return DEAD_AVATAR_SVG;
   const a = person.age, g = person.gender || 'Nonbinary';
   const bracket = a<2 ? 'baby' : a<13 ? 'child' : a<60 ? 'adult' : 'elder';
   const seed = seedFromString(person.name);
-  const body = `<path d="M12,62 C12,45 20,39 32,39 C44,39 52,45 52,62 Z" fill="var(--ink-line)"/>`;
+  const body = bracket==='baby' ? BODY_PATHS[0] : BODY_PATHS[Math.floor(seed/29) % BODY_PATHS.length];
   const headR = bracket==='baby' ? 15 : 13;
   const headCy = bracket==='baby' ? 30 : 25;
   const head = `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>`;
-  let hair = '', accessory = '';
+  let hair = '', accessory = '', marks = '';
   if(bracket!=='baby'){
     const styles = g==='Female' ? FEMALE_HAIR : g==='Male' ? MALE_HAIR : NEUTRAL_HAIR;
     hair = styles[seed % styles.length](headCy);
     const accPool = accessoryPoolFor(bracket, g);
     accessory = accPool[Math.floor(seed/7) % accPool.length](headCy);
+    marks = MARK_POOL[Math.floor(seed/17) % MARK_POOL.length](headCy);
   }
-  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${accessory}</svg>`;
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${accessory}${marks}</svg>`;
 }
 function avatarSVG(){ return personAvatarSVG(state); }
 
@@ -3181,7 +3198,7 @@ function makeNewFriendP23(){
 function groupedRelationshipsP23(){
   const living = state.relationships.filter(r=>r.alive);
   const immediateTypes = ['parent','sibling','spouse','child','datingpartner','exspouse'];
-  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law'];
+  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law','niece_nephew'];
   return {
     immediate: living.filter(r=>immediateTypes.includes(r.type)),
     extended: living.filter(r=>extendedTypes.includes(r.type)),
@@ -3189,7 +3206,9 @@ function groupedRelationshipsP23(){
   };
 }
 function personListItemP23(r){
-  return `<div class="list-item"><div class="li-portrait">${personAvatarSVG(r)}</div><div class="li-main"><b>${r.name}</b><span>${relLabel(r.type)} · Age ${r.age} · Rel ${Math.round(r.rel)}%</span></div>
+  const isBest = state.bestFriendId===r.id;
+  const badge = isBest ? ` <span class="best-friend-badge" title="Best Friend">★</span>` : '';
+  return `<div class="list-item"><div class="li-portrait">${personAvatarSVG(r)}</div><div class="li-main"><b>${r.name}${badge}</b><span>${relLabel(r.type)} · Age ${r.age} · Rel ${Math.round(r.rel)}%</span></div>
     <button class="btn" onclick='interactWith(${JSON.stringify(r.id)})'>Interact</button></div>`;
 }
 const _origOpenRelationshipsPanel_P23 = openRelationshipsPanel;
@@ -3227,6 +3246,111 @@ openRelationshipsPanel = function(){
   }
   html += `<button class="btn btn-block btn-accent" onclick="openApiSettingsPanelP15()">🔑 AI Chat Settings</button>`;
   openPanel('People', html);
+};
+
+/* ---------------------------------------------------------------------
+   P24 — Best Friend designation, nieces/nephews, family reunions, and
+   richer one-on-one interactions.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, {
+  best_friend_ach:'Made a Best Friend', family_reunion_ach:'Hosted a Family Reunion',
+});
+relLabel = (function(_orig){
+  return function(type){
+    if(type==='niece_nephew') return 'Niece/Nephew';
+    return _orig(type);
+  };
+})(relLabel);
+
+function refreshBestFriendP24(){
+  const candidates = state.relationships.filter(r=>r.alive && r.type==='friend' && r.rel>=85);
+  if(!candidates.length){ return; }
+  candidates.sort((a,b)=>b.rel-a.rel);
+  const top = candidates[0];
+  if(state.bestFriendId!==top.id){
+    state.bestFriendId = top.id;
+    log(`${top.name} is now your best friend.`,'good');
+    checkAchievement('best_friend_ach');
+  }
+}
+
+function makeNieceNephewP24(sibling){
+  const gender = pick(['Male','Female']);
+  const kid = newRelationship('niece_nephew', {gender, age:0, rel:rand(55,80), last:sibling.name.split(' ').slice(-1)[0]});
+  kid.name = randomFirstName(gender)+' '+sibling.name.split(' ').slice(-1)[0];
+  kid.parentSiblingId = sibling.id;
+  state.relationships.push(kid);
+  log(`${sibling.name} had a baby! Say hello to ${kid.name}, your new niece/nephew.`,'good');
+}
+
+function tickFamilyGrowthP24(){
+  state.relationships.filter(r=>r.alive && r.type==='sibling' && r.age>=20 && r.age<=45).forEach(sib=>{
+    const existingKids = state.relationships.filter(r=>r.alive && r.type==='niece_nephew' && r.parentSiblingId===sib.id).length;
+    if(existingKids<3 && chance(5)) makeNieceNephewP24(sib);
+  });
+}
+
+const FAMILY_REUNION_LINES_P24 = [
+  'Someone brought three different potato salads and it nearly started a war.',
+  'Grandpa told the same fishing story for the fourth year running, and it somehow got funnier.',
+  'A cousin you barely recognized showed up with a guitar and would not put it down.',
+  'The kids ran wild in the backyard while the adults argued about the good old days.',
+  'Someone finally admitted who broke the good vase five years ago.',
+];
+function tryFamilyReunionP24(){
+  if(state.age<8) return;
+  const extended = state.relationships.filter(r=>r.alive && ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','sibling','parent'].includes(r.type));
+  if(extended.length<3) return;
+  if(!chance(6)) return;
+  extended.forEach(r=>{ r.rel = clamp(r.rel+rand(4,10),0,100); });
+  state.stats.happiness = clamp(state.stats.happiness+6,0,100);
+  const line = pick(FAMILY_REUNION_LINES_P24);
+  log(`The whole family gathered for a reunion. ${line}`,'good');
+  newspaper(`${state.last.toUpperCase()} FAMILY REUNION DRAWS A CROWD`, line, 'Community Desk');
+  checkAchievement('family_reunion_ach');
+}
+
+const _origAgeUp_P24 = ageUp;
+ageUp = function(){
+  _origAgeUp_P24();
+  if(!state || !state.alive) return;
+  tickFamilyGrowthP24();
+  tryFamilyReunionP24();
+  refreshBestFriendP24();
+  render();
+};
+
+/* Extra interactWith options — layered on top of the original four via a
+   full reimplementation, since the choice list has to be assembled once
+   with type-specific entries mixed in among the generic ones. */
+const _origInteractWith_P24 = interactWith;
+interactWith = function(id){
+  const r = state.relationships.find(x=>x.id===id);
+  if(!r) return;
+  const opts = [
+    {label:'Spend Time Together', run:()=>{ r.rel=clamp(r.rel+rand(3,10),0,100); state.stats.happiness=clamp(state.stats.happiness+3,0,100); log(`You spent quality time with ${r.name}. Relationship improved.`,'good'); }},
+    {label:'Give a Gift', run:()=>{ if(state.money>=100){ state.money-=100; r.rel=clamp(r.rel+8,0,100); log(`You gave ${r.name} a gift.`,'good'); } else { log(`Not enough money for a gift.`,'bad'); } }},
+    {label:'Compliment Them', run:()=>{ r.rel=clamp(r.rel+rand(1,6),0,100); log(`You complimented ${r.name}.`,'good'); }},
+    {label:'Ask for Advice', run:()=>{ const gain = Math.round(r.rel/25); state.stats.smarts=clamp(state.stats.smarts+gain+1,0,100); state.stats.happiness=clamp(state.stats.happiness+2,0,100); log(`${r.name} gave you some real talk. You feel a little wiser.`,'good'); }},
+    {label:'Vent to Them', run:()=>{ state.stats.happiness=clamp(state.stats.happiness+rand(4,9),0,100); r.rel=clamp(r.rel+rand(1,4),0,100); log(`You got some things off your chest with ${r.name}. Felt good to be heard.`,'good'); }},
+    {label:'Insult Them', run:()=>{ r.rel=clamp(r.rel-rand(5,15),0,100); state.stats.karma=clamp(state.stats.karma-3,0,100); log(`You insulted ${r.name}. Relationship damaged.`,'bad'); }},
+  ];
+  if(r.type==='friend' && r.rel>=60){
+    opts.splice(1, 0, {label: state.bestFriendId===r.id ? '🌟 Best Friend Hangout' : 'Hang Out', run:()=>{
+      const bonus = state.bestFriendId===r.id ? 5 : 0;
+      r.rel=clamp(r.rel+rand(6,12)+bonus,0,100);
+      state.stats.happiness=clamp(state.stats.happiness+rand(5,10)+bonus,0,100);
+      log(`You and ${r.name} ${pick(['hit the arcade','grabbed food downtown','went to a movie','walked around the old neighborhood','stayed up talking'])}. Great time.`,'good');
+      refreshBestFriendP24();
+    }});
+  }
+  if(['parent','grandparent'].includes(r.type) && state.money<300){
+    opts.splice(opts.length-1, 0, {label:'Ask to Borrow Money', run:()=>{
+      if(chance(Math.min(85, r.rel+10))){ const amt = rand(50,300); state.money+=amt; r.rel=clamp(r.rel-2,0,100); log(`${r.name} lent you $${amt}.`,'good'); }
+      else { log(`${r.name} said times are tight right now.`,'neutral'); }
+    }});
+  }
+  playScene({title:r.name, text:`How do you want to interact with ${r.name}?`, choices:opts});
 };
 </script>
 </body>
