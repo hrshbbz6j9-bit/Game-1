@@ -2652,6 +2652,24 @@
   </div>
 </nav>
 
+<div class="paywall-overlay" id="welcomeOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="welcomeClose" aria-label="Close">✕</button>
+    <div class="paywall-crown" style="background:var(--gradient-glow);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 2l2.6 6.6L21 11l-6.4 2.4L12 20l-2.6-6.6L3 11l6.4-2.4L12 2z"/></svg>
+    </div>
+    <div class="paywall-title">Welcome to Looksmaxing Dictionary</div>
+    <div class="paywall-sub">450+ terms, an active community forum, and tools to actually track your progress — all in one place.</div>
+    <div class="paywall-features">
+      <div class="paywall-feature"><span class="check">✓</span>Browse a complete glossary of looksmaxing terms &amp; techniques</div>
+      <div class="paywall-feature"><span class="check">✓</span>Join the forum — post, reply, and rank up as you participate</div>
+      <div class="paywall-feature"><span class="check">✓</span>Track streaks, unlock achievements, and earn your tier badge</div>
+      <div class="paywall-feature"><span class="check">✓</span>Sell or take courses from the community</div>
+    </div>
+    <button class="cta-btn" id="welcomeCta">Let's Go</button>
+  </div>
+</div>
+
 <div class="paywall-overlay" id="paywallOverlay">
   <div class="paywall-sheet">
     <button class="paywall-close" id="paywallClose" aria-label="Close">✕</button>
@@ -9221,6 +9239,20 @@
         return `<div class="dashboard-row"><span class="name">${escapeHtml(c.title)}</span><span class="cut">$${cut.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>`;
       })
       .join("");
+  }
+
+  /* ---------------- Welcome (first-run only) ---------------- */
+  function closeWelcome() {
+    document.getElementById("welcomeOverlay").classList.remove("show");
+    localStorage.setItem("looksmax_onboarded", "true");
+  }
+  document.getElementById("welcomeClose").addEventListener("click", closeWelcome);
+  document.getElementById("welcomeCta").addEventListener("click", closeWelcome);
+  document.getElementById("welcomeOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "welcomeOverlay") closeWelcome();
+  });
+  if (!localStorage.getItem("looksmax_onboarded")) {
+    document.getElementById("welcomeOverlay").classList.add("show");
   }
 
   /* ---------------- Init ---------------- */
