@@ -433,6 +433,14 @@ const BODY_PATHS = [
   `<path d="M9,62 C9,43 18,36 32,36 C46,36 55,43 55,62 Z" fill="var(--ink-line)"/>`,
   `<path d="M15,62 C15,47 22,41 32,41 C42,41 49,47 49,62 Z" fill="var(--ink-line)"/>`,
 ];
+/* Gold outfit accents on the collar — a small formal touch that reads as
+   "dressed differently" without breaking the ink-and-gold palette. */
+const OUTFIT_POOL = [
+  cy=>'',
+  cy=>`<path d="M27,42 L32,48 L37,42" fill="none" stroke="var(--gold)" stroke-width="1.6"/>`,
+  cy=>`<circle cx="32" cy="44" r="1.4" fill="var(--gold)"/><circle cx="32" cy="48" r="1.4" fill="var(--gold)"/>`,
+  cy=>`<rect x="29" y="41" width="6" height="10" fill="var(--gold)"/>`,
+];
 /* Renders any person's portrait (player or a relationship): {name, age, gender, alive} */
 function personAvatarSVG(person){
   if(person.alive===false) return DEAD_AVATAR_SVG;
@@ -443,15 +451,16 @@ function personAvatarSVG(person){
   const headR = bracket==='baby' ? 15 : 13;
   const headCy = bracket==='baby' ? 30 : 25;
   const head = `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>`;
-  let hair = '', accessory = '', marks = '';
+  let hair = '', accessory = '', marks = '', outfit = '';
   if(bracket!=='baby'){
     const styles = g==='Female' ? FEMALE_HAIR : g==='Male' ? MALE_HAIR : NEUTRAL_HAIR;
     hair = styles[seed % styles.length](headCy);
     const accPool = accessoryPoolFor(bracket, g);
     accessory = accPool[Math.floor(seed/7) % accPool.length](headCy);
     marks = MARK_POOL[Math.floor(seed/17) % MARK_POOL.length](headCy);
+    outfit = OUTFIT_POOL[Math.floor(seed/41) % OUTFIT_POOL.length](headCy);
   }
-  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${hair}${head}${accessory}${marks}</svg>`;
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${outfit}${hair}${head}${accessory}${marks}</svg>`;
 }
 function avatarSVG(){ return personAvatarSVG(state); }
 
