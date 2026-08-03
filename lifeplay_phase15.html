@@ -518,6 +518,12 @@ function faceExtrasP29(band, headCx, headCy, headR){
   }
   return '';
 }
+/* Age leaves its own mark regardless of looks — a few soft creases at
+   the eyes for elders, so a 30-year-old and an 80-year-old with the
+   same looks stat still read as different people. */
+function wrinklesP29(headCy){
+  return `<path d="M20,${headCy+1} L23,${headCy+.5}" stroke="var(--panel2)" stroke-width=".6" fill="none" stroke-linecap="round"/><path d="M41,${headCy+.5} L44,${headCy+1}" stroke="var(--panel2)" stroke-width=".6" fill="none" stroke-linecap="round"/><path d="M25,${headCy-6} L27,${headCy-7}" stroke="var(--panel2)" stroke-width=".5" fill="none" stroke-linecap="round"/><path d="M39,${headCy-7} L37,${headCy-6}" stroke="var(--panel2)" stroke-width=".5" fill="none" stroke-linecap="round"/>`;
+}
 /* Renders any person's portrait (player or a relationship): {name, age, gender, alive, looks} */
 function personAvatarSVG(person){
   if(person.alive===false) return DEAD_AVATAR_SVG;
@@ -542,6 +548,7 @@ function personAvatarSVG(person){
     marks = MARK_POOL[Math.floor(seed/17) % MARK_POOL.length](headCy);
     outfit = OUTFIT_POOL[Math.floor(seed/41) % OUTFIT_POOL.length](headCy);
     face = eyesP29(band, headCy) + browsP29(band, headCy) + noseP29(band, headCy) + mouthP29(band, headCy) + faceExtrasP29(band, 32, headCy, headR);
+    if(bracket==='elder') face += wrinklesP29(headCy);
   }
   return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${outfit}${hair}${head}${accessory}${face}${marks}</svg>`;
 }
