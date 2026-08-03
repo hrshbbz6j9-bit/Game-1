@@ -1941,6 +1941,28 @@
   }
   .buy-course-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
 
+  .thumb-swatch-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .thumb-swatch {
+    flex: 1;
+    height: 44px;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    position: relative;
+  }
+  .thumb-swatch.selected::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 900;
+    font-size: 16px;
+    text-shadow: 0 0 4px rgba(0,0,0,0.6);
+    background: rgba(27,14,46,0.25);
+  }
+
   .revenue-breakdown {
     margin-top: 10px;
     padding: 10px 12px;
@@ -2734,6 +2756,8 @@
     <input type="number" class="form-input" id="sellCoursePrice" placeholder="49" min="1" step="1">
     <label class="form-label">Description</label>
     <textarea class="form-textarea" id="sellCourseDesc" placeholder="What will students learn?"></textarea>
+    <label class="form-label">Thumbnail Style</label>
+    <div class="thumb-swatch-row" id="thumbSwatchRow"></div>
     <div class="revenue-breakdown" id="sellCourseBreakdown">Enter a price to see your payout breakdown.</div>
     <button class="cta-btn" id="sellCourseSubmit" style="margin-top:14px;">List Course</button>
     <div class="paywall-disclaimer">Demo preview — listing is saved locally on this device only. No real payment processing is connected.</div>
@@ -8946,7 +8970,24 @@
   /* ---------------- Sell Course Modal ---------------- */
   const sellCourseOverlay = document.getElementById("sellCourseOverlay");
 
+  let selectedCourseGradientIdx = 0;
+
+  function renderThumbSwatches() {
+    const row = document.getElementById("thumbSwatchRow");
+    row.innerHTML = courseGradients.map((g, i) => `
+      <div class="thumb-swatch ${i === selectedCourseGradientIdx ? "selected" : ""}" data-swatch="${i}" style="background:${g};"></div>
+    `).join("");
+    row.querySelectorAll("[data-swatch]").forEach(el => {
+      el.addEventListener("click", () => {
+        selectedCourseGradientIdx = parseInt(el.dataset.swatch, 10);
+        renderThumbSwatches();
+      });
+    });
+  }
+
   function openSellCourseModal() {
+    selectedCourseGradientIdx = Math.floor(Math.random() * courseGradients.length);
+    renderThumbSwatches();
     sellCourseOverlay.classList.add("show");
     updateSellCourseBreakdown();
   }
@@ -8988,11 +9029,11 @@
     courses.push({
       id: newId,
       title,
-      creator: "you",
+      creator: username,
       price: Math.round(price),
       sales: 0,
       rating: 5.0,
-      gradient: courseGradients[newId % courseGradients.length],
+      gradient: courseGradients[selectedCourseGradientIdx],
       desc
     });
     saveCourses();
