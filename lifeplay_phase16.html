@@ -4317,6 +4317,42 @@ openActivitiesPanel = function(){
   btn.onclick = bookModelingGigP38;
   body.appendChild(btn);
 };
+
+/* ---------------------------------------------------------------------
+   P39 — Careers & Fame: with six parallel career/fame tracks now live
+   (job, sports, mafia, military, acting, music, modeling), the Profile
+   panel gets a single summary so the player can see everything they've
+   built without hunting through Career/Activities for each one.
+   --------------------------------------------------------------------- */
+function fameSummaryLinesP39(){
+  const lines = [];
+  if(state.job) lines.push([state.job.title, fmtMoney(state.job.salary)+'/yr']);
+  if(state.mafia) lines.push([`${MAFIA_RANKS_P33[state.mafia.rank]}, ${state.mafia.family}`, `Heat ${state.mafia.heat}%`]);
+  if(state.military) lines.push([`${MILITARY_RANKS_P37[state.military.rank]}, ${state.military.branch}`, `${state.military.medals} medal${state.military.medals===1?'':'s'}`]);
+  if(state.sportsCareer && state.sportsCareer.stage>=2) lines.push([`${state.sportsCareer.sport} — ${SPORTS_STAGES[state.sportsCareer.stage]}`, state.sportsCareer.stage===6?`Fame ${state.sportsCareer.fame||0}%`:`Skill ${state.sportsCareer.skill}`]);
+  if(state.acting && state.acting.stage>0) lines.push([`Actor — ${ACTING_STAGES_P35[state.acting.stage]}`, `Fame ${state.acting.fame}%`]);
+  if(state.music && state.music.stage>0) lines.push([`Musician — ${MUSIC_STAGES_P36[state.music.stage]}`, `Fame ${state.music.fame}%`]);
+  if(state.modeling && state.modeling.stage>0) lines.push([`Model — ${MODELING_STAGES_P38[state.modeling.stage]}`, `Fame ${state.modeling.fame}%`]);
+  return lines;
+}
+const _origOpenProfilePanel_P39 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P39();
+  const lines = fameSummaryLinesP39();
+  if(!lines.length) return;
+  const body = $('panel-body');
+  const anchor = body.children[1] || null;
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.insertBefore(hr, anchor);
+  const label = document.createElement('b'); label.textContent = 'Careers & Fame';
+  body.insertBefore(label, anchor);
+  lines.forEach(([title, sub])=>{
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.innerHTML = `<div class="li-main"><b>${title}</b><span>${sub}</span></div>`;
+    body.insertBefore(row, anchor);
+  });
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
