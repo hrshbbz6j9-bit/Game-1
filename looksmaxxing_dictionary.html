@@ -577,6 +577,45 @@
   .fav-btn.active { color: var(--coral-ink); }
   .fav-btn:active { transform: scale(1.3); }
 
+  .learned-btn {
+    background: none;
+    border: 1.5px solid var(--ink-mute);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    color: transparent;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    margin-right: 2px;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .learned-btn.active { color: #fff; background: var(--ink); border-color: var(--ink); }
+  .learned-btn:active { transform: scale(1.2); }
+
+  .learned-progress-wrap { padding: 0 20px 14px; }
+  .learned-progress-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    margin-bottom: 5px;
+  }
+  .learned-progress-track {
+    width: 100%;
+    height: 7px;
+    border: 1.5px solid var(--ink);
+    background: var(--card);
+    overflow: hidden;
+  }
+  .learned-progress-fill { height: 100%; width: 0%; background: var(--ink); transition: width 0.4s ease; }
+
   /* ---------- Technique Guide (Premium) ---------- */
   .technique-section { margin-top: 14px; border: 2px solid var(--ink); }
 
@@ -2269,6 +2308,11 @@
         <div class="result-count" id="resultCount"></div>
         <button class="random-term-btn" id="randomTermBtn">🎲 Random Term</button>
       </div>
+    </div>
+
+    <div class="learned-progress-wrap" id="learnedProgress">
+      <div class="learned-progress-label"></div>
+      <div class="learned-progress-track"><div class="learned-progress-fill"></div></div>
     </div>
 
     <div class="index-bar" id="indexBar"></div>
@@ -5863,6 +5907,37 @@
     saveFavorites();
     renderList();
   }
+
+  let learnedTerms = loadLearnedTerms();
+
+  function loadLearnedTerms() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_learned_terms"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveLearnedTerms() {
+    localStorage.setItem("looksmax_learned_terms", JSON.stringify([...learnedTerms]));
+  }
+
+  function toggleLearned(term) {
+    if (learnedTerms.has(term)) learnedTerms.delete(term);
+    else learnedTerms.add(term);
+    saveLearnedTerms();
+    renderList();
+    renderLearnedProgress();
+  }
+
+  function renderLearnedProgress() {
+    const el = document.getElementById("learnedProgress");
+    if (!el) return;
+    const pct = Math.round((learnedTerms.size / TERMS.length) * 100);
+    el.querySelector(".learned-progress-label").textContent = `${learnedTerms.size} of ${TERMS.length} terms learned (${pct}%)`;
+    el.querySelector(".learned-progress-fill").style.width = `${pct}%`;
+  }
+
   let isPremium = localStorage.getItem("looksmax_premium") === "true";
   let selectedPlan = "yearly";
 
@@ -5975,7 +6050,7 @@
 
   /* ---------------- Index Bar ---------------- */
   function renderIndexBar() {
-    const categories = ["All", "★ Saved", ...new Set(TERMS.map(t => t.category))];
+    const categories = ["All", "★ Saved", "✓ Learned", ...new Set(TERMS.map(t => t.category))];
     els.indexBar.innerHTML = "";
     categories.forEach(cat => {
       const chip = document.createElement("div");
@@ -6014,6 +6089,7 @@
       .map((t, i) => ({ ...t, _idx: i }))
       .filter(t => {
         if (activeCategory === "★ Saved") return favorites.has(t.term);
+        if (activeCategory === "✓ Learned") return learnedTerms.has(t.term);
         return activeCategory === "All" || t.category === activeCategory;
       })
       .filter(t => !q || t.term.toLowerCase().includes(q) || t.definition.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
@@ -6031,6 +6107,12 @@
         <div class="empty-state">
           <div class="glyph">★</div>
           <p>No saved terms yet.<br>Tap the star on any term to save it here.</p>
+        </div>`
+        : activeCategory === "✓ Learned" && !searchTerm
+        ? `
+        <div class="empty-state">
+          <div class="glyph">✓</div>
+          <p>No terms marked learned yet.<br>Tap the checkmark on any term to track it here.</p>
         </div>`
         : `
         <div class="empty-state">
@@ -6095,6 +6177,7 @@
             </div>
             <div class="term-category">${t.category}</div>
           </div>
+          <button class="learned-btn ${learnedTerms.has(t.term) ? "active" : ""}" data-learned="1" aria-label="Mark as learned">✓</button>
           <button class="fav-btn ${favorites.has(t.term) ? "active" : ""}" data-fav="1" aria-label="Save term">${favorites.has(t.term) ? "★" : "☆"}</button>
           <span class="chevron-icon">▾</span>
         </div>
@@ -6121,6 +6204,11 @@
       card.querySelector("[data-fav]").addEventListener("click", (e) => {
         e.stopPropagation();
         toggleFavorite(t.term);
+      });
+
+      card.querySelector("[data-learned]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLearned(t.term);
       });
 
       card.querySelector(".gear-btn").addEventListener("click", (e) => {
@@ -6888,7 +6976,8 @@
     { icon: "🔖", name: "Archivist", desc: "Watch 5 threads", check: () => watchedThreads.size >= 5 },
     { icon: "🌙", name: "Night Owl", desc: "Try dark mode", check: () => localStorage.getItem("looksmax_theme") === "dark" },
     { icon: "👑", name: "VIP Member", desc: "Unlock Premium", check: () => isPremium },
-    { icon: "🎓", name: "Entrepreneur", desc: "List a course for sale", check: () => courses.some(c => c.creator === username) }
+    { icon: "🎓", name: "Entrepreneur", desc: "List a course for sale", check: () => courses.some(c => c.creator === username) },
+    { icon: "📚", name: "Scholar", desc: "Mark 50 dictionary terms as learned", check: () => learnedTerms.size >= 50 }
   ];
 
   function openAchievements() {
@@ -8521,6 +8610,7 @@
   renderTotd();
   renderIndexBar();
   renderList();
+  renderLearnedProgress();
   renderForumTabs();
   renderThreads();
   renderCourses();
