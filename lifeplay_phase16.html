@@ -43,6 +43,20 @@
   #phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--panel);display:flex;flex-direction:column;position:relative;overflow-x:hidden;box-shadow:0 0 0 1px var(--border);
     background-image:repeating-linear-gradient(0deg, rgba(0,0,0,.015) 0px, rgba(0,0,0,.015) 1px, transparent 1px, transparent 3px);}
   .hidden{display:none !important;}
+  /* Desktop / wide-viewport treatment: a newspaper still reads as a fixed-width
+     column on a big screen, so widen it modestly and let it rest on a proper
+     desk surface instead of floating in empty white space. Mobile is untouched. */
+  @media (min-width: 760px){
+    html,body{background:radial-gradient(ellipse at 50% 0%, #E7DFC5 0%, var(--bg) 55%, #C9BE9E 100%);}
+    #phone{max-width:560px;min-height:calc(100vh - 48px);margin:24px auto;box-shadow:0 18px 44px rgba(28,26,22,.28), 0 0 0 1px var(--border);border-radius:3px;}
+    .btn{cursor:pointer;transition:transform .08s, box-shadow .08s, filter .12s;}
+    .btn:hover{filter:brightness(1.04);}
+    .btn:hover:not(:active){transform:translateY(-1px);box-shadow:3px 4px 0 var(--ink-line);}
+    #bottomnav button{cursor:pointer;transition:background .12s;}
+    #bottomnav button:hover{background:var(--panel2);}
+    .list-item{transition:background .12s;}
+    .list-item:hover{background:var(--panel2);}
+  }
   h1,h2,h3{font-family:var(--font-display); text-wrap:balance;}
   button, input, select{font-family:inherit;}
   button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--gold-deep); outline-offset:2px;}
@@ -50,7 +64,7 @@
   .masthead{text-align:center;padding:14px 14px 8px;background:var(--panel);}
   .crest{display:block;margin:0 auto 4px;}
   #screen-loading .crest-big{margin-bottom:10px;}
-  .masthead-title{font-family:var(--font-display);font-weight:700;font-size:1.7em;letter-spacing:.03em;text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;}
+  .masthead-title{font-family:var(--font-display);font-weight:700;font-size:1.7em;letter-spacing:.03em;text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;text-wrap:balance;}
   .masthead-sub{font-family:var(--font-caption);font-size:.62em;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:5px;font-weight:600;}
   /* Loading */
   #screen-loading{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);}
