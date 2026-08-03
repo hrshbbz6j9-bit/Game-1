@@ -82,6 +82,7 @@
   .cash-pill{font-weight:700;color:var(--text);background:var(--panel2);border:1.5px solid var(--ink-line);border-radius:2px;padding:4px 8px;font-size:.78em;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:var(--font-caption);}
   .almanac{margin-top:10px;border:1px solid var(--ink-line);border-radius:2px;}
   .almanac-label{font-family:var(--font-caption);font-size:.58em;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);text-align:center;padding:3px 0;border-bottom:1px solid var(--border);font-weight:700;}
+  .almanac-weather{font-family:var(--font-caption);font-size:.62em;color:var(--sub);text-align:center;padding:4px 0;border-top:1px solid var(--border);letter-spacing:.02em;}
   .stats{display:flex;}
   .stat-badge{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 5px;border-right:1px solid var(--border);animation:statPop .28s ease;}
   .stat-badge:last-child{border-right:none;}
@@ -199,6 +200,7 @@
       <div class="almanac">
         <div class="almanac-label">Today's Almanac</div>
         <div class="stats" id="hd-stats"></div>
+        <div class="almanac-weather" id="hd-weather"></div>
       </div>
     </div>
     <div id="log"></div>
@@ -337,6 +339,19 @@ function avatarFor(){
   return state.gender==='Female'?'👵':(state.gender==='Male'?'👴':'🧓');
 }
 
+const WEATHER_LINES = [
+  {ic:'☀️', text:'Fair skies and mild temps'}, {ic:'🌧️', text:'Showers expected this edition'},
+  {ic:'⛅', text:'Partly cloudy over the city'}, {ic:'❄️', text:'A cold snap moving through'},
+  {ic:'🌩️', text:'Thunderstorms possible tonight'}, {ic:'🌫️', text:'Foggy start to the day'},
+  {ic:'🔥', text:'The heatwave continues'}, {ic:'🌬️', text:'Blustery winds expected'},
+  {ic:'🌈', text:'Clearing after morning rain'}, {ic:'❅', text:'Light snow flurries'},
+  {ic:'🌤️', text:'Sunny with a light breeze'}, {ic:'🌦️', text:'Scattered showers'},
+];
+function weatherForToday(){
+  const idx = (state.age*7 + state.city.length*3) % WEATHER_LINES.length;
+  return WEATHER_LINES[idx];
+}
+
 function render(){
   if(!state) return;
   if(!state.alive){ renderDeathScreen(); return; }
@@ -348,6 +363,8 @@ function render(){
   else if(state.inPrison) sub += ' · Incarcerated';
   $('hd-sub').textContent = sub;
   $('hd-money').textContent = fmtMoney(state.money);
+  const w = weatherForToday();
+  $('hd-weather').textContent = w.ic + ' ' + w.text + ' in ' + state.city;
   const statsHtml = ['health','happiness','smarts','looks','karma'].map(k=>{
     const v = clamp(Math.round(state.stats[k]),0,100);
     const b = STAT_BADGES[k];
@@ -2664,6 +2681,15 @@ ageUp = function(){
   tickMilestoneP19();
   render();
 };
+
+/* Expanded college majors — the original 10 repeated fast for anyone who went to college. */
+MAJORS.push('Journalism','History','Political Science','Economics','Chemistry','Physics','Philosophy','Sociology','Marketing','Finance');
+
+/* Two secret endings tied to the Gazette-native mechanics */
+SECRET_ENDINGS.push(
+  {id:'correspondent', title:'The Correspondent', cond:s=>(s.flags.lettersReceived||0)>=8},
+  {id:'stargazer', title:'The Stargazer', cond:s=>(s.flags.horoscopesRead||0)>=25 && s.stats.karma>=60},
+);
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
