@@ -376,6 +376,8 @@ function freshState(){
     lastCause:null,
     murders:0,
     bestFriendId:null,
+    mafia:null,
+    acting:{stage:0, fame:0, roles:0, oscars:0},
   };
 }
 
@@ -3978,6 +3980,86 @@ openCareerPanel = function(){
   retireBtn.textContent = '🏁 Retire';
   retireBtn.onclick = retireFromSportsP34;
   body.appendChild(retireBtn);
+};
+
+/* ---------------------------------------------------------------------
+   P35 — Hollywood: an acting career track, structured like sports (a
+   stage ladder driven by fame) but running independently of state.job,
+   the same way the influencer track does — you can act AND hold down
+   a day job at the same time, same as BitLife lets you.
+   --------------------------------------------------------------------- */
+const ACTING_STAGES_P35 = ['Unknown','Background Extra','Supporting Actor','Lead Actor','A-List Star','Legend'];
+Object.assign(ACHIEVEMENTS, {
+  actor_ach:'Landed your first acting role',
+  oscar_ach:'Won an Academy Award',
+  legend_actor_ach:'Became a Hollywood Legend',
+});
+function auditionForRoleP35(){
+  if(!state.acting) state.acting = {stage:0, fame:0, roles:0, oscars:0};
+  const a = state.acting;
+  const chanceToLand = clamp(20 + (state.stats.looks-50)*0.4 + (state.stats.smarts-50)*0.2 + a.fame*0.3, 5, 90);
+  if(chance(chanceToLand)){
+    a.roles++;
+    const pay = rand(500,3000)*(a.stage+1);
+    state.money += pay;
+    a.fame = clamp(a.fame+rand(3,8),0,100);
+    log(`You landed a role in a ${a.stage>=3?'major':'small'} production! Paid ${fmtMoney(pay)}.`,'good');
+    checkAchievement('actor_ach');
+    if(a.fame >= (a.stage+1)*18 && a.stage<ACTING_STAGES_P35.length-1){
+      a.stage++;
+      log(`Your acting career advanced to: ${ACTING_STAGES_P35[a.stage]}!`,'good');
+      newspaper(`${state.name.toUpperCase()} BREAKS THROUGH IN HOLLYWOOD`, `Now billed as a ${ACTING_STAGES_P35[a.stage]}.`, 'Entertainment Desk');
+      if(a.stage===ACTING_STAGES_P35.length-1) checkAchievement('legend_actor_ach');
+    }
+  } else {
+    log(`The audition didn't go your way. Better luck next time.`,'bad');
+    state.stats.happiness = clamp(state.stats.happiness-2,0,100);
+  }
+  closePanel(); render();
+}
+function tickActingEventsP35(){
+  const a = state.acting; if(!a || a.stage<3) return;
+  if(chance(10)){
+    a.fame = clamp(a.fame+5,0,100);
+    if(chance(40)){
+      a.oscars++;
+      checkAchievement('oscar_ach');
+      state.stats.happiness = clamp(state.stats.happiness+10,0,100);
+      newspaper(`${state.name.toUpperCase()} WINS ACADEMY AWARD`, `A career-defining night at the Oscars.`, 'Entertainment Desk');
+    } else {
+      newspaper(`${state.name.toUpperCase()} NOMINATED FOR ACADEMY AWARD`, `Awards season buzz continues to build.`, 'Entertainment Desk');
+    }
+  }
+  if(chance(5)){
+    a.fame = clamp(a.fame-15,0,100);
+    state.stats.karma = clamp(state.stats.karma-5,0,100);
+    newspaper(`${state.name.toUpperCase()} CAUGHT UP IN TABLOID SCANDAL`, `The tabloids smell blood this week.`, 'Entertainment Desk');
+  }
+}
+const _origAgeUp_P35 = ageUp;
+ageUp = function(){
+  _origAgeUp_P35();
+  if(!state || !state.alive) return;
+  tickActingEventsP35();
+  render();
+};
+const _origOpenActivitiesPanel_P35 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P35();
+  if(state.inPrison || state.age<10) return;
+  if(!state.acting) state.acting = {stage:0, fame:0, roles:0, oscars:0};
+  const a = state.acting;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b');
+  label.textContent = `Hollywood (${ACTING_STAGES_P35[a.stage]}${a.stage>0?` · Fame ${a.fame}%`:''}${a.oscars?` · 🏆×${a.oscars}`:''})`;
+  body.appendChild(label);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎬 Audition for a Role';
+  btn.onclick = auditionForRoleP35;
+  body.appendChild(btn);
 };
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
