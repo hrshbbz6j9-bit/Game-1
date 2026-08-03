@@ -2937,11 +2937,20 @@ function sportsHeadline(headline, sub){
   renderLog();
 }
 const _origRenderLog_P20 = renderLog;
+const DESK_ACCENT_COLORS_P44 = {
+  'Underworld Desk': 'var(--danger)',
+  'Military Desk': 'var(--accent2)',
+  'Entertainment Desk': 'var(--life-pink)',
+  'Style Desk': 'var(--gold)',
+  'Business Desk': 'var(--accent)',
+};
 renderLog = function(){
   const el = $('log');
   el.innerHTML = state.log.slice(-200).map(entry=>{
     if(entry.newspaper){
-      return `<div class="newspaper"><div class="np-name">${entry.paper||'The Daily Life'}</div>
+      const accent = DESK_ACCENT_COLORS_P44[entry.paper];
+      const style = accent ? ` style="border-left:5px solid ${accent}"` : '';
+      return `<div class="newspaper"${style}><div class="np-name">${entry.paper||'The Daily Life'}</div>
         <h3>${entry.headline}</h3><p>${entry.sub||''}</p></div>`;
     }
     if(entry.letter){
