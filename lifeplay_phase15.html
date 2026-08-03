@@ -99,6 +99,10 @@
   .newspaper .np-name{font-family:var(--font-caption);font-size:.6em;letter-spacing:.25em;text-transform:uppercase;text-align:center;color:var(--gold);font-weight:800;margin-bottom:4px;}
   .newspaper h3{margin:0 0 6px;font-size:1.3em;text-align:center;line-height:1.15;font-weight:700;text-wrap:balance;}
   .newspaper p{margin:0;font-size:.82em;text-align:center;font-style:italic;color:var(--sub);}
+  .sports-card{background:var(--panel2);border:3px solid var(--ink-line);padding:12px 14px;margin:8px 0;}
+  .sports-card .sd-eyebrow{font-family:var(--font-caption);font-size:.58em;letter-spacing:.2em;text-transform:uppercase;color:var(--accent2);font-weight:800;}
+  .sports-card .sd-headline{font-family:var(--font-caption);font-size:1.15em;font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:1.2;margin:3px 0 4px;}
+  .sports-card .sd-sub{font-family:var(--font-caption);font-size:.78em;color:var(--sub);}
   #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:2px solid var(--ink-line);}
   #bottomnav button{background:none;border:none;border-right:1px solid var(--border);color:var(--text);padding:8px 2px 7px;font-family:var(--font-caption);font-size:.58em;font-weight:700;text-transform:uppercase;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
   #bottomnav button:last-child{border-right:none;}
@@ -901,7 +905,6 @@ function tickSports(){
     if(chance(clamp(30+sc.skill*0.5,10,90))){
       sc.stage = nextStage;
       log(`Your ${sc.sport} career advanced to: ${SPORTS_STAGES[sc.stage]}!`,'good');
-      newspaper(`${state.name.toUpperCase()} ADVANCES IN ${sc.sport.toUpperCase()}`, `Local athlete reaches ${SPORTS_STAGES[sc.stage]} status.`);
       if(sc.stage===6){
         const salary = rand(80000,900000);
         state.job = {title:`Pro ${sc.sport} Athlete`, salary, tier:5, years:0};
@@ -2690,6 +2693,45 @@ SECRET_ENDINGS.push(
   {id:'correspondent', title:'The Correspondent', cond:s=>(s.flags.lettersReceived||0)>=8},
   {id:'stargazer', title:'The Stargazer', cond:s=>(s.flags.horoscopesRead||0)>=25 && s.stats.karma>=60},
 );
+
+/* ---------------------------------------------------------------------
+   SPORTS DESK — sports gets its own typographic voice in the paper,
+   the way a real newspaper's sports section reads differently from the
+   front page (bold condensed sans vs. the serif used everywhere else).
+   Extends renderLog() with a fourth entry type alongside newspaper/
+   letter/logline.
+   --------------------------------------------------------------------- */
+function sportsHeadline(headline, sub){
+  state.log.push({sportsCard:true, headline, sub, age:state.age});
+  renderLog();
+}
+const _origRenderLog_P20 = renderLog;
+renderLog = function(){
+  const el = $('log');
+  el.innerHTML = state.log.slice(-200).map(entry=>{
+    if(entry.newspaper){
+      return `<div class="newspaper"><div class="np-name">${entry.paper||'The Daily Life'}</div>
+        <h3>${entry.headline}</h3><p>${entry.sub||''}</p></div>`;
+    }
+    if(entry.letter){
+      return `<div class="letter"><span class="letter-head">Letter to the Editor · Age ${entry.age}</span>"${entry.text}"<span class="letter-sig">— ${entry.sig}</span></div>`;
+    }
+    if(entry.sportsCard){
+      return `<div class="sports-card"><div class="sd-eyebrow">Sports Desk · Age ${entry.age}</div>
+        <div class="sd-headline">${entry.headline}</div><div class="sd-sub">${entry.sub||''}</div></div>`;
+    }
+    return `<div class="logline ${entry.type||'neutral'}"><span class="age">Age ${entry.age}</span>${entry.text}</div>`;
+  }).join('');
+};
+const _origTickSports_P20 = tickSports;
+tickSports = function(){
+  const beforeStage = state.sportsCareer ? state.sportsCareer.stage : -1;
+  _origTickSports_P20();
+  if(state.sportsCareer && state.sportsCareer.stage!==beforeStage && state.sportsCareer.stage!==6){
+    sportsHeadline(`${state.name.toUpperCase()} MOVES UP TO ${SPORTS_STAGES[state.sportsCareer.stage].toUpperCase()}`,
+      `${state.sportsCareer.sport} standout continues to climb the ranks.`);
+  }
+};
 </script>
 </body>
 </html>
