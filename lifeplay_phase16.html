@@ -381,6 +381,7 @@ function freshState(){
     acting:{stage:0, fame:0, roles:0, oscars:0},
     music:{stage:0, fame:0, songs:0, grammys:0},
     modeling:{stage:0, fame:0, gigs:0, covers:0},
+    stocks:{},
   };
 }
 
@@ -4352,6 +4353,92 @@ openProfilePanel = function(){
     row.innerHTML = `<div class="li-main"><b>${title}</b><span>${sub}</span></div>`;
     body.insertBefore(row, anchor);
   });
+};
+
+/* ---------------------------------------------------------------------
+   P40 — Stock Market: a second investment system alongside crypto, but
+   calmer (lower volatility) and company-flavored, with rare market-wide
+   crash/boom events that move every stock at once.
+   --------------------------------------------------------------------- */
+const STOCKS_P40 = [
+  {sym:'TCHX', name:'Techora Inc.'},
+  {sym:'GRLD', name:'Global Retail Ltd.'},
+  {sym:'ENRG', name:'Enrique Energy'},
+  {sym:'MEDX', name:'MedixCorp'},
+  {sym:'AERO', name:'AeroDyne Systems'},
+];
+const STOCK_PRICES_P40 = {TCHX:120, GRLD:65, ENRG:45, MEDX:90, AERO:200};
+Object.assign(ACHIEVEMENTS, { investor_ach:'Held $50,000 in stocks' });
+function tickStockPricesP40(){
+  for(const sym in STOCK_PRICES_P40){
+    STOCK_PRICES_P40[sym] = Math.max(1, STOCK_PRICES_P40[sym]*(1+(Math.random()*2-1)*0.08));
+  }
+  if(chance(4)){
+    for(const sym in STOCK_PRICES_P40) STOCK_PRICES_P40[sym] = Math.max(1, STOCK_PRICES_P40[sym]*(0.6+Math.random()*0.15));
+    newspaper('MARKET PLUNGES IN SUDDEN CRASH', 'Investors watch billions evaporate in a single session.', 'Business Desk');
+  } else if(chance(4)){
+    for(const sym in STOCK_PRICES_P40) STOCK_PRICES_P40[sym] *= (1.2+Math.random()*0.2);
+    newspaper('MARKETS SURGE TO RECORD HIGHS', 'A broad rally lifts stocks across every sector.', 'Business Desk');
+  }
+}
+function stockPortfolioValueP40(){
+  if(!state.stocks) return 0;
+  let v = 0;
+  for(const sym in state.stocks) v += (state.stocks[sym]||0)*STOCK_PRICES_P40[sym];
+  return v;
+}
+function buyStockP40(sym){
+  const amt = 1000;
+  if(state.money<amt){ log(`Not enough cash to buy ${sym} shares.`,'bad'); closePanel(); render(); return; }
+  state.money -= amt;
+  if(!state.stocks) state.stocks = {};
+  state.stocks[sym] = (state.stocks[sym]||0) + amt/STOCK_PRICES_P40[sym];
+  log(`You bought ${fmtMoney(amt)} of ${sym} stock.`,'neutral');
+  openStockPanelP40();
+}
+function sellStockP40(sym){
+  const shares = (state.stocks && state.stocks[sym]) || 0;
+  const value = shares*STOCK_PRICES_P40[sym];
+  state.money += value;
+  if(!state.stocks) state.stocks = {};
+  state.stocks[sym] = 0;
+  log(`You sold all your ${sym} shares for ${fmtMoney(value)}.`,'neutral');
+  openStockPanelP40();
+}
+function openStockPanelP40(){
+  if(!state.stocks) state.stocks = {};
+  let html = '';
+  STOCKS_P40.forEach(s=>{
+    const held = state.stocks[s.sym]||0;
+    html += `<div class="list-item"><div class="li-main"><b>${s.sym}</b><span>${s.name} · ${fmtMoney(STOCK_PRICES_P40[s.sym])}/share · Holding: ${held.toFixed(2)}</span></div>
+      <div class="row"><button class="btn" onclick='buyStockP40(${JSON.stringify(s.sym)})'>Buy $1,000</button><button class="btn" onclick='sellStockP40(${JSON.stringify(s.sym)})'>Sell All</button></div></div>`;
+  });
+  openPanel('Stock Market', html);
+}
+const _origAgeUp_P40 = ageUp;
+ageUp = function(){
+  _origAgeUp_P40();
+  if(!state || !state.alive) return;
+  tickStockPricesP40();
+  if(stockPortfolioValueP40()>=50000) checkAchievement('investor_ach');
+  render();
+};
+const _origNetWorth_P40 = netWorth;
+netWorth = function(){
+  return _origNetWorth_P40() + stockPortfolioValueP40();
+};
+const _origOpenAssetsPanel_P40 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P40();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = 'Stock Portfolio'; body.appendChild(label);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '📈 Open Stock Market';
+  btn.onclick = openStockPanelP40;
+  body.appendChild(btn);
 };
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
