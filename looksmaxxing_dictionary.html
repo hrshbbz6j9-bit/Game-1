@@ -1244,6 +1244,20 @@
   .photo-upload-btn { background: var(--ink); color: var(--card); }
   .photo-remove-btn { background: var(--card); color: var(--ink); }
 
+  .thread-photo-preview-wrap {
+    width: 100%;
+    max-height: 220px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+  }
+  .thread-photo-preview-wrap img { width: 100%; height: auto; display: block; }
+
   /* ---------- Like Button ---------- */
   .like-btn {
     background: none;
@@ -1414,6 +1428,19 @@
   }
 
   .thread-preview { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
+
+  .thread-photo {
+    margin-top: 10px;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    overflow: hidden;
+    max-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+  }
+  .thread-photo img { width: 100%; height: auto; display: block; }
 
   .thread-stats {
     display: flex;
@@ -2528,8 +2555,26 @@
     <input type="text" class="form-input" id="newThreadTitle" placeholder="e.g. 6 weeks of consistent posture training">
     <label class="form-label">Category</label>
     <select class="form-select" id="newThreadCategory"></select>
+    <label class="form-label">Prefix (optional)</label>
+    <select class="form-select" id="newThreadPrefix">
+      <option value="">None</option>
+      <option value="RATE ME">Rate Me</option>
+      <option value="PROGRESS">Progress</option>
+      <option value="QUESTION">Question</option>
+      <option value="GUIDE">Guide</option>
+      <option value="DISCUSSION">Discussion</option>
+    </select>
     <label class="form-label">Post</label>
     <textarea class="form-textarea" id="newThreadBody" placeholder="Share the details..."></textarea>
+    <label class="form-label">Photo (optional)</label>
+    <div class="thread-photo-preview-wrap" id="newThreadPhotoPreviewWrap" style="display:none;">
+      <img id="newThreadPhotoPreviewImg" src="" alt="">
+    </div>
+    <div class="photo-edit-actions" style="margin-bottom:18px;">
+      <label class="photo-upload-btn" for="newThreadPhotoInput" id="newThreadPhotoLabel">Add Photo</label>
+      <input type="file" id="newThreadPhotoInput" accept="image/*" style="display:none;">
+      <button class="photo-remove-btn" id="newThreadPhotoRemove" style="display:none;">Remove Photo</button>
+    </div>
     <button class="cta-btn" id="newThreadSubmit">Post Thread</button>
   </div>
 </div>
@@ -7935,6 +7980,7 @@
           </div>
         ` : `
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
+          ${t.image ? `<div class="thread-photo"><img src="${t.image}" alt="Attached photo"></div>` : ""}
           ${signatureHtml(t.author)}
           <div class="reply-list">${repliesHtml}</div>
           ${isLocked ? `
@@ -8140,7 +8186,38 @@
     newThreadCategorySelect.appendChild(opt);
   });
 
-  function openNewThreadModal() { newThreadOverlay.classList.add("show"); }
+  let newThreadPhoto = null;
+  const newThreadPrefixSelect = document.getElementById("newThreadPrefix");
+  const newThreadPhotoInput = document.getElementById("newThreadPhotoInput");
+  const newThreadPhotoPreviewWrap = document.getElementById("newThreadPhotoPreviewWrap");
+  const newThreadPhotoPreviewImg = document.getElementById("newThreadPhotoPreviewImg");
+  const newThreadPhotoLabel = document.getElementById("newThreadPhotoLabel");
+  const newThreadPhotoRemove = document.getElementById("newThreadPhotoRemove");
+
+  function resetNewThreadPhoto() {
+    newThreadPhoto = null;
+    newThreadPhotoPreviewWrap.style.display = "none";
+    newThreadPhotoPreviewImg.src = "";
+    newThreadPhotoLabel.style.display = "block";
+    newThreadPhotoRemove.style.display = "none";
+    newThreadPhotoInput.value = "";
+  }
+
+  newThreadPhotoInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { showToast("Please choose an image file."); return; }
+    resizeImageFileFit(file, 640, (dataUrl) => {
+      newThreadPhoto = dataUrl;
+      newThreadPhotoPreviewImg.src = dataUrl;
+      newThreadPhotoPreviewWrap.style.display = "flex";
+      newThreadPhotoLabel.style.display = "none";
+      newThreadPhotoRemove.style.display = "block";
+    });
+  });
+  newThreadPhotoRemove.addEventListener("click", resetNewThreadPhoto);
+
+  function openNewThreadModal() { resetNewThreadPhoto(); newThreadPrefixSelect.value = ""; newThreadOverlay.classList.add("show"); }
   function closeNewThreadModal() { newThreadOverlay.classList.remove("show"); }
   document.getElementById("newThreadClose").addEventListener("click", closeNewThreadModal);
   newThreadOverlay.addEventListener("click", (e) => { if (e.target === newThreadOverlay) closeNewThreadModal(); });
@@ -8150,13 +8227,18 @@
     const bodyInput = document.getElementById("newThreadBody");
     const title = titleInput.value.trim();
     const category = newThreadCategorySelect.value;
+    const prefix = newThreadPrefixSelect.value || undefined;
     const body = bodyInput.value.trim();
     if (!title || !body) { showToast("Add a title and a post before submitting."); return; }
     const newId = Math.max(0, ...threads.map(t => t.id)) + 1;
-    threads.push({ id: newId, title, category, author: username, body, replies: [], likes: 0 });
+    const newThread = { id: newId, title, category, author: username, body, replies: [], likes: 0 };
+    if (prefix) newThread.prefix = prefix;
+    if (newThreadPhoto) newThread.image = newThreadPhoto;
+    threads.push(newThread);
     saveThreads();
     titleInput.value = "";
     bodyInput.value = "";
+    resetNewThreadPhoto();
     closeNewThreadModal();
     activeForumCategory = "All";
     renderForumTabs();
