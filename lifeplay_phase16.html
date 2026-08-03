@@ -103,6 +103,10 @@
   .sports-card .sd-eyebrow{font-family:var(--font-caption);font-size:.58em;letter-spacing:.2em;text-transform:uppercase;color:var(--accent2);font-weight:800;}
   .sports-card .sd-headline{font-family:var(--font-caption);font-size:1.15em;font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:1.2;margin:3px 0 4px;}
   .sports-card .sd-sub{font-family:var(--font-caption);font-size:.78em;color:var(--sub);}
+  .business-card{background:var(--panel2);border:1px solid var(--ink-line);border-left:5px solid var(--accent);padding:11px 13px;margin:8px 0;}
+  .business-card .bd-eyebrow{font-family:var(--font-caption);font-size:.58em;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:800;}
+  .business-card .bd-headline{font-family:var(--font-display);font-size:1.05em;font-weight:700;margin:3px 0 3px;}
+  .business-card .bd-sub{font-family:var(--font-caption);font-size:.78em;color:var(--sub);font-variant-numeric:tabular-nums;}
   #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:2px solid var(--ink-line);}
   #bottomnav button{background:none;border:none;border-right:1px solid var(--border);color:var(--text);padding:8px 2px 7px;font-family:var(--font-caption);font-size:.58em;font-weight:700;text-transform:uppercase;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
   #bottomnav button:last-child{border-right:none;}
@@ -3493,6 +3497,58 @@ SCANDAL_CARDS_P16.push(
   {title:'Foreign Influence Scandal', text:'Questions are swirling about a foreign donor tied to your campaign.'},
   {title:'Old Tweets Scandal', text:'A decade-old social media post of yours resurfaced and it has not aged well.'},
 );
+
+/* ---------------------------------------------------------------------
+   BUSINESS DESK — the same "each section has its own voice" idea as the
+   Sports Desk, applied to real business milestones (franchising, a
+   hostile takeover sale) rather than routine actions like hiring, which
+   would just make the log noisy.
+   --------------------------------------------------------------------- */
+function businessHeadline(headline, sub){
+  state.log.push({businessCard:true, headline, sub, age:state.age});
+  renderLog();
+}
+const _origRenderLog_P21 = renderLog;
+renderLog = function(){
+  const el = $('log');
+  el.innerHTML = state.log.slice(-200).map(entry=>{
+    if(entry.newspaper){
+      return `<div class="newspaper"><div class="np-name">${entry.paper||'The Daily Life'}</div>
+        <h3>${entry.headline}</h3><p>${entry.sub||''}</p></div>`;
+    }
+    if(entry.letter){
+      return `<div class="letter"><span class="letter-head">Letter to the Editor · Age ${entry.age}</span>"${entry.text}"<span class="letter-sig">— ${entry.sig}</span></div>`;
+    }
+    if(entry.sportsCard){
+      return `<div class="sports-card"><div class="sd-eyebrow">Sports Desk · Age ${entry.age}</div>
+        <div class="sd-headline">${entry.headline}</div><div class="sd-sub">${entry.sub||''}</div></div>`;
+    }
+    if(entry.businessCard){
+      return `<div class="business-card"><div class="bd-eyebrow">Business Desk · Age ${entry.age}</div>
+        <div class="bd-headline">${entry.headline}</div><div class="bd-sub">${entry.sub||''}</div></div>`;
+    }
+    return `<div class="logline ${entry.type||'neutral'}"><span class="age">Age ${entry.age}</span>${entry.text}</div>`;
+  }).join('');
+};
+const _origFranchiseP16_Desk = franchiseP16;
+franchiseP16 = function(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId);
+  const wasFranchise = biz ? biz.franchise : null;
+  _origFranchiseP16_Desk(bizId);
+  if(biz && !wasFranchise && biz.franchise){
+    businessHeadline(`${biz.name.toUpperCase()} GOES NATIONAL`, `The ${biz.locations}-location operation officially becomes a franchise.`);
+  }
+};
+const _origAcceptTakeoverP16_Desk = acceptTakeoverP16;
+acceptTakeoverP16 = function(bizId){
+  const biz = state.business.companies.find(b=>b.id===bizId);
+  const name = biz ? biz.name : null;
+  const offer = biz ? biz.takeoverOffer : null;
+  _origAcceptTakeoverP16_Desk(bizId);
+  if(name && offer){
+    businessHeadline(`${name.toUpperCase()} SOLD IN HOSTILE TAKEOVER`, `Deal closes at ${fmtMoney(offer)}, ending an era for the local business.`);
+  }
+};
 </script>
 </body>
 </html>
