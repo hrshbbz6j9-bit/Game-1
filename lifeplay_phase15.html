@@ -2736,6 +2736,273 @@ tickSports = function(){
       `${state.sportsCareer.sport} standout continues to climb the ranks.`);
   }
 };
+
+/* =========================================================================
+   BRANCHING CHOICE EVENTS — pop-up scenarios with real choices and
+   consequences, distinct from the passive flavor-event pools above (which
+   just apply an effect automatically). These use the existing playScene()
+   modal + scene queue, so they never collide with other pop-ups.
+
+   TO ADD A NEW EVENT: push an object onto the right bracket array in
+   CHOICE_EVENTS ('child' <13, 'teen' 13-17, 'adult' 18-64, 'elder' 65+):
+     {
+       title: 'Short scene title',
+       text: 'Setup text describing the situation.',
+       choices: [
+         { label:'What the player picks', type:'good'|'bad'|'neutral',
+           fx: s=>{ ...mutate s.stats / s.money / relationships... },
+           result: 'Shown in the log after picking' // or a function(s)=>string
+                                                       // for chance-based outcomes
+         },
+         ... 2-4 choices ...
+       ]
+     }
+   That's the whole contract. No other wiring is needed — rollChoiceEvent()
+   already picks a random one from the current life stage and displays it.
+   ========================================================================= */
+const CHOICE_EVENTS = { child:[], teen:[], adult:[], elder:[] };
+
+function choiceBracketKey(){
+  if(state.age<13) return 'child';
+  if(state.age<18) return 'teen';
+  if(state.age<65) return 'adult';
+  return 'elder';
+}
+function rollChoiceEvent(){
+  const pool = CHOICE_EVENTS[choiceBracketKey()];
+  if(!pool || !pool.length) return false;
+  const ev = pick(pool);
+  playScene({
+    title: ev.title, text: ev.text,
+    choices: ev.choices.map(c=>({label:c.label, run:()=>{
+      c.fx(state); clampAllStats();
+      const resultText = typeof c.result==='function' ? c.result(state) : c.result;
+      log(resultText, c.type||'neutral');
+    }}))
+  });
+  return true;
+}
+
+CHOICE_EVENTS.child.push(
+  {title:'The Lemonade Stand Showdown', text:'The kid next door set up a lemonade stand right across from yours, undercutting your prices by a dime. Your customers are drifting.', choices:[
+    {label:'Drop your price to compete', type:'neutral', fx:s=>{s.stats.happiness+=2;}, result:'You matched their price. Business picked back up, barely.'},
+    {label:'Spread a rumor their lemonade is warm', type:'bad', fx:s=>{s.stats.karma-=5; s.stats.happiness+=3;}, result:'Cruel, but it worked. Their line disappeared.'},
+    {label:'Team up and merge stands', type:'good', fx:s=>{s.stats.karma+=3; s.stats.happiness+=5; s.money+=20;}, result:'You joined forces. Turns out two lemonade stands are better than one.'},
+  ]},
+  {title:'Truth or Dare', text:'At recess, the popular kids dare you to eat a handful of sand. Everyone\'s watching.', choices:[
+    {label:'Do it', type:'neutral', fx:s=>{s.stats.health-=4; s.stats.happiness+=4;}, result:'You did it. Gross, but you\'re a legend at recess now.'},
+    {label:'Refuse', type:'bad', fx:s=>{s.stats.happiness-=3;}, result:'You said no. A few kids laughed, but you kept your dignity.'},
+    {label:'Dare them back instead', type:'good', fx:s=>{s.stats.karma+=1; s.stats.happiness+=2;}, result:'You turned it around on them. Chaos ensued, but it was hilarious.'},
+  ]},
+  {title:'The Lost Wallet', text:'You find a wallet on the sidewalk with $40 cash inside and no ID.', choices:[
+    {label:'Keep the money', type:'bad', fx:s=>{s.money+=40; s.stats.karma-=6;}, result:'You pocketed the cash. It felt a little wrong.'},
+    {label:'Turn it in to a nearby store', type:'good', fx:s=>{s.stats.karma+=6; s.stats.happiness+=2; s.money+=10;}, result:'You handed it in. The owner thanked you later with a small reward.'},
+    {label:'Track down the owner yourself', type:'good', fx:s=>{s.stats.karma+=8; s.stats.happiness+=4;}, result:'You found the owner through a card inside. They were so relieved they hugged you.'},
+  ]},
+  {title:'Recital Jitters', text:'It\'s your turn at the piano recital and your hands won\'t stop shaking.', choices:[
+    {label:'Push through and play', type:'good', fx:s=>{s.stats.smarts+=2; s.stats.happiness+=3;}, result:'You stumbled through a few notes but finished. The applause felt earned.'},
+    {label:'Freeze up and run offstage', type:'bad', fx:s=>{s.stats.happiness-=4;}, result:'You bolted. Your face was red for a week.'},
+    {label:'Fake being sick to skip your turn', type:'bad', fx:s=>{s.stats.karma-=2; s.stats.happiness-=1;}, result:'You faked a stomachache. Nobody bought it, but nobody said anything either.'},
+  ]},
+  {title:'The New Kid', text:'A nervous-looking new kid sits alone at lunch on their first day.', choices:[
+    {label:'Invite them to sit with you', type:'good', fx:s=>{s.stats.karma+=5; s.stats.happiness+=3; s.relationships.push(newRelationship('friend',{gender:pick(['Male','Female']), age:s.age, rel:70}));}, result:'You waved them over. You made a friend for life.'},
+    {label:'Ignore them', type:'bad', fx:s=>{s.stats.karma-=1;}, result:'You looked away. Someone else eventually sat with them.'},
+    {label:'Make fun of their lunch', type:'bad', fx:s=>{s.stats.karma-=6; s.stats.happiness-=1;}, result:'You laughed at their lunch. It didn\'t feel as good as you thought it would.'},
+  ]},
+  {title:'The Broken Vase', text:'You accidentally shatter your parents\' favorite vase playing indoors. No one saw.', choices:[
+    {label:'Confess immediately', type:'good', fx:s=>{s.stats.karma+=4; s.relationships.filter(r=>r.type==='parent').forEach(r=>r.rel=clamp(r.rel+5,0,100));}, result:'You told the truth. Your parents were upset but proud you owned up.'},
+    {label:'Hide the pieces and say nothing', type:'bad', fx:s=>{s.stats.karma-=4; s.stats.happiness-=2;}, result:'You hid the evidence. The guilt gnawed at you for weeks.'},
+    {label:'Blame a sibling', type:'bad', fx:s=>{s.stats.karma-=8; s.relationships.filter(r=>r.type==='sibling').forEach(r=>r.rel=clamp(r.rel-15,0,100));}, result:'You blamed someone else. It worked, but it cost you.'},
+  ]},
+  {title:'Talent Show Sign-Ups', text:'Sign-ups for the school talent show are up. You could do something interesting, but everyone will be watching.', choices:[
+    {label:'Perform your best trick', type:'neutral', fx:s=>{ if(chance(60)){ s.stats.happiness+=6; s.stats.looks+=2; s.flags.talentShowWin=true; } else { s.stats.happiness-=2; } }, result:s=>s.flags.talentShowWin?'You nailed it. The whole gym cheered.':'You flubbed it halfway through. Awkward, but you survived.'},
+    {label:'Chicken out and don\'t sign up', type:'bad', fx:s=>{s.stats.happiness-=2;}, result:'You didn\'t sign up. Part of you always wondered what if.'},
+    {label:'Sign up but do something silly on purpose', type:'good', fx:s=>{s.stats.happiness+=4; s.stats.karma+=1;}, result:'You went up and did something goofy on purpose. The whole gym laughed — with you, not at you.'},
+  ]},
+  {title:'Your Best Friend\'s Secret', text:'Your best friend tells you a secret and makes you promise not to tell — but it involves someone getting hurt.', choices:[
+    {label:'Keep the promise', type:'bad', fx:s=>{s.stats.karma-=2;}, result:'You kept quiet. Loyalty has a price.'},
+    {label:'Tell a trusted adult anyway', type:'good', fx:s=>{s.stats.karma+=6;}, result:'You told a teacher. It was the right call, even though your friend was furious at first.'},
+    {label:'Confront your friend about it directly', type:'good', fx:s=>{s.stats.karma+=3;}, result:'You pushed your friend to fix it themselves. They eventually did.'},
+  ]},
+  {title:'Running for Class President', text:'There\'s an opening for class president. You could run, but so could the most popular kid in school.', choices:[
+    {label:'Run a real campaign with actual promises', type:'neutral', fx:s=>{ s.stats.smarts+=2; if(chance(45)){ s.stats.happiness+=6; s.flags.classPresWin=true; } else { s.stats.happiness-=2; } }, result:s=>s.flags.classPresWin?'You won! Turns out "more recess" is a winning platform.':'You lost to the popular kid. Democracy is brutal.'},
+    {label:'Don\'t bother running', type:'neutral', fx:s=>{}, result:'You sat this one out.'},
+    {label:'Bribe classmates with candy for votes', type:'bad', fx:s=>{ s.stats.karma-=4; s.money-=10; if(chance(65)){ s.stats.happiness+=4; } }, result:'The candy bribes mostly worked, morally questionable as they were.'},
+  ]},
+  {title:'The Chores Strike', text:'You\'re sick of doing chores for no allowance. Your parents haven\'t budged in months.', choices:[
+    {label:'Refuse to do any chores until they pay up', type:'bad', fx:s=>{ s.stats.karma-=2; if(chance(40)){ s.money+=30; } }, result:'You went on strike. It was tense, but it eventually got you somewhere.'},
+    {label:'Negotiate calmly for a small allowance', type:'good', fx:s=>{ s.stats.smarts+=2; s.stats.karma+=2; s.money+=15; }, result:'You made your case like a mini lawyer. It worked.'},
+    {label:'Just keep doing them without complaint', type:'neutral', fx:s=>{s.stats.karma+=3; s.stats.happiness-=1;}, result:'You kept your head down. Reliable, if unrewarded.'},
+  ]},
+);
+
+CHOICE_EVENTS.teen.push(
+  {title:'The Answer Key', text:'A photo of tomorrow\'s exam answers is circulating in a group chat.', choices:[
+    {label:'Use it', type:'neutral', fx:s=>{ if(chance(30)){ s.stats.karma-=10; s.gpa=clamp(s.gpa-0.5,0,4); } else { s.gpa=clamp(s.gpa+0.3,0,4); s.stats.karma-=5; } }, result:s=>s.stats.karma<=45?'You got caught. The academic fallout was brutal.':'You used it and got away clean. The guilt lingered more than expected.'},
+    {label:'Report it to the teacher', type:'good', fx:s=>{ s.stats.karma+=6; s.stats.happiness-=2; }, result:'You reported it. Not exactly popular, but it was the right call.'},
+    {label:'Ignore it and study normally', type:'good', fx:s=>{ s.stats.smarts+=2; s.stats.karma+=2; s.gpa=clamp(s.gpa+0.1,0,4); }, result:'You studied the old-fashioned way. Slower, but yours.'},
+  ]},
+  {title:'The Interview', text:'You\'re nervous for your first real job interview at the local diner.', choices:[
+    {label:'Be totally honest, even about your weaknesses', type:'good', fx:s=>{ s.stats.karma+=3; if(chance(50)){ s.money+=200; s.flags.gotDinerJob=true; } }, result:s=>s.flags.gotDinerJob?'Honesty paid off — you got the job.':'You didn\'t get it, but the manager said to try again next season.'},
+    {label:'Exaggerate your experience', type:'bad', fx:s=>{ s.stats.karma-=3; if(chance(70)){ s.money+=200; s.flags.gotDinerJob=true; } }, result:s=>s.flags.gotDinerJob?'The exaggeration worked. You got the job, for now.':'They saw right through it. No job.'},
+    {label:'Bail and reschedule', type:'bad', fx:s=>{ s.stats.happiness-=2; }, result:'You chickened out. There\'s always next time, probably.'},
+  ]},
+  {title:'The Invitation', text:'The most popular kids in school invite you to a party — but your real friends aren\'t invited and will feel hurt.', choices:[
+    {label:'Go to the party', type:'bad', fx:s=>{ s.stats.happiness+=4; s.stats.karma-=2; s.relationships.filter(r=>r.type==='friend').forEach(r=>r.rel=clamp(r.rel-10,0,100)); }, result:'You went. It was fun, but you felt the distance with your real friends after.'},
+    {label:'Decline and hang out with your real friends', type:'good', fx:s=>{ s.stats.karma+=4; s.stats.happiness+=2; s.relationships.filter(r=>r.type==='friend').forEach(r=>r.rel=clamp(r.rel+8,0,100)); }, result:'You stayed loyal. Your real friends noticed.'},
+    {label:'Try to sneak your friends in too', type:'neutral', fx:s=>{ if(chance(40)){ s.stats.karma+=5; s.stats.happiness+=6; } else { s.stats.happiness-=3; s.stats.karma-=1; } }, result:s=>s.stats.happiness>=50?'It actually worked. Everyone had a great night.':'You got caught trying to sneak them in. Embarrassing for everyone.'},
+  ]},
+  {title:'Caught in the Middle', text:'Your two best friends just broke up and both are pressuring you to pick a side.', choices:[
+    {label:'Stay neutral', type:'neutral', fx:s=>{ s.stats.karma+=2; s.stats.happiness-=2; }, result:'You refused to choose. Both were a little annoyed, but respected it eventually.'},
+    {label:'Side with one of them', type:'neutral', fx:s=>{ s.stats.happiness-=1; }, result:'You picked a side. One friendship deepened, the other quietly ended.'},
+    {label:'Try to mediate and get them back together', type:'good', fx:s=>{ if(chance(35)){ s.stats.karma+=6; s.stats.happiness+=4; } else { s.stats.happiness-=3; } }, result:s=>s.stats.happiness>=50?'Against the odds, you actually got them talking again.':'Your mediation attempt backfired spectacularly.'},
+  ]},
+  {title:'Five-Finger Discount', text:'Your friends are daring you to shoplift something small, just to prove you\'re not scared.', choices:[
+    {label:'Do it', type:'bad', fx:s=>{ if(chance(35)){ s.inPrison=false; s.criminalRecord.push('Shoplifting'); s.stats.karma-=8; s.stats.happiness-=4; } else { s.stats.karma-=5; s.money+=15; } }, result:s=>s.criminalRecord.includes('Shoplifting')?'Security caught you red-handed. It\'s on your record now.':'You got away with it, but it didn\'t feel like winning.'},
+    {label:'Refuse and walk away', type:'good', fx:s=>{ s.stats.karma+=3; s.stats.happiness-=2; }, result:'You said no. A little social friction, but no regrets.'},
+    {label:'Talk them out of it', type:'good', fx:s=>{ s.stats.karma+=5; s.stats.happiness+=2; }, result:'You talked everyone down. Crisis averted.'},
+  ]},
+  {title:'Two Paths', text:'A guidance counselor hands you two brochures: a four-year university, and a trade program that gets you working in half the time.', choices:[
+    {label:'Set your sights on college', type:'neutral', fx:s=>{ s.stats.smarts+=3; }, result:'You started planning for college applications.'},
+    {label:'Consider the trade path', type:'neutral', fx:s=>{ s.stats.smarts+=1; s.stats.happiness+=2; }, result:'The trade program felt more real, more immediate. You liked that.'},
+    {label:'Tell them you\'re not sure yet', type:'neutral', fx:s=>{}, result:'You shrugged. There\'s time to figure it out.'},
+  ]},
+  {title:'The Diet Plan', text:'A classmate hands you a "miracle" crash diet plan that promises fast results but sounds unhealthy.', choices:[
+    {label:'Try it', type:'bad', fx:s=>{ s.stats.health-=6; s.stats.looks+=3; }, result:'You lost weight fast, and felt terrible the whole time.'},
+    {label:'Ignore it and eat normally', type:'good', fx:s=>{ s.stats.health+=2; }, result:'You skipped the fad. Your body thanked you.'},
+    {label:'Warn others it\'s dangerous', type:'good', fx:s=>{ s.stats.karma+=4; s.stats.happiness+=1; }, result:'You spoke up. A couple of classmates listened.'},
+  ]},
+  {title:'The Group Project Freeloader', text:'Your group project partner hasn\'t done any work and the deadline is tomorrow.', choices:[
+    {label:'Cover for them and do it all yourself', type:'neutral', fx:s=>{ s.stats.smarts+=2; s.stats.health-=2; }, result:'You pulled an all-nighter to save the grade. Exhausting, but done.'},
+    {label:'Tell the teacher they didn\'t contribute', type:'neutral', fx:s=>{ s.stats.karma+=3; }, result:'You reported it honestly. Awkward, but fair.'},
+    {label:'Confront them and demand they help', type:'neutral', fx:s=>{ if(chance(50)){ s.stats.karma+=2; } else { s.stats.happiness-=3; } }, result:s=>s.stats.happiness>=50?'They actually stepped up after you called them out.':'The confrontation just made things worse.'},
+  ]},
+  {title:'Ghosted', text:'The person you\'ve been seeing suddenly stops responding to you completely, with no explanation.', choices:[
+    {label:'Wallow in it for a while', type:'bad', fx:s=>{ s.stats.happiness-=5; }, result:'You spiraled for a bit. It happens.'},
+    {label:'Confront them for closure', type:'neutral', fx:s=>{ if(chance(40)){ s.stats.happiness+=3; } else { s.stats.happiness-=4; } }, result:s=>s.stats.happiness>=50?'You got an honest answer. It stung, but it helped.':'They doubled down on ignoring you. Rough.'},
+    {label:'Throw yourself into something else', type:'good', fx:s=>{ s.stats.happiness+=2; s.stats.health+=2; }, result:'You channeled it into something productive. Not bad, actually.'},
+  ]},
+  {title:'The Cooler in the Garage', text:'At a party, someone cracks open a cooler full of beer and passes cans around like it\'s nothing.', choices:[
+    {label:'Drink', type:'bad', fx:s=>{ s.stats.health-=3; s.stats.happiness+=2; if(chance(6) && !s.addiction){ s.addiction={substance:'alcohol', inRecovery:false, soberYears:0, sponsor:null, chips:[], meetingsAttended:0, relapses:0}; } }, result:s=>s.addiction?'It felt harmless at the time. It didn\'t stay that way.':'You had a few. Nothing dramatic happened, this time.'},
+    {label:'Politely decline', type:'good', fx:s=>{ s.stats.karma+=1; s.stats.happiness-=1; }, result:'You passed. A little awkward, but no regrets in the morning.'},
+    {label:'Pour it out when no one\'s looking', type:'good', fx:s=>{ s.stats.karma+=2; s.stats.happiness-=1; }, result:'You quietly poured it into the sink. Nobody noticed, and that was fine.'},
+  ]},
+);
+
+CHOICE_EVENTS.adult.push(
+  {title:'The Business Pitch', text:'An old friend corners you at a coffee shop wanting you to invest your savings in their "can\'t-miss" startup.', choices:[
+    {label:'Invest a big chunk of your savings', type:'neutral', fx:s=>{ const amt=Math.min(s.money*0.4, 20000); s.money-=amt; if(chance(20)){ s.money+=amt*4; } }, result:s=>s.money>0?'The numbers will tell the story.':'The startup folded within a year.'},
+    {label:'Invest a small, safe amount', type:'neutral', fx:s=>{ s.money-=500; if(chance(30)){ s.money+=1500; } }, result:'You hedged your bet. Reasonable, all things considered.'},
+    {label:'Politely decline', type:'neutral', fx:s=>{}, result:'You passed. The friendship survived; the startup, who knows.'},
+  ]},
+  {title:'Jury Duty', text:'You\'re on a jury and most others want to convict quickly to go home, but you have real doubts about the evidence.', choices:[
+    {label:'Hold your ground', type:'good', fx:s=>{ s.stats.karma+=6; s.stats.happiness-=2; s.stats.smarts+=1; }, result:'You refused to budge. It took three more days, but you did the right thing.'},
+    {label:'Go along with the majority', type:'bad', fx:s=>{ s.stats.karma-=4; }, result:'You caved to the pressure to be done with it. It didn\'t sit right afterward.'},
+    {label:'Try to convince the others', type:'neutral', fx:s=>{ if(chance(45)){ s.stats.karma+=8; } else { s.stats.happiness-=3; } }, result:s=>s.stats.karma>=50?'You changed enough minds. Justice, argued into existence.':'Nobody budged. A long, exhausting deadlock.'},
+  ]},
+  {title:'The Layoffs', text:'Your company announces layoffs, and your boss privately asks you to help decide who on your team gets cut.', choices:[
+    {label:'Recommend based on performance only', type:'good', fx:s=>{ s.stats.karma+=3; if(s.job) s.job.years+=1; }, result:'You kept it fair, even when it was hard.'},
+    {label:'Protect your friend even though they underperform', type:'bad', fx:s=>{ s.stats.karma-=3; }, result:'You protected your friend. Someone else paid the price for it.'},
+    {label:'Refuse to be involved', type:'neutral', fx:s=>{ s.stats.karma+=2; s.stats.happiness-=2; }, result:'You opted out entirely. Your boss wasn\'t thrilled, but you slept fine.'},
+  ]},
+  {title:'The Fence Line', text:'Your neighbor built a new fence two feet onto your property without asking.', choices:[
+    {label:'Let it go to keep the peace', type:'neutral', fx:s=>{ s.stats.happiness-=1; s.stats.karma+=1; }, result:'You let it slide. Peace has a cost, apparently two feet of yard.'},
+    {label:'Demand they move it', type:'neutral', fx:s=>{ if(chance(50)){ s.stats.happiness+=2; } else { s.stats.happiness-=3; } }, result:s=>s.stats.happiness>=50?'They moved it, grudgingly. Neighborly relations: strained but intact.':'It turned into a cold war of passive-aggressive lawn care.'},
+    {label:'Take them to small claims court', type:'neutral', fx:s=>{ s.money-=400; if(chance(55)){ s.money+=1200; } }, result:'The court ruled. Whatever the outcome, the neighborly relationship is over.'},
+  ]},
+  {title:'A Child Needs a Home', text:'A local shelter reaches out — they have a child who needs emergency foster placement, even just temporarily.', choices:[
+    {label:'Take them in', type:'good', fx:s=>{ s.stats.karma+=8; s.stats.happiness+=4; s.money-=1000; const kid=newRelationship('child',{gender:pick(['Male','Female']), age:rand(4,12), rel:60}); s.relationships.push(kid); s.kids.push(kid.id); }, result:'You opened your home. It changed both your lives.'},
+    {label:'Donate money instead', type:'good', fx:s=>{ s.stats.karma+=3; s.money-=300; }, result:'You couldn\'t take them in, but you could help another way.'},
+    {label:'You\'re not in a position to help right now', type:'neutral', fx:s=>{}, result:'Not this time. It still weighed on you for a while.'},
+  ]},
+  {title:'What You Saw', text:'You discover your company has been quietly falsifying safety reports to cut costs.', choices:[
+    {label:'Report it to authorities', type:'good', fx:s=>{ s.stats.karma+=10; if(chance(30) && s.job){ s.jobHistory.push(s.job); s.job=null; } }, result:s=>s.job?'You reported it and kept your job. Rare, but it happens.':'You reported it. It cost you your job, but you\'d do it again.'},
+    {label:'Report it anonymously', type:'good', fx:s=>{ s.stats.karma+=6; }, result:'You found a safer way to do the right thing.'},
+    {label:'Say nothing and keep your head down', type:'bad', fx:s=>{ s.stats.karma-=6; s.stats.happiness-=3; }, result:'You looked away. It\'s bothered you ever since.'},
+  ]},
+  {title:'The Will', text:'A distant relative passed away and left you a modest inheritance — but a cousin claims you don\'t deserve it and wants to contest it.', choices:[
+    {label:'Fight for it in court', type:'neutral', fx:s=>{ s.money-=1500; if(chance(50)){ s.money+=12000; } }, result:'The court battle dragged on, but it\'s settled now.'},
+    {label:'Split it with the cousin to keep peace', type:'good', fx:s=>{ s.money+=3000; s.stats.karma+=3; }, result:'You split it fairly. Family peace, mostly intact.'},
+    {label:'Give it all up to avoid conflict', type:'good', fx:s=>{ s.stats.karma+=5; s.stats.happiness+=1; }, result:'You walked away from it entirely. Some things aren\'t worth the fight.'},
+  ]},
+  {title:'The Motorcycle in the Driveway', text:'You\'re staring down a milestone birthday and feel the sudden urge to do something wild and impulsive.', choices:[
+    {label:'Buy something reckless', type:'neutral', fx:s=>{ s.money-=8000; s.stats.happiness+=6; s.stats.health-=2; }, result:'You bought it. No regrets, mostly.'},
+    {label:'Book a solo adventure trip instead', type:'good', fx:s=>{ s.money-=3000; s.stats.happiness+=7; }, result:'You went somewhere you\'d always talked about and never gone. Worth it.'},
+    {label:'Ignore the feeling and stick to routine', type:'neutral', fx:s=>{ s.stats.happiness-=2; }, result:'You let the urge pass. Responsible, if a little wistful.'},
+  ]},
+  {title:'Stolen Credit', text:'A coworker presents your idea to the whole company as their own, and everyone\'s congratulating them.', choices:[
+    {label:'Call it out in the meeting, right then', type:'neutral', fx:s=>{ s.stats.karma+=3; if(chance(50) && s.job){ s.job.salary+=rand(2000,8000); } else { s.stats.happiness-=3; } }, result:'You spoke up on the spot. The room got very quiet.'},
+    {label:'Talk to your boss privately afterward', type:'neutral', fx:s=>{ if(chance(55) && s.job){ s.job.salary+=rand(1000,5000); } }, result:'You raised it quietly. Slower, but it landed.'},
+    {label:'Let it go and move on', type:'bad', fx:s=>{ s.stats.happiness-=3; s.stats.karma+=1; }, result:'You let it slide. It still bugs you sometimes.'},
+  ]},
+  {title:'The Stranger\'s Flat Tire', text:'You pass a stranger struggling with a flat tire on the side of the highway in the rain.', choices:[
+    {label:'Stop and help', type:'good', fx:s=>{ s.stats.karma+=5; s.stats.happiness+=3; }, result:'You got soaked, but they got back on the road. Worth it.'},
+    {label:'Call roadside assistance for them and keep driving', type:'good', fx:s=>{ s.stats.karma+=2; }, result:'A smaller gesture, but a real one.'},
+    {label:'Keep driving, not your problem', type:'bad', fx:s=>{ s.stats.karma-=3; }, result:'You kept driving. Somebody else probably stopped. Probably.'},
+  ]},
+);
+
+CHOICE_EVENTS.elder.push(
+  {title:'The Hot Stock Tip', text:'Your golf buddy swears he has an insider tip on a stock that\'s about to explode.', choices:[
+    {label:'Invest a large chunk of your retirement', type:'bad', fx:s=>{ const amt=Math.min(s.money*0.3,15000); s.money-=amt; if(chance(15)){ s.money+=amt*5; } }, result:'Retirement money is now riding on a golf-course rumor.'},
+    {label:'Invest a small amount just for fun', type:'neutral', fx:s=>{ s.money-=300; if(chance(25)){ s.money+=1000; } }, result:'A small, mostly harmless flutter.'},
+    {label:'Politely decline', type:'good', fx:s=>{ s.stats.happiness+=1; }, result:'You\'ve heard this story before. You passed.'},
+  ]},
+  {title:'An Unexpected Call', text:'A child you\'ve been estranged from for years calls out of nowhere, wanting to reconnect.', choices:[
+    {label:'Welcome them back with open arms', type:'good', fx:s=>{ s.stats.karma+=6; s.stats.happiness+=6; s.relationships.filter(r=>r.type==='child').forEach(r=>r.rel=clamp(r.rel+30,0,100)); }, result:'Years of silence, undone in one phone call. You both cried a little.'},
+    {label:'Ask for time before deciding', type:'neutral', fx:s=>{ s.stats.happiness+=1; }, result:'You asked for space to think. Fair, even if it\'s hard.'},
+    {label:'Refuse to engage', type:'bad', fx:s=>{ s.stats.happiness-=3; s.stats.karma-=2; }, result:'You let it go to voicemail again. The silence continues.'},
+  ]},
+  {title:'Selling the House', text:'The family home is getting to be too much to maintain. Your kids think it\'s time to downsize.', choices:[
+    {label:'Sell and move to a smaller place', type:'neutral', fx:s=>{ s.money+=80000; s.stats.happiness-=1; }, result:'You sold it. Lighter, in every sense.'},
+    {label:'Refuse — too many memories here', type:'neutral', fx:s=>{ s.stats.happiness+=2; s.stats.health-=2; }, result:'You stayed put. The stairs are getting harder, but so what.'},
+    {label:'Compromise: rent it out instead', type:'good', fx:s=>{ s.money+=15000; }, result:'You kept the house and the income. Best of both.'},
+  ]},
+  {title:'The Tuition Ask', text:'A grandchild nervously asks if you could help cover part of their college tuition.', choices:[
+    {label:'Pay for it fully', type:'good', fx:s=>{ s.money-=15000; s.stats.karma+=6; s.stats.happiness+=5; }, result:'You covered it. Their face was worth every penny.'},
+    {label:'Help partially', type:'good', fx:s=>{ s.money-=5000; s.stats.karma+=3; s.stats.happiness+=3; }, result:'You helped what you could. They were grateful regardless.'},
+    {label:'Say you can\'t this time', type:'neutral', fx:s=>{ s.stats.happiness-=2; }, result:'You had to say no. It didn\'t feel good, but it was honest.'},
+  ]},
+  {title:'The Doctor\'s Recommendation', text:'Your doctor recommends a risky elective surgery that could improve your quality of life, or you could just manage the symptoms as-is.', choices:[
+    {label:'Go through with the surgery', type:'neutral', fx:s=>{ if(chance(70)){ s.stats.health+=15; } else { s.stats.health-=10; } }, result:s=>s.stats.health>=60?'The surgery went well. You feel younger already.':'The recovery has been rough. You\'re still healing.'},
+    {label:'Manage symptoms conservatively', type:'neutral', fx:s=>{ s.stats.health+=2; }, result:'You played it safe. Slower progress, less risk.'},
+    {label:'Get a second opinion first', type:'good', fx:s=>{ s.stats.smarts+=1; }, result:'Measured and careful, as always.'},
+  ]},
+  {title:'An Old Rival\'s Funeral', text:'Someone who was, for decades, your fiercest rival has passed away.', choices:[
+    {label:'Attend and pay respects', type:'good', fx:s=>{ s.stats.karma+=4; s.stats.happiness-=1; }, result:'You went. Old rivalries feel small at a funeral.'},
+    {label:'Don\'t go — too much history', type:'neutral', fx:s=>{}, result:'You stayed home. Some chapters just close quietly.'},
+    {label:'Attend and speak with the family', type:'good', fx:s=>{ s.stats.karma+=6; s.stats.happiness+=2; }, result:'You told them a story about their loved one they\'d never heard. It meant something.'},
+  ]},
+  {title:'The Community Board', text:'A local community organization asks if you\'d like to join their board, using your decades of life experience.', choices:[
+    {label:'Join enthusiastically', type:'good', fx:s=>{ s.stats.karma+=5; s.stats.happiness+=4; }, result:'You said yes. Turns out you still have plenty to give.'},
+    {label:'Decline — time to relax', type:'neutral', fx:s=>{ s.stats.happiness+=2; }, result:'You chose rest instead. No shame in that.'},
+    {label:'Join, but only half-heartedly', type:'neutral', fx:s=>{ s.stats.karma+=1; }, result:'You showed up sometimes. It was something.'},
+  ]},
+  {title:'Putting Things in Order', text:'Your lawyer says it\'s time to finalize your will and decide how things will be divided.', choices:[
+    {label:'Divide everything equally among family', type:'good', fx:s=>{ s.stats.karma+=3; s.relationships.forEach(r=>{ if(r.alive) r.rel=clamp(r.rel+3,0,100); }); }, result:'Fair and simple. No one can argue with equal.'},
+    {label:'Leave a large portion to charity', type:'good', fx:s=>{ s.stats.karma+=8; }, result:'You decided your legacy would outlive your family, too.'},
+    {label:'Keep putting it off', type:'bad', fx:s=>{ s.stats.happiness-=1; }, result:'You\'ll deal with it later. You always say that.'},
+  ]},
+  {title:'The Phone Call', text:'Someone claiming to be from the IRS calls, demanding immediate payment or you\'ll be arrested.', choices:[
+    {label:'Pay them immediately out of fear', type:'bad', fx:s=>{ s.money-=Math.min(s.money*0.2,5000); }, result:'It was a scam. The money is gone.'},
+    {label:'Hang up and report it', type:'good', fx:s=>{ s.stats.smarts+=2; s.stats.karma+=1; }, result:'You saw through it immediately and reported the number.'},
+    {label:'Keep them on the phone to waste their time', type:'good', fx:s=>{ s.stats.karma+=3; s.stats.happiness+=2; }, result:'You strung them along for twenty minutes about your garden. Petty, satisfying.'},
+  ]},
+  {title:'The Reunion Toast', text:'At a big family reunion, someone asks you to give a toast summarizing your life\'s biggest lesson.', choices:[
+    {label:'Speak from the heart, honestly', type:'good', fx:s=>{ s.stats.happiness+=6; s.stats.karma+=3; s.relationships.forEach(r=>{ if(r.alive) r.rel=clamp(r.rel+4,0,100); }); }, result:'You said what you really meant. There wasn\'t a dry eye at the table.'},
+    {label:'Keep it short and avoid emotion', type:'neutral', fx:s=>{ s.stats.happiness+=1; }, result:'Short, sweet, safe. A few polite laughs.'},
+    {label:'Decline to speak', type:'neutral', fx:s=>{ s.stats.happiness-=1; }, result:'You passed the toast to someone else. Maybe next time.'},
+  ]},
+);
+
+/* Wire the choice-event roll into the yearly loop, independent of the flavor event */
+const _origAgeUp_P22 = ageUp;
+ageUp = function(){
+  _origAgeUp_P22();
+  if(!state || !state.alive) return;
+  if(chance(22)) rollChoiceEvent();
+  render();
+};
 </script>
 </body>
 </html>
