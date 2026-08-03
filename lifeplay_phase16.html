@@ -378,6 +378,7 @@ function newRelationship(type, opts){
     name: opts.name || (randomFirstName(gender)+' '+ (opts.last || state.last)),
     age: opts.age!=null?opts.age:rand(20,45),
     rel: opts.rel!=null?opts.rel:rand(50,90),
+    looks: opts.looks!=null?opts.looks:rand(15,90),
     alive:true, jobless:false,
   };
 }
@@ -458,17 +459,81 @@ const OUTFIT_POOL = [
   cy=>`<circle cx="32" cy="44" r="1.4" fill="var(--gold)"/><circle cx="32" cy="48" r="1.4" fill="var(--gold)"/>`,
   cy=>`<rect x="29" y="41" width="6" height="10" fill="var(--gold)"/>`,
 ];
-/* Renders any person's portrait (player or a relationship): {name, age, gender, alive} */
+/* Looks stat (0-100) is genetic, set at birth from the parents' own
+   values rather than pure RNG (see P28 below) — and it drives actual
+   drawn facial features here, not just a silhouette. Five percentage
+   bands (0-20 / 20-40 / 40-60 / 60-80 / 80-100) each get their own
+   eyes, brows, nose, mouth and jawline, so the face itself changes as
+   the stat moves, all in panel2 linework "engraved" onto the dark
+   ink-silhouette head — same trick real woodcut portraits use to show
+   features on a solid dark shape. */
+function looksBandP29(looksVal){
+  const v = looksVal==null ? 50 : looksVal;
+  if(v<20) return 0;
+  if(v<40) return 1;
+  if(v<60) return 2;
+  if(v<80) return 3;
+  return 4;
+}
+function jawShapeP29(band, cx, cy, r){
+  if(band<=1){
+    return `<ellipse cx="${cx-1.5}" cy="${cy}" rx="${r+1}" ry="${r-1.5}" fill="var(--ink-line)"/><ellipse cx="${cx+3.5}" cy="${cy+2.5}" rx="${r-5}" ry="${r-5}" fill="var(--ink-line)"/>`;
+  }
+  if(band>=3){
+    return `<circle cx="${cx}" cy="${cy-1}" r="${r-1}" fill="var(--ink-line)"/><path d="M${cx-r+1},${cy-1} L${cx-4},${cy+r+3} L${cx+4},${cy+r+3} L${cx+r-1},${cy-1} Z" fill="var(--ink-line)"/>`;
+  }
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--ink-line)"/>`;
+}
+function eyesP29(band, cy){
+  if(band===0) return `<ellipse cx="26" cy="${cy+1.5}" rx="1.6" ry="1" fill="var(--panel2)"/><ellipse cx="39" cy="${cy+2.3}" rx="1.2" ry=".8" fill="var(--panel2)"/>`;
+  if(band===1) return `<ellipse cx="26.5" cy="${cy+1}" rx="1.6" ry="1.1" fill="var(--panel2)"/><ellipse cx="38.5" cy="${cy+1}" rx="1.6" ry="1.1" fill="var(--panel2)"/>`;
+  if(band===2) return `<circle cx="27" cy="${cy+1}" r="1.5" fill="var(--panel2)"/><circle cx="38" cy="${cy+1}" r="1.5" fill="var(--panel2)"/>`;
+  if(band===3) return `<circle cx="27" cy="${cy+1}" r="1.8" fill="var(--panel2)"/><circle cx="38" cy="${cy+1}" r="1.8" fill="var(--panel2)"/>`;
+  return `<circle cx="27" cy="${cy+1}" r="2" fill="var(--panel2)"/><circle cx="27.7" cy="${cy+.3}" r=".55" fill="var(--ink-line)"/><circle cx="38" cy="${cy+1}" r="2" fill="var(--panel2)"/><circle cx="38.7" cy="${cy+.3}" r=".55" fill="var(--ink-line)"/>`;
+}
+function browsP29(band, cy){
+  if(band===0) return `<path d="M23,${cy-3} Q32,${cy-6} 41,${cy-2}" stroke="var(--panel2)" stroke-width="1.7" fill="none" stroke-linecap="round"/>`;
+  if(band===1) return `<path d="M23,${cy-3} L29,${cy-2}" stroke="var(--panel2)" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M35,${cy-2} L41,${cy-3}" stroke="var(--panel2)" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  if(band===2) return `<path d="M24,${cy-2.5} L30,${cy-2.5}" stroke="var(--panel2)" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M34,${cy-2.5} L40,${cy-2.5}" stroke="var(--panel2)" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  if(band===3) return `<path d="M24,${cy-2.5} Q27,${cy-3.4} 30,${cy-2.3}" stroke="var(--panel2)" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M34,${cy-2.3} Q37,${cy-3.4} 40,${cy-2.5}" stroke="var(--panel2)" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  return `<path d="M23.5,${cy-2.5} Q27,${cy-4.2} 30.5,${cy-2}" stroke="var(--panel2)" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M33.5,${cy-2} Q37,${cy-4.2} 40.5,${cy-2.5}" stroke="var(--panel2)" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+}
+function noseP29(band, cy){
+  if(band===0) return `<path d="M32,${cy+2} L29.5,${cy+6.5} L33,${cy+7.3}" stroke="var(--panel2)" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
+  if(band===4) return `<path d="M32,${cy+2.5} L32,${cy+5.5}" stroke="var(--panel2)" stroke-width=".7" fill="none" stroke-linecap="round"/>`;
+  return `<path d="M32,${cy+2} L32,${cy+6.5}" stroke="var(--panel2)" stroke-width=".85" fill="none" stroke-linecap="round"/>`;
+}
+function mouthP29(band, cy){
+  if(band===0) return `<path d="M27,${cy+11} Q32,${cy+8.5} 37,${cy+11}" stroke="var(--panel2)" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  if(band===1) return `<path d="M27,${cy+10.5} Q32,${cy+9.5} 37,${cy+10.5}" stroke="var(--panel2)" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  if(band===2) return `<path d="M27,${cy+10} L37,${cy+10}" stroke="var(--panel2)" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  if(band===3) return `<path d="M27,${cy+9.5} Q32,${cy+11.5} 37,${cy+9.5}" stroke="var(--panel2)" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  return `<path d="M26,${cy+9} Q32,${cy+12.5} 38,${cy+9}" stroke="var(--panel2)" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+}
+function faceExtrasP29(band, headCx, headCy, headR){
+  if(band===0) return `<circle cx="37" cy="${headCy+5}" r="1.1" fill="var(--panel2)"/>`;
+  if(band===4){
+    const sx = headCx+headR+3, sy = headCy-headR-1;
+    return `<path d="M${sx},${sy-3} L${sx+1},${sy} L${sx+4},${sy+1} L${sx+1},${sy+2} L${sx},${sy+5} L${sx-1},${sy+2} L${sx-4},${sy+1} L${sx-1},${sy} Z" fill="var(--gold)"/>`;
+  }
+  return '';
+}
+/* Renders any person's portrait (player or a relationship): {name, age, gender, alive, looks} */
 function personAvatarSVG(person){
   if(person.alive===false) return DEAD_AVATAR_SVG;
   const a = person.age, g = person.gender || 'Nonbinary';
   const bracket = a<2 ? 'baby' : a<13 ? 'child' : a<60 ? 'adult' : 'elder';
   const seed = seedFromString(person.name);
-  const body = bracket==='baby' ? BODY_PATHS[0] : BODY_PATHS[Math.floor(seed/29) % BODY_PATHS.length];
+  const looksVal = person.looks!=null ? person.looks : (person.stats ? person.stats.looks : 50);
+  const band = looksBandP29(looksVal);
+  let bodyIdx = Math.floor(seed/29) % BODY_PATHS.length;
+  if(band>=3 && bodyIdx===2) bodyIdx = 1;
+  if(band<=1 && bodyIdx===1) bodyIdx = 2;
+  const body = bracket==='baby' ? BODY_PATHS[0] : BODY_PATHS[bodyIdx];
   const headR = bracket==='baby' ? 15 : 13;
   const headCy = bracket==='baby' ? 30 : 25;
-  const head = `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>`;
-  let hair = '', accessory = '', marks = '', outfit = '';
+  const head = bracket==='baby' ? `<circle cx="32" cy="${headCy}" r="${headR}" fill="var(--ink-line)"/>` : jawShapeP29(band, 32, headCy, headR);
+  let hair = '', accessory = '', marks = '', outfit = '', face = '';
   if(bracket!=='baby'){
     const styles = g==='Female' ? FEMALE_HAIR : g==='Male' ? MALE_HAIR : NEUTRAL_HAIR;
     hair = styles[seed % styles.length](headCy);
@@ -476,8 +541,9 @@ function personAvatarSVG(person){
     accessory = accPool[Math.floor(seed/7) % accPool.length](headCy);
     marks = MARK_POOL[Math.floor(seed/17) % MARK_POOL.length](headCy);
     outfit = OUTFIT_POOL[Math.floor(seed/41) % OUTFIT_POOL.length](headCy);
+    face = eyesP29(band, headCy) + browsP29(band, headCy) + noseP29(band, headCy) + mouthP29(band, headCy) + faceExtrasP29(band, 32, headCy, headR);
   }
-  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${outfit}${hair}${head}${accessory}${marks}</svg>`;
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">${body}${outfit}${hair}${head}${accessory}${face}${marks}</svg>`;
 }
 function avatarSVG(){ return personAvatarSVG(state); }
 
@@ -3401,7 +3467,7 @@ function openFamilyTreeP25(){
   if(parentsGen.length){
     html += `<div class="ft-gen"><div class="ft-gen-label">Parents &amp; Family</div><div class="ft-row">${parentsGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
   }
-  html += `<div class="ft-gen"><div class="ft-gen-label">Your Generation</div><div class="ft-row">${familyTreeNodeP25({name:state.name, age:state.age, gender:state.gender, alive:state.alive}, true)}${selfGenOthers.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
+  html += `<div class="ft-gen"><div class="ft-gen-label">Your Generation</div><div class="ft-row">${familyTreeNodeP25({name:state.name, age:state.age, gender:state.gender, alive:state.alive, looks:state.stats.looks}, true)}${selfGenOthers.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
   if(childGen.length){
     html += `<div class="ft-gen"><div class="ft-gen-label">The Next Generation</div><div class="ft-row">${childGen.map(p=>familyTreeNodeP25(p)).join('')}</div></div>`;
   }
@@ -3468,7 +3534,7 @@ function photoAlbumTileP27(person, roleLabel){
 function openPhotoAlbumP27(){
   let html = `<div class="yb-header">Class of ${state.birthYear} · ${state.city}</div>`;
   html += `<div class="yb-grid">`;
-  html += photoAlbumTileP27({name:state.name, age:state.age, gender:state.gender, alive:state.alive}, 'Yourself');
+  html += photoAlbumTileP27({name:state.name, age:state.age, gender:state.gender, alive:state.alive, looks:state.stats.looks}, 'Yourself');
   state.relationships.forEach(r=>{
     html += photoAlbumTileP27(r, relLabel(r.type));
   });
@@ -3486,6 +3552,39 @@ openProfilePanel = function(){
   btn.textContent = '📸 Photo Album';
   btn.onclick = openPhotoAlbumP27;
   body.insertBefore(btn, body.firstChild);
+};
+
+/* ---------------------------------------------------------------------
+   P28 — Looks are hereditary. Your own looks stat (and any full
+   siblings') is rerolled from your parents' looks values right after
+   birth, instead of being pure luck-of-the-draw independent of them.
+   Kids you have later inherit from you and your spouse the same way.
+   --------------------------------------------------------------------- */
+function inheritedLooksP28(a, b){
+  return clamp(Math.round((a+b)/2 + rand(-15,15)), 8, 96);
+}
+const _origStartNewLife_P28 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P28();
+  if(!state) return;
+  const dad = state.relationships.find(r=>r.type==='parent' && r.gender==='Male');
+  const mom = state.relationships.find(r=>r.type==='parent' && r.gender==='Female');
+  if(dad && mom){
+    state.stats.looks = inheritedLooksP28(dad.looks, mom.looks);
+    state.relationships.filter(r=>r.type==='sibling').forEach(sib=>{
+      sib.looks = inheritedLooksP28(dad.looks, mom.looks);
+    });
+  }
+};
+const _origTryForBaby_P28 = tryForBaby;
+tryForBaby = function(){
+  const before = state.kids.length;
+  _origTryForBaby_P28();
+  if(state.kids.length>before){
+    const kid = state.relationships.find(r=>r.id===state.kids[state.kids.length-1]);
+    const spouse = state.relationships.find(r=>r.id===state.spouseId);
+    if(kid) kid.looks = inheritedLooksP28(state.stats.looks, spouse ? spouse.looks : rand(15,90));
+  }
 };
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
