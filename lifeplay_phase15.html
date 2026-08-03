@@ -3311,7 +3311,7 @@ function makeNewFriendP23(){
 function groupedRelationshipsP23(){
   const living = state.relationships.filter(r=>r.alive);
   const immediateTypes = ['parent','sibling','spouse','child','datingpartner','exspouse'];
-  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law','niece_nephew'];
+  const extendedTypes = ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','godparent'];
   return {
     immediate: living.filter(r=>immediateTypes.includes(r.type)),
     extended: living.filter(r=>extendedTypes.includes(r.type)),
@@ -3372,6 +3372,7 @@ Object.assign(ACHIEVEMENTS, {
 relLabel = (function(_orig){
   return function(type){
     if(type==='niece_nephew') return 'Niece/Nephew';
+    if(type==='godparent') return 'Godparent';
     return _orig(type);
   };
 })(relLabel);
@@ -3458,7 +3459,7 @@ interactWith = function(id){
       refreshBestFriendP24();
     }});
   }
-  if(['parent','grandparent'].includes(r.type) && state.money<300){
+  if(['parent','grandparent','godparent'].includes(r.type) && state.money<300){
     opts.splice(opts.length-1, 0, {label:'Ask to Borrow Money', run:()=>{
       if(chance(Math.min(85, r.rel+10))){ const amt = rand(50,300); state.money+=amt; r.rel=clamp(r.rel-2,0,100); log(`${r.name} lent you $${amt}.`,'good'); }
       else { log(`${r.name} said times are tight right now.`,'neutral'); }
@@ -3478,7 +3479,7 @@ function familyTreeNodeP25(person, isYou){
 function openFamilyTreeP25(){
   const rel = state.relationships.filter(r=>r.alive);
   const grandparents = rel.filter(r=>r.type==='grandparent');
-  const parentsGen = rel.filter(r=>r.type==='parent' || r.type==='aunt_uncle');
+  const parentsGen = rel.filter(r=>r.type==='parent' || r.type==='aunt_uncle' || r.type==='godparent');
   const selfGenOthers = rel.filter(r=>['spouse','sibling','cousin','in_law','datingpartner'].includes(r.type));
   const childGen = rel.filter(r=>r.type==='child' || r.type==='niece_nephew');
   let html = `<div class="family-tree">`;
@@ -3673,6 +3674,24 @@ openActivitiesPanel = function(){
     surgeryBtn.onclick = openSurgeryPanelP30;
     body.appendChild(surgeryBtn);
   }
+};
+
+/* ---------------------------------------------------------------------
+   P32 — Godparents: a close friend of the family, chosen at birth,
+   generous and warm from day one.
+   --------------------------------------------------------------------- */
+function generateGodparentsP32(){
+  const count = chance(55) ? rand(1,2) : 0;
+  for(let i=0;i<count;i++){
+    const gender = pick(['Male','Female']);
+    const gp = newRelationship('godparent', {gender, age:rand(28,55), rel:rand(70,95), last:pick(LAST_NAMES)});
+    state.relationships.push(gp);
+  }
+}
+const _origStartNewLife_P32 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P32();
+  if(state) generateGodparentsP32();
 };
 </script>
 </body>
