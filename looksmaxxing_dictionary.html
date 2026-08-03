@@ -3,25 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0D0D0D">
+<meta name="theme-color" content="#1B0E2E">
 <title>Looksmaxxing Dictionary</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSIyMCIgeT0iMjAiIHdpZHRoPSI2MiIgaGVpZ2h0PSI2MiIgZmlsbD0iIzI2MjYyNiIgdHJhbnNmb3JtPSJyb3RhdGUoLTYgNTEgNTEpIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoMyA0NCA0NCkiPjxyZWN0IHg9IjEyIiB5PSIxMiIgd2lkdGg9IjYyIiBoZWlnaHQ9IjYyIiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9IiMwRDBEMEQiIHN0cm9rZS13aWR0aD0iNiIvPjx0ZXh0IHg9IjQzIiB5PSI1OCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsIFRpbWVzIE5ldyBSb21hbiwgc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZvbnQtc2l6ZT0iMzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwRDBEMEQiPkxEPC90ZXh0PjwvZz48L3N2Zz4=">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRkYzRTdGIi8+PHN0b3Agb2Zmc2V0PSI1NSUiIHN0b3AtY29sb3I9IiNCODRGRkYiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMzRDVBRkUiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB4PSIyMCIgeT0iMjAiIHdpZHRoPSI2MiIgaGVpZ2h0PSI2MiIgZmlsbD0idXJsKCNnKSIgdHJhbnNmb3JtPSJyb3RhdGUoLTYgNTEgNTEpIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoMyA0NCA0NCkiPjxyZWN0IHg9IjEyIiB5PSIxMiIgd2lkdGg9IjYyIiBoZWlnaHQ9IjYyIiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9IiMxQjBFMkUiIHN0cm9rZS13aWR0aD0iNiIvPjx0ZXh0IHg9IjQzIiB5PSI1OCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsIFRpbWVzIE5ldyBSb21hbiwgc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZvbnQtc2l6ZT0iMzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxQjBFMkUiPkxEPC90ZXh0PjwvZz48L3N2Zz4=">
 <style>
   :root {
-    --paper: #FAFAF8;
+    --paper: #FAF5FF;
     --card: #FFFFFF;
-    --ink: #0D0D0D;
-    --ink-soft: #4A4A4A;
-    --ink-mute: #8A8A8A;
-    --ink-fixed: #0D0D0D;
+    --ink: #1B0E2E;
+    --ink-soft: #4E3B6B;
+    --ink-mute: #8E7CA8;
+    --ink-fixed: #1B0E2E;
     --card-fixed: #FFFFFF;
-    --lime: #EDEDED;
-    --coral: #262626;
-    --coral-ink: #262626;
-    --blue: #4A4A4A;
-    --yellow: #C7C7C7;
-    --orange: #5A5A5A;
-    --teal: #7A7A7A;
+    --lime: #C6FF3D;
+    --coral: #FF3E7F;
+    --coral-ink: #E0245E;
+    --blue: #3D5AFE;
+    --yellow: #FFC530;
+    --orange: #FF7A33;
+    --teal: #14E0C4;
+    --violet: #B84FFF;
+    --gradient-glow: linear-gradient(135deg, #FF3E7F, #B84FFF 55%, #3D5AFE);
     --font-display: Georgia, 'Times New Roman', serif;
     --font-mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -32,12 +34,12 @@
   }
 
   :root[data-theme="dark"] {
-    --paper: #121212;
-    --card: #1C1C1C;
-    --ink: #F2F2F0;
-    --ink-soft: #C4C4C0;
-    --ink-mute: #8A8A86;
-    --coral-ink: #B8B8B2;
+    --paper: #140A24;
+    --card: #1F1035;
+    --ink: #F5EFFF;
+    --ink-soft: #C9BAE8;
+    --ink-mute: #8D7BB0;
+    --coral-ink: #FF6F9E;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -132,14 +134,14 @@
     line-height: 0.98;
     text-transform: uppercase;
     color: var(--ink);
-    text-shadow: 3px 3px 0 var(--coral);
+    text-shadow: 3px 3px 0 var(--coral), 0 0 26px rgba(184,79,255,0.4);
   }
   h1.title::after {
     content: "";
     display: block;
     width: 74px;
     height: 15px;
-    background: repeating-linear-gradient(45deg, var(--coral), var(--coral) 5px, #7A7A7A 5px, #7A7A7A 10px);
+    background: repeating-linear-gradient(45deg, var(--coral), var(--coral) 5px, var(--violet) 5px, var(--violet) 10px);
     border: 1.5px solid var(--ink);
     margin: 14px auto 0;
     transform: rotate(-2deg);
@@ -923,14 +925,14 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FFFFFF, #C9C9C9);
+    background: linear-gradient(135deg, #FFC530, #FF7A33);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-display);
     font-weight: 800;
     font-size: 12px;
-    color: #0D0D0D;
+    color: #1B0E2E;
   }
 
   .ad-banner-body { flex: 1; min-width: 0; }
@@ -1039,7 +1041,7 @@
     right: 30px;
     width: 60px;
     height: 22px;
-    background: repeating-linear-gradient(-45deg, var(--blue), var(--blue) 6px, #8A8A8A 6px, #8A8A8A 12px);
+    background: repeating-linear-gradient(-45deg, var(--blue), var(--blue) 6px, var(--teal) 6px, var(--teal) 12px);
     border: 1.5px solid var(--ink);
     transform: rotate(6deg);
     opacity: 0.95;
@@ -1083,8 +1085,8 @@
     box-shadow: 0 0 0 2px var(--paper);
   }
   .tier-badge.vip {
-    background: repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 3px, #FFFFFF 3px, #FFFFFF 6px);
-    color: #0D0D0D;
+    background: repeating-linear-gradient(45deg, #FFC530, #FFC530 3px, #FF3E7F 3px, #FF3E7F 6px);
+    color: #1B0E2E;
     text-shadow: 0 0 3px #FFFFFF, 0 0 3px #FFFFFF;
   }
 
@@ -1102,6 +1104,24 @@
     box-shadow: 2px 2px 0 var(--ink);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+
+  .follow-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--card);
+    border: 2px solid var(--ink);
+    padding: 7px 12px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink-mute);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .follow-btn.active { background: var(--card); color: var(--ink); }
+  .follow-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink-mute); }
   .edit-profile-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
 
   .profile-stats {
@@ -1422,9 +1442,9 @@
   .thread-last-activity .author { color: var(--coral-ink); font-weight: 800; }
 
   .tier-badge.staff {
-    background: #FFFFFF;
-    color: #0D0D0D;
-    border: 1.5px dashed #0D0D0D;
+    background: var(--card-fixed);
+    color: var(--ink-fixed);
+    border: 1.5px dashed var(--ink-fixed);
   }
 
   .thread-preview { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
@@ -2393,7 +2413,14 @@
 
     <header>
       <svg class="logo-mark logo-mark-lg" viewBox="0 0 100 100" aria-hidden="true">
-        <rect x="20" y="20" width="62" height="62" fill="var(--coral)" transform="rotate(-6 51 51)"/>
+        <defs>
+          <linearGradient id="logoGradLg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FF3E7F"/>
+            <stop offset="55%" stop-color="#B84FFF"/>
+            <stop offset="100%" stop-color="#3D5AFE"/>
+          </linearGradient>
+        </defs>
+        <rect x="20" y="20" width="62" height="62" fill="url(#logoGradLg)" transform="rotate(-6 51 51)"/>
         <g transform="rotate(3 44 44)">
           <rect x="12" y="12" width="62" height="62" fill="var(--card)" stroke="var(--ink)" stroke-width="6"/>
           <text x="43" y="58" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="38" text-anchor="middle" fill="var(--ink)">LD</text>
@@ -2455,7 +2482,14 @@
   <div id="view-forum" class="view-section">
     <header class="section-header">
       <svg class="logo-mark logo-mark-sm" viewBox="0 0 100 100" aria-hidden="true">
-        <rect x="20" y="20" width="62" height="62" fill="var(--coral)" transform="rotate(-6 51 51)"/>
+        <defs>
+          <linearGradient id="logoGradSm1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FF3E7F"/>
+            <stop offset="55%" stop-color="#B84FFF"/>
+            <stop offset="100%" stop-color="#3D5AFE"/>
+          </linearGradient>
+        </defs>
+        <rect x="20" y="20" width="62" height="62" fill="url(#logoGradSm1)" transform="rotate(-6 51 51)"/>
         <g transform="rotate(3 44 44)">
           <rect x="12" y="12" width="62" height="62" fill="var(--card)" stroke="var(--ink)" stroke-width="6"/>
           <text x="43" y="58" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="38" text-anchor="middle" fill="var(--ink)">LD</text>
@@ -2497,7 +2531,14 @@
   <div id="view-courses" class="view-section">
     <header class="section-header">
       <svg class="logo-mark logo-mark-sm" viewBox="0 0 100 100" aria-hidden="true">
-        <rect x="20" y="20" width="62" height="62" fill="var(--coral)" transform="rotate(-6 51 51)"/>
+        <defs>
+          <linearGradient id="logoGradSm2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FF3E7F"/>
+            <stop offset="55%" stop-color="#B84FFF"/>
+            <stop offset="100%" stop-color="#3D5AFE"/>
+          </linearGradient>
+        </defs>
+        <rect x="20" y="20" width="62" height="62" fill="url(#logoGradSm2)" transform="rotate(-6 51 51)"/>
         <g transform="rotate(3 44 44)">
           <rect x="12" y="12" width="62" height="62" fill="var(--card)" stroke="var(--ink)" stroke-width="6"/>
           <text x="43" y="58" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="38" text-anchor="middle" fill="var(--ink)">LD</text>
@@ -2546,7 +2587,7 @@
   <div class="paywall-sheet">
     <button class="paywall-close" id="paywallClose" aria-label="Close">✕</button>
     <div class="paywall-crown">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="#0D0D0D"><path d="M2.5 19h19l-1.2-6.5-4.3 3-4-6-4 6-4.3-3L2.5 19z"/></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#1B0E2E"><path d="M2.5 19h19l-1.2-6.5-4.3 3-4-6-4 6-4.3-3L2.5 19z"/></svg>
     </div>
     <div class="paywall-title">Unlock Technique Guides</div>
     <div class="paywall-sub">Definitions stay free forever. Go Premium for step-by-step how-to guides on every actionable method in the dictionary.</div>
@@ -2735,6 +2776,10 @@
     <div class="activity-section">
       <div class="activity-section-label" id="activityReviewsLabel">Course Reviews</div>
       <div class="activity-list" id="activityReviewsList"></div>
+    </div>
+    <div class="activity-section">
+      <div class="activity-section-label" id="activityFollowingLabel">Following</div>
+      <div class="activity-list" id="activityFollowingList"></div>
     </div>
   </div>
 </div>
@@ -6303,7 +6348,7 @@
             <div class="technique-locked">
               <div class="blur-preview">${escapeHtml(t.technique)}</div>
               <div class="lock-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.4"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B0E2E" stroke-width="2.4"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
               </div>
               <button class="unlock-btn" data-unlock="1">Unlock Technique Guide</button>
               <div class="unlock-caption">Included with Premium</div>
@@ -7065,11 +7110,11 @@
   }
 
   const TIERS = [
-    { name: "Newcomer", min: 0, color: "#EAEAEA", fg: "#0D0D0D", icon: "○" },
-    { name: "Regular", min: 3, color: "#C4C4C4", fg: "#0D0D0D", icon: "▪" },
-    { name: "Veteran", min: 8, color: "#8A8A8A", fg: "#FFFFFF", icon: "▪▪" },
-    { name: "Elite", min: 16, color: "#4A4A4A", fg: "#FFFFFF", icon: "▪▪▪" },
-    { name: "Legend", min: 30, color: "#0D0D0D", fg: "#FFFFFF", icon: "★" }
+    { name: "Newcomer", min: 0, color: "#F1E3FF", fg: "#1B0E2E", icon: "○" },
+    { name: "Regular", min: 3, color: "#14E0C4", fg: "#0B2A25", icon: "▪" },
+    { name: "Veteran", min: 8, color: "#3D5AFE", fg: "#FFFFFF", icon: "▪▪" },
+    { name: "Elite", min: 16, color: "#B84FFF", fg: "#FFFFFF", icon: "▪▪▪" },
+    { name: "Legend", min: 30, color: "linear-gradient(135deg, #FFC530, #FF3E7F)", fg: "#1B0E2E", icon: "★" }
   ];
 
   function authorStats(name) {
@@ -7151,7 +7196,8 @@
     { icon: "🌙", name: "Night Owl", desc: "Try dark mode", check: () => localStorage.getItem("looksmax_theme") === "dark" },
     { icon: "👑", name: "VIP Member", desc: "Unlock Premium", check: () => isPremium },
     { icon: "🎓", name: "Entrepreneur", desc: "List a course for sale", check: () => courses.some(c => c.creator === username) },
-    { icon: "📚", name: "Scholar", desc: "Mark 50 dictionary terms as learned", check: () => learnedTerms.size >= 50 }
+    { icon: "📚", name: "Scholar", desc: "Mark 50 dictionary terms as learned", check: () => learnedTerms.size >= 50 },
+    { icon: "🤝", name: "Networker", desc: "Follow 5 members", check: () => following.size >= 5 }
   ];
 
   function openAchievements() {
@@ -7277,6 +7323,21 @@
         `).join("")
       : `<div class="activity-empty">No course reviews yet.</div>`;
 
+    document.getElementById("activityFollowingLabel").textContent = `Following (${following.size})`;
+    document.getElementById("activityFollowingList").innerHTML = following.size
+      ? [...following].map(name => `
+          <button class="activity-row" data-view-member="${escapeHtml(name)}">
+            <div class="activity-row-text">
+              <div class="activity-row-title">@${escapeHtml(name)}</div>
+              <div class="activity-row-meta">${tierForScore(authorStats(name).score).current.name}</div>
+            </div>
+          </button>
+        `).join("")
+      : `<div class="activity-empty">Not following anyone yet.</div>`;
+    document.querySelectorAll("[data-view-member]").forEach(btn => {
+      btn.addEventListener("click", () => { closeMyActivity(); openMemberProfile(btn.dataset.viewMember); });
+    });
+
     document.querySelectorAll("[data-jump-thread]").forEach(btn => {
       btn.addEventListener("click", () => jumpToThread(parseInt(btn.dataset.jumpThread, 10)));
     });
@@ -7329,6 +7390,8 @@
     const rank = getAllAuthors().findIndex(a => a.name === name) + 1;
     const vipHtml = (name === username && isPremium) ? `<span class="tier-badge vip">👑 VIP</span>` : "";
     const myThreads = threads.filter(t => t.author === name).slice(0, 5);
+    const isSelf = name === username;
+    const isFollowing = following.has(name);
     document.getElementById("memberProfileBody").innerHTML = `
       <div class="profile-top">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -7342,6 +7405,7 @@
             </div>
           </div>
         </div>
+        ${isSelf ? "" : `<button class="follow-btn ${isFollowing ? "active" : ""}" id="memberFollowBtn">${isFollowing ? "✓ Following" : "+ Follow"}</button>`}
       </div>
       ${signatureHtml(name)}
       <div class="profile-stats">
@@ -7372,6 +7436,8 @@
     document.querySelectorAll("#memberProfileBody [data-jump-thread]").forEach(btn => {
       btn.addEventListener("click", () => jumpToThread(parseInt(btn.dataset.jumpThread, 10)));
     });
+    const followBtn = document.getElementById("memberFollowBtn");
+    if (followBtn) followBtn.addEventListener("click", () => toggleFollow(name));
   }
 
   document.addEventListener("click", (e) => {
@@ -7453,7 +7519,7 @@
       return;
     }
     const color = avatarColor(username);
-    const fg = AVATAR_LIGHT_BGS.has(color) ? "#0D0D0D" : "#FFFFFF";
+    const fg = AVATAR_LIGHT_BGS.has(color) ? "#1B0E2E" : "#FFFFFF";
     const letter = escapeHtml((username[0] || "?").toUpperCase());
     el.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${color};color:${fg};font-family:var(--font-mono);font-weight:800;font-size:26px;">${letter}</div>`;
   }
@@ -7539,7 +7605,7 @@
   function renderForumTabs() {
     const wrap = document.getElementById("forumTabs");
     wrap.innerHTML = "";
-    const displayCats = ["All", "🔖 Watching", ...FORUM_CATEGORIES.filter(c => c !== "All")];
+    const displayCats = ["All", "🔖 Watching", "👥 Following", ...FORUM_CATEGORIES.filter(c => c !== "All")];
     displayCats.forEach(cat => {
       const chip = document.createElement("div");
       chip.className = "index-chip" + (cat === activeForumCategory ? " active" : "");
@@ -7561,9 +7627,12 @@
   }
 
   const CATEGORY_TONES = [
-    { bg: "#0D0D0D", fg: "#FFFFFF" },
-    { bg: "#FFFFFF", fg: "#0D0D0D" },
-    { bg: "#8A8A8A", fg: "#FFFFFF" }
+    { bg: "#FF3E7F", fg: "#FFFFFF" },
+    { bg: "#3D5AFE", fg: "#FFFFFF" },
+    { bg: "#14E0C4", fg: "#0B2A25" },
+    { bg: "#FFC530", fg: "#1B0E2E" },
+    { bg: "#B84FFF", fg: "#FFFFFF" },
+    { bg: "#FF7A33", fg: "#1B0E2E" }
   ];
 
   function categoryTagStyle(category) {
@@ -7574,8 +7643,8 @@
   }
 
   /* ---------------- Avatars ---------------- */
-  const AVATAR_COLORS = ["#0D0D0D", "#4A4A4A", "#FFFFFF", "#8A8A8A", "#D0D0D0"];
-  const AVATAR_LIGHT_BGS = new Set(["#FFFFFF", "#D0D0D0"]);
+  const AVATAR_COLORS = ["#FF3E7F", "#3D5AFE", "#14E0C4", "#FFC530", "#B84FFF", "#1B0E2E"];
+  const AVATAR_LIGHT_BGS = new Set(["#14E0C4", "#FFC530"]);
 
   function avatarColor(name) {
     let hash = 0;
@@ -7596,7 +7665,7 @@
       return `<span class="avatar${large ? " large" : ""} avatar-photo" data-author="${escapeHtml(name)}" style="transform:rotate(${rot}deg);"><img src="${profilePhoto}" alt=""></span>`;
     }
     const color = avatarColor(name);
-    const fg = AVATAR_LIGHT_BGS.has(color) ? "#0D0D0D" : "#FFFFFF";
+    const fg = AVATAR_LIGHT_BGS.has(color) ? "#1B0E2E" : "#FFFFFF";
     const letter = escapeHtml((name[0] || "?").toUpperCase());
     return `<span class="avatar${large ? " large" : ""}" data-author="${escapeHtml(name)}" style="background:${color};color:${fg};transform:rotate(${rot}deg);">${letter}</span>`;
   }
@@ -7625,6 +7694,29 @@
       if (t) markThreadSeen(t);
     }
     saveWatchedThreads();
+    renderThreads();
+  }
+
+  /* ---------------- Following ---------------- */
+  let following = loadFollowing();
+
+  function loadFollowing() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_following"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveFollowing() {
+    localStorage.setItem("looksmax_following", JSON.stringify([...following]));
+  }
+
+  function toggleFollow(name) {
+    if (following.has(name)) following.delete(name);
+    else following.add(name);
+    saveFollowing();
+    renderMemberProfile(name);
     renderThreads();
   }
 
@@ -7951,6 +8043,7 @@
     const filtered = threads
       .filter(t => {
         if (activeForumCategory === "🔖 Watching") return watchedThreads.has(t.id);
+        if (activeForumCategory === "👥 Following") return following.has(t.author);
         return activeForumCategory === "All" || t.category === activeForumCategory;
       })
       .filter(t => !q || t.title.toLowerCase().includes(q) || t.body.toLowerCase().includes(q) || t.author.toLowerCase().includes(q));
@@ -7959,6 +8052,8 @@
         ? `<div class="empty-state"><div class="glyph">◎</div><p>No threads match "<strong>${escapeHtml(forumSearchTerm)}</strong>".<br>Try a different keyword.</p></div>`
         : activeForumCategory === "🔖 Watching"
         ? `<div class="empty-state"><div class="glyph">🔖</div><p>Not watching any threads yet.<br>Tap the bookmark icon on a thread to save it here.</p></div>`
+        : activeForumCategory === "👥 Following"
+        ? `<div class="empty-state"><div class="glyph">👥</div><p>Not following anyone yet.<br>Open a member's profile to follow them.</p></div>`
         : `<div class="empty-state"><div class="glyph">💬</div><p>No threads in this category yet.<br>Start the first one.</p></div>`;
       return;
     }
@@ -8422,7 +8517,7 @@
       price: 79,
       sales: 340,
       rating: 4.7,
-      gradient: "#0D0D0D",
+      gradient: "linear-gradient(135deg, #FF3E7F, #B84FFF)",
       desc: "A structured 12-week orofacial myofunctional program covering tongue posture, breathing retraining, and progress tracking.",
       reviews: [
         { author: "quietjawline", rating: 5, text: "Genuinely the most detailed mewing resource I've found. The breathing retraining section alone was worth it." },
@@ -8436,7 +8531,7 @@
       price: 39,
       sales: 512,
       rating: 4.8,
-      gradient: "#FFFFFF",
+      gradient: "linear-gradient(135deg, #FFC530, #FF7A33)",
       desc: "Evidence-based skincare fundamentals — actives, layering order, and how to build a routine around your actual skin type.",
       reviews: [
         { author: "matte_or_bust", rating: 5, text: "Finally someone explaining WHY the layering order matters instead of just listing steps. Cleared up so much confusion." },
@@ -8451,7 +8546,7 @@
       price: 59,
       sales: 208,
       rating: 4.6,
-      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+      gradient: "repeating-linear-gradient(45deg, #FF3E7F, #FF3E7F 8px, #FFC530 8px, #FFC530 16px)",
       desc: "A 16-week compound-lift program built around deltoid, trap, and lat development for a stronger V-taper."
     },
     {
@@ -8461,7 +8556,7 @@
       price: 29,
       sales: 176,
       rating: 4.5,
-      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
+      gradient: "repeating-linear-gradient(-45deg, #3D5AFE, #3D5AFE 4px, #14E0C4 4px, #14E0C4 8px)",
       desc: "Fit, fragrance, grooming routines, and color analysis basics — the fundamentals most guys skip."
     },
     {
@@ -8471,7 +8566,7 @@
       price: 25,
       sales: 94,
       rating: 4.9,
-      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+      gradient: "radial-gradient(#B84FFF 22%, transparent 23%) 0 0/18px 18px, #FFF3FA",
       desc: "A no-fluff sleep and stress-management protocol — the cheapest, highest-leverage habit most routines skip entirely."
     },
     {
@@ -8481,7 +8576,7 @@
       price: 45,
       sales: 131,
       rating: 4.7,
-      gradient: "#8A8A8A",
+      gradient: "linear-gradient(135deg, #14E0C4, #3D5AFE)",
       desc: "A 10-week posture and mobility program addressing forward head posture — often mistaken for weak jaw structure."
     },
     {
@@ -8491,7 +8586,7 @@
       price: 35,
       sales: 87,
       rating: 4.6,
-      gradient: "#0D0D0D",
+      gradient: "linear-gradient(135deg, #FF3E7F, #B84FFF)",
       desc: "A structured low-intensity cardio and recovery protocol built to support strength training instead of competing with it."
     },
     {
@@ -8501,7 +8596,7 @@
       price: 45,
       sales: 143,
       rating: 4.8,
-      gradient: "#FFFFFF",
+      gradient: "linear-gradient(135deg, #FFC530, #FF7A33)",
       desc: "A no-nonsense breakdown of every major active — retinoids, acids, vitamin C — and exactly how to layer them without irritation."
     },
     {
@@ -8511,7 +8606,7 @@
       price: 19,
       sales: 265,
       rating: 4.7,
-      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+      gradient: "repeating-linear-gradient(45deg, #FF3E7F, #FF3E7F 8px, #FFC530 8px, #FFC530 16px)",
       desc: "Cuts through supplement marketing to cover the handful of products with real research behind them, and how to actually use them."
     },
     {
@@ -8521,7 +8616,7 @@
       price: 32,
       sales: 118,
       rating: 4.6,
-      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
+      gradient: "repeating-linear-gradient(-45deg, #3D5AFE, #3D5AFE 4px, #14E0C4 4px, #14E0C4 8px)",
       desc: "Toner, essence, serum, moisturizer — the correct order, timing, and product weights so multi-step routines actually absorb properly."
     },
     {
@@ -8531,7 +8626,7 @@
       price: 29,
       sales: 172,
       rating: 4.7,
-      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+      gradient: "radial-gradient(#B84FFF 22%, transparent 23%) 0 0/18px 18px, #FFF3FA",
       desc: "A decision framework for choosing between bulking and cutting based on your current body fat, training age, and goals — no more guessing."
     },
     {
@@ -8541,7 +8636,7 @@
       price: 39,
       sales: 201,
       rating: 4.5,
-      gradient: "#8A8A8A",
+      gradient: "linear-gradient(135deg, #14E0C4, #3D5AFE)",
       desc: "Practical conversation frameworks, body language, and confidence habits — because presence matters as much as any single feature."
     },
     {
@@ -8551,7 +8646,7 @@
       price: 42,
       sales: 96,
       rating: 4.6,
-      gradient: "#0D0D0D",
+      gradient: "linear-gradient(135deg, #FF3E7F, #B84FFF)",
       desc: "A medically grounded walkthrough of hair-loss treatment options, how to combine them safely, and what timelines to actually expect."
     },
     {
@@ -8561,7 +8656,7 @@
       price: 22,
       sales: 63,
       rating: 4.4,
-      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+      gradient: "repeating-linear-gradient(45deg, #FF3E7F, #FF3E7F 8px, #FFC530 8px, #FFC530 16px)",
       desc: "Grip strength, forearm development, and frame-maximizing training details most programs skip entirely."
     },
     {
@@ -8571,7 +8666,7 @@
       price: 25,
       sales: 74,
       rating: 4.6,
-      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
+      gradient: "repeating-linear-gradient(-45deg, #3D5AFE, #3D5AFE 4px, #14E0C4 4px, #14E0C4 8px)",
       desc: "A no-nonsense breakdown of calculating your calorie needs and setting macros that actually fit your lifestyle and goals."
     },
     {
@@ -8581,7 +8676,7 @@
       price: 55,
       sales: 58,
       rating: 4.7,
-      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+      gradient: "radial-gradient(#B84FFF 22%, transparent 23%) 0 0/18px 18px, #FFF3FA",
       desc: "For those who've mastered the basics — a deep dive into peptides, growth factors, and next-level actives worth the investment."
     },
     {
@@ -8591,7 +8686,7 @@
       price: 35,
       sales: 112,
       rating: 4.5,
-      gradient: "#0D0D0D",
+      gradient: "linear-gradient(135deg, #FF3E7F, #B84FFF)",
       desc: "The small style details that separate a put-together look from a good one — coordination, proportion, and layering basics."
     },
     {
@@ -8601,7 +8696,7 @@
       price: 45,
       sales: 89,
       rating: 4.8,
-      gradient: "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
+      gradient: "repeating-linear-gradient(45deg, #FF3E7F, #FF3E7F 8px, #FFC530 8px, #FFC530 16px)",
       desc: "Deep-dive form breakdowns for the four foundational lifts, with common mistake fixes and progressive warm-up protocols."
     },
     {
@@ -8611,7 +8706,7 @@
       price: 38,
       sales: 71,
       rating: 4.7,
-      gradient: "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
+      gradient: "radial-gradient(#B84FFF 22%, transparent 23%) 0 0/18px 18px, #FFF3FA",
       desc: "A calm, evidence-based approach to managing rosacea and reactive skin — triggers, gentle actives, and when to see a dermatologist."
     },
     {
@@ -8621,7 +8716,7 @@
       price: 15,
       sales: 154,
       rating: 4.6,
-      gradient: "#8A8A8A",
+      gradient: "linear-gradient(135deg, #14E0C4, #3D5AFE)",
       desc: "A blunt rundown of which supplements have real evidence behind them and which are mostly marketing — creatine to BCAAs and everything between."
     },
     {
@@ -8631,7 +8726,7 @@
       price: 20,
       sales: 68,
       rating: 4.5,
-      gradient: "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
+      gradient: "repeating-linear-gradient(-45deg, #3D5AFE, #3D5AFE 4px, #14E0C4 4px, #14E0C4 8px)",
       desc: "A practical comparison of PPL, upper/lower, and full-body splits so you can pick the one that actually fits your real-life schedule."
     },
     {
@@ -8641,7 +8736,7 @@
       price: 30,
       sales: 187,
       rating: 4.9,
-      gradient: "#FFFFFF",
+      gradient: "linear-gradient(135deg, #FFC530, #FF7A33)",
       desc: "Everything about starting and sticking with retinoids — how to tell purging from a real reaction, and how to build tolerance without giving up too early."
     }
   ];
@@ -8824,12 +8919,12 @@
   document.getElementById("sellCoursePrice").addEventListener("input", updateSellCourseBreakdown);
 
   const courseGradients = [
-    "#0D0D0D",
-    "#FFFFFF",
-    "repeating-linear-gradient(45deg, #0D0D0D, #0D0D0D 8px, #FFFFFF 8px, #FFFFFF 16px)",
-    "repeating-linear-gradient(-45deg, #0D0D0D, #0D0D0D 4px, #FFFFFF 4px, #FFFFFF 8px)",
-    "radial-gradient(#0D0D0D 22%, transparent 23%) 0 0/18px 18px, #FFFFFF",
-    "#8A8A8A"
+    "linear-gradient(135deg, #FF3E7F, #B84FFF)",
+    "linear-gradient(135deg, #FFC530, #FF7A33)",
+    "repeating-linear-gradient(45deg, #FF3E7F, #FF3E7F 8px, #FFC530 8px, #FFC530 16px)",
+    "repeating-linear-gradient(-45deg, #3D5AFE, #3D5AFE 4px, #14E0C4 4px, #14E0C4 8px)",
+    "radial-gradient(#B84FFF 22%, transparent 23%) 0 0/18px 18px, #FFF3FA",
+    "linear-gradient(135deg, #14E0C4, #3D5AFE)"
   ];
 
   document.getElementById("sellCourseSubmit").addEventListener("click", () => {
