@@ -212,7 +212,7 @@
     left: 26px;
     width: 68px;
     height: 24px;
-    background: repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 6px, #E8E8E8 6px, #E8E8E8 12px);
+    background: repeating-linear-gradient(45deg, var(--yellow), var(--yellow) 6px, var(--coral) 6px, var(--coral) 12px);
     border: 1.5px solid var(--ink);
     transform: rotate(-7deg);
     opacity: 0.95;
@@ -2702,8 +2702,8 @@
 <div class="paywall-overlay" id="removeAdsOverlay">
   <div class="paywall-sheet">
     <button class="paywall-close" id="removeAdsClose" aria-label="Close">✕</button>
-    <div class="paywall-crown" style="background:#262626;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAFAF8" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <div class="paywall-crown" style="background:var(--ink-fixed);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--card-fixed)" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </div>
     <div class="paywall-title">Remove Ads</div>
     <div class="paywall-sub">One-time payment. No more top banner, no more sponsored popups — ever, on this device.</div>
@@ -6832,7 +6832,7 @@
     const body = document.getElementById("scannerBody");
     if (!scannerUnlocked) {
       body.innerHTML = `
-        <div class="paywall-crown" style="background:#262626;font-size:24px;">🔬</div>
+        <div class="paywall-crown" style="background:var(--gradient-glow);font-size:24px;">🔬</div>
         <div class="paywall-title">AI Face Scanner</div>
         <div class="paywall-sub">Upload a photo for an on-device breakdown of facial structure, symmetry, and skin.</div>
         <div class="paywall-features">
