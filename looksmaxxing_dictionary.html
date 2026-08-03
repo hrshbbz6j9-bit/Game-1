@@ -2055,6 +2055,112 @@
     text-decoration: underline;
   }
 
+  /* ---------- AI Scanner Promo ---------- */
+  .scanner-promo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 20px 18px;
+    padding: 12px 14px;
+    background: var(--ink-fixed);
+    border: 2.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--coral);
+  }
+  .scanner-promo-icon { font-size: 26px; flex-shrink: 0; }
+  .scanner-promo-text { flex: 1; min-width: 0; }
+  .scanner-promo-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--card-fixed);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .scanner-promo-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    background: var(--coral);
+    color: #fff;
+    padding: 2px 6px;
+  }
+  .scanner-promo-sub { font-family: var(--font-mono); font-size: 10.5px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .scanner-promo-btn {
+    flex-shrink: 0;
+    background: var(--card-fixed);
+    color: var(--ink-fixed);
+    border: 1.5px solid var(--card-fixed);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 8px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .scanner-promo-btn:active { transform: scale(0.96); }
+
+  .scanner-photo-preview {
+    width: 100%;
+    max-height: 240px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    margin: 6px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+  }
+  .scanner-photo-preview img { width: 100%; height: auto; display: block; }
+
+  .scanner-analyzing-bar {
+    width: 100%;
+    height: 10px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .scanner-analyzing-fill {
+    height: 100%;
+    width: 30%;
+    background: var(--ink);
+    animation: scannerSweep 1.1s ease-in-out infinite;
+  }
+  @keyframes scannerSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(430%); }
+  }
+
+  .scanner-honesty-note {
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1.5px dashed var(--ink-mute);
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .scanner-honesty-note b { color: var(--ink); }
+
+  .scanner-tip-chips { display: flex; flex-direction: column; gap: 8px; }
+  .scanner-tip-chip {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .scanner-tip-chip:active { background: var(--ink); color: var(--card); }
+
   /* ---------- Empty state ---------- */
   .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-mute); }
   .empty-state .glyph { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
@@ -2131,6 +2237,15 @@
         <div class="premium-pill" id="premiumPill"></div>
       </div>
     </header>
+
+    <div class="scanner-promo" id="scannerPromo" style="display:none;">
+      <div class="scanner-promo-icon">🔬</div>
+      <div class="scanner-promo-text">
+        <div class="scanner-promo-title">AI Face Scanner <span class="scanner-promo-badge">APP EXCLUSIVE</span></div>
+        <div class="scanner-promo-sub">Upload a photo, get a personalized breakdown</div>
+      </div>
+      <button class="scanner-promo-btn" id="scannerPromoBtn">Open</button>
+    </div>
 
     <div class="totd-wrap">
       <div class="totd-card" id="totdCard">
@@ -2298,6 +2413,13 @@
     <div class="single-price">$5.00 <span>one-time</span></div>
     <button class="cta-btn" id="removeAdsCta">Remove Ads Now — $5.00</button>
     <div class="paywall-disclaimer">Demo preview — no payment is collected. Unlocking stores a local preference on this device only.</div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="scannerOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="scannerClose" aria-label="Close">✕</button>
+    <div id="scannerBody"></div>
   </div>
 </div>
 
@@ -6167,6 +6289,145 @@
   }
 
   applyAdState();
+
+  /* ---------------- AI Face Scanner (app-version-only paid feature) ---------------- */
+  function isAppMode() {
+    const params = new URLSearchParams(location.search);
+    if (params.has("app")) {
+      const on = params.get("app") !== "0";
+      localStorage.setItem("looksmax_app_mode", on ? "true" : "false");
+      return on;
+    }
+    return localStorage.getItem("looksmax_app_mode") === "true";
+  }
+  const APP_MODE = isAppMode();
+  if (APP_MODE) {
+    const promo = document.getElementById("scannerPromo");
+    if (promo) promo.style.display = "flex";
+  }
+
+  let scannerUnlocked = localStorage.getItem("looksmax_scanner_unlocked") === "true";
+  let scannerState = "paywall";
+  let scannerPhoto = null;
+
+  function resizeImageFileFit(file, maxDim, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else if (h >= w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  const SCANNER_TIPS = ["Facial Thirds", "Skincare Routine Order", "Realistic Expectations", "Facial Symmetry"];
+
+  function renderScannerModal() {
+    const body = document.getElementById("scannerBody");
+    if (!scannerUnlocked) {
+      body.innerHTML = `
+        <div class="paywall-crown" style="background:#262626;font-size:24px;">🔬</div>
+        <div class="paywall-title">AI Face Scanner</div>
+        <div class="paywall-sub">Upload a photo for an on-device breakdown of facial structure, symmetry, and skin.</div>
+        <div class="paywall-features">
+          <div class="paywall-feature"><span class="check">✓</span>Instant photo scan</div>
+          <div class="paywall-feature"><span class="check">✓</span>Personalized next-step suggestions</div>
+          <div class="paywall-feature"><span class="check">✓</span>Photos never leave your device</div>
+        </div>
+        <button class="cta-btn" id="scannerUnlockCta">Unlock AI Scanner — $6.99</button>
+        <div class="paywall-disclaimer">Demo preview — no payment is collected. Unlocking stores a local preference on this device only.</div>
+      `;
+      document.getElementById("scannerUnlockCta").addEventListener("click", () => {
+        scannerUnlocked = true;
+        localStorage.setItem("looksmax_scanner_unlocked", "true");
+        scannerState = "upload";
+        renderScannerModal();
+        showToast("AI Scanner unlocked (demo).");
+      });
+      return;
+    }
+
+    if (scannerState === "upload") {
+      body.innerHTML = `
+        <div class="paywall-title" style="text-align:left;">🔬 AI Face Scanner</div>
+        <div class="paywall-sub" style="text-align:left;padding:0;margin-bottom:18px;">Choose a clear, front-facing photo in good lighting.</div>
+        <label class="photo-upload-btn" for="scannerFileInput" style="display:block;">Choose Photo</label>
+        <input type="file" id="scannerFileInput" accept="image/*" style="display:none;">
+      `;
+      document.getElementById("scannerFileInput").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { showToast("Please choose an image file."); return; }
+        resizeImageFileFit(file, 500, (dataUrl) => {
+          scannerPhoto = dataUrl;
+          scannerState = "analyzing";
+          renderScannerModal();
+          setTimeout(() => {
+            scannerState = "result";
+            renderScannerModal();
+          }, 2200);
+        });
+        e.target.value = "";
+      });
+      return;
+    }
+
+    if (scannerState === "analyzing") {
+      body.innerHTML = `
+        <div class="paywall-title" style="text-align:left;">🔬 Analyzing...</div>
+        <div class="scanner-photo-preview"><img src="${scannerPhoto}" alt=""></div>
+        <div class="scanner-analyzing-bar"><div class="scanner-analyzing-fill"></div></div>
+        <div class="paywall-sub" style="text-align:left;padding:0;">Scanning facial structure, symmetry, and skin texture...</div>
+      `;
+      return;
+    }
+
+    body.innerHTML = `
+      <div class="paywall-title" style="text-align:left;">🔬 Scan Complete</div>
+      <div class="scanner-photo-preview"><img src="${scannerPhoto}" alt=""></div>
+      <div class="scanner-honesty-note"><b>Heads up:</b> this is a demo build. Looksmaxxing Dictionary doesn't run real computer-vision analysis on your photo — there's no model behind this scan, and no attractiveness score has been generated for you. We'd rather say that plainly than fake a number.</div>
+      <div class="paywall-sub" style="text-align:left;padding:0;margin-bottom:10px;">Worth reading instead:</div>
+      <div class="scanner-tip-chips">
+        ${SCANNER_TIPS.map(t => `<button class="scanner-tip-chip" data-jump-term="${escapeHtml(t)}">${escapeHtml(t)} →</button>`).join("")}
+      </div>
+      <button class="cta-btn" id="scannerRescan" style="margin-top:16px;">Scan Another Photo</button>
+    `;
+    body.querySelectorAll("[data-jump-term]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        closeScannerModal();
+        jumpToTerm(btn.dataset.jumpTerm, "Opened");
+      });
+    });
+    document.getElementById("scannerRescan").addEventListener("click", () => {
+      scannerState = "upload";
+      scannerPhoto = null;
+      renderScannerModal();
+    });
+  }
+
+  function openScannerModal() {
+    scannerState = scannerUnlocked ? "upload" : "paywall";
+    renderScannerModal();
+    document.getElementById("scannerOverlay").classList.add("show");
+  }
+  function closeScannerModal() {
+    document.getElementById("scannerOverlay").classList.remove("show");
+  }
+  document.getElementById("scannerClose").addEventListener("click", closeScannerModal);
+  document.getElementById("scannerOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "scannerOverlay") closeScannerModal();
+  });
+  const scannerPromoBtn = document.getElementById("scannerPromoBtn");
+  if (scannerPromoBtn) scannerPromoBtn.addEventListener("click", openScannerModal);
 
   /* ---------------- Forum ---------------- */
   const FORUM_CATEGORIES = ["All", "Skincare", "Mewing & Jaw", "Fitness", "Grooming", "Progress Logs", "Questions"];
