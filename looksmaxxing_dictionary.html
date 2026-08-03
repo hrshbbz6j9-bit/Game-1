@@ -2436,6 +2436,32 @@
   .empty-state .glyph { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
   .empty-state p { font-family: var(--font-body); font-size: 13.5px; line-height: 1.5; }
 
+  /* ---------- Back to Top ---------- */
+  .back-to-top {
+    position: fixed;
+    right: 16px;
+    bottom: calc(var(--safe-bottom) + var(--bottom-nav-h) + 16px);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--gradient-glow);
+    color: #FFFFFF;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .back-to-top:active { transform: scale(0.9); }
+
   /* ---------- Toast ---------- */
   .toast {
     position: fixed;
@@ -2645,6 +2671,8 @@
   </div>
 
 </div>
+
+<button class="back-to-top" id="backToTopBtn" aria-label="Scroll to top">↑</button>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
@@ -9269,6 +9297,22 @@
   if (!localStorage.getItem("looksmax_onboarded")) {
     document.getElementById("welcomeOverlay").classList.add("show");
   }
+
+  /* ---------------- Back to Top ---------------- */
+  const backToTopBtn = document.getElementById("backToTopBtn");
+  let backToTopTicking = false;
+  window.addEventListener("scroll", () => {
+    if (backToTopTicking) return;
+    backToTopTicking = true;
+    requestAnimationFrame(() => {
+      backToTopBtn.classList.toggle("show", window.scrollY > 500);
+      backToTopTicking = false;
+    });
+  });
+  backToTopBtn.addEventListener("click", () => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+  });
 
   /* ---------------- Escape key closes whichever modal is open ---------------- */
   document.addEventListener("keydown", (e) => {
