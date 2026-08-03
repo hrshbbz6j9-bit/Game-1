@@ -380,6 +380,7 @@ function freshState(){
     military:null,
     acting:{stage:0, fame:0, roles:0, oscars:0},
     music:{stage:0, fame:0, songs:0, grammys:0},
+    modeling:{stage:0, fame:0, gigs:0, covers:0},
   };
 }
 
@@ -4236,6 +4237,85 @@ openCareerPanel = function(){
       body.appendChild(btn);
     });
   }
+};
+
+/* ---------------------------------------------------------------------
+   P38 — Modeling: same fame-ladder shape as acting/music, but the
+   audition roll leans almost entirely on looks instead of smarts, and
+   the payoff ties directly into the portrait/looks system — a face
+   that's genuinely in the top band books work a lot more easily.
+   --------------------------------------------------------------------- */
+const MODELING_STAGES_P38 = ['Amateur','Local Model','Runway Model','Cover Model','Supermodel','Icon'];
+Object.assign(ACHIEVEMENTS, {
+  model_ach:'Booked your first modeling gig',
+  cover_model_ach:'Landed a magazine cover',
+  supermodel_ach:'Became a Supermodel',
+});
+function bookModelingGigP38(){
+  if(!state.modeling) state.modeling = {stage:0, fame:0, gigs:0, covers:0};
+  const md = state.modeling;
+  const chanceToBook = clamp(10 + (state.stats.looks-50)*0.7 + md.fame*0.3, 5, 92);
+  if(chance(chanceToBook)){
+    md.gigs++;
+    const pay = rand(400,2200)*(md.stage+1);
+    state.money += pay;
+    md.fame = clamp(md.fame+rand(3,8),0,100);
+    log(`You booked a modeling gig. Paid ${fmtMoney(pay)}.`,'good');
+    checkAchievement('model_ach');
+    if(md.fame >= (md.stage+1)*18 && md.stage<MODELING_STAGES_P38.length-1){
+      md.stage++;
+      log(`Your modeling career advanced to: ${MODELING_STAGES_P38[md.stage]}!`,'good');
+      newspaper(`${state.name.toUpperCase()} TURNS HEADS IN THE FASHION WORLD`, `Now billed as a ${MODELING_STAGES_P38[md.stage]}.`, 'Style Desk');
+      if(md.stage===MODELING_STAGES_P38.length-1) checkAchievement('supermodel_ach');
+    }
+  } else {
+    log(`The agency passed on you for this gig.`,'bad');
+    state.stats.happiness = clamp(state.stats.happiness-2,0,100);
+  }
+  closePanel(); render();
+}
+function tickModelingEventsP38(){
+  const md = state.modeling; if(!md || md.stage<3) return;
+  if(chance(10)){
+    md.fame = clamp(md.fame+5,0,100);
+    if(chance(40)){
+      md.covers++;
+      checkAchievement('cover_model_ach');
+      state.stats.happiness = clamp(state.stats.happiness+8,0,100);
+      newspaper(`${state.name.toUpperCase()} LANDS MAGAZINE COVER`, `Newsstands everywhere feature the shoot this month.`, 'Style Desk');
+    } else {
+      newspaper(`${state.name.toUpperCase()} IN THE RUNNING FOR MODEL OF THE YEAR`, `Industry buzz keeps building.`, 'Style Desk');
+    }
+  }
+  if(chance(5)){
+    md.fame = clamp(md.fame-15,0,100);
+    newspaper(`${state.name.toUpperCase()} DROPPED FROM CAMPAIGN AFTER CONTROVERSY`, `A brand parts ways following an unflattering photo scandal.`, 'Style Desk');
+  }
+}
+const _origAgeUp_P38 = ageUp;
+ageUp = function(){
+  _origAgeUp_P38();
+  if(!state || !state.alive) return;
+  tickModelingEventsP38();
+  render();
+};
+const _origOpenActivitiesPanel_P38 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P38();
+  if(state.inPrison || state.age<14) return;
+  if(!state.modeling) state.modeling = {stage:0, fame:0, gigs:0, covers:0};
+  const md = state.modeling;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b');
+  label.textContent = `Modeling (${MODELING_STAGES_P38[md.stage]}${md.stage>0?` · Fame ${md.fame}%`:''}${md.covers?` · 📷×${md.covers}`:''})`;
+  body.appendChild(label);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '💃 Book a Modeling Gig';
+  btn.onclick = bookModelingGigP38;
+  body.appendChild(btn);
 };
 </script>
 </body>
