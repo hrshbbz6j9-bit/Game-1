@@ -1380,6 +1380,50 @@
 
   .thread-tag.locked-tag { background: var(--coral); color: #fff; }
 
+  .notif-btn {
+    position: relative;
+    background: var(--card);
+    border: 1.5px solid var(--ink);
+    font-size: 16px;
+    line-height: 1;
+    padding: 7px 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .notif-btn:active { transform: translate(1px, 1px); }
+  .notif-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background: var(--coral);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--paper);
+    padding: 0 2px;
+  }
+  .notif-badge.show { display: flex; }
+
+  .notif-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  .notif-mark-read-btn {
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--ink-mute);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
   .owner-btn {
     background: none;
     border: none;
@@ -2237,6 +2281,18 @@
   <div class="paywall-sheet">
     <button class="paywall-close" id="memberClose" aria-label="Close">✕</button>
     <div id="memberProfileBody"></div>
+  </div>
+</div>
+
+<div class="paywall-overlay" id="notifOverlay">
+  <div class="paywall-sheet">
+    <button class="paywall-close" id="notifClose" aria-label="Close">✕</button>
+    <div class="notif-header-row">
+      <div class="paywall-title" style="text-align:left;">🔔 Notifications</div>
+      <button class="notif-mark-read-btn" id="notifMarkAllRead">Mark all read</button>
+    </div>
+    <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">New replies on threads you posted or are watching.</div>
+    <div class="activity-list" id="notifList"></div>
   </div>
 </div>
 
@@ -6459,6 +6515,8 @@
     document.getElementById("forumClearBtn").classList.remove("show");
     renderForumTabs();
     openThreadId = threadId;
+    const jumpedThread = threads.find(x => x.id === threadId);
+    if (jumpedThread) markThreadSeen(jumpedThread);
     renderThreads();
     setTimeout(() => {
       const el = document.querySelector(`.thread-card[data-thread-id="${threadId}"]`);
@@ -6665,7 +6723,10 @@
             </div>
           </div>
         </div>
-        <button class="edit-profile-btn" id="editProfileBtn">Edit</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="notif-btn" id="notifBtn" aria-label="Notifications">🔔<span class="notif-badge" id="notifBadge">0</span></button>
+          <button class="edit-profile-btn" id="editProfileBtn">Edit</button>
+        </div>
       </div>
       <div class="profile-stats">
         <span>${threadCount} thread${threadCount === 1 ? "" : "s"}</span>
@@ -6689,6 +6750,8 @@
     document.getElementById("leaderboardBtn").addEventListener("click", openLeaderboard);
     document.getElementById("achievementsBtn").addEventListener("click", openAchievements);
     document.getElementById("myActivityBtn").addEventListener("click", openMyActivity);
+    document.getElementById("notifBtn").addEventListener("click", openNotifications);
+    renderNotifBadge();
   }
 
   const profileOverlay = document.getElementById("profileOverlay");
@@ -6804,10 +6867,95 @@
   }
 
   function toggleWatch(threadId) {
-    if (watchedThreads.has(threadId)) watchedThreads.delete(threadId);
-    else watchedThreads.add(threadId);
+    if (watchedThreads.has(threadId)) {
+      watchedThreads.delete(threadId);
+    } else {
+      watchedThreads.add(threadId);
+      const t = threads.find(x => x.id === threadId);
+      if (t) markThreadSeen(t);
+    }
     saveWatchedThreads();
     renderThreads();
+  }
+
+  /* ---------------- Notifications ---------------- */
+  let notifSeen = loadNotifSeen();
+
+  function loadNotifSeen() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_notif_seen"));
+      if (saved && typeof saved === "object") return saved;
+    } catch (e) {}
+    return {};
+  }
+
+  function saveNotifSeen() {
+    localStorage.setItem("looksmax_notif_seen", JSON.stringify(notifSeen));
+  }
+
+  function markThreadSeen(t) {
+    if (notifSeen[t.id] !== t.replies.length) {
+      notifSeen[t.id] = t.replies.length;
+      saveNotifSeen();
+    }
+  }
+
+  function getNotifications() {
+    return threads
+      .filter(t => (t.author === username || watchedThreads.has(t.id)) && t.replies.length > (notifSeen[t.id] || 0))
+      .map(t => {
+        const seen = notifSeen[t.id] || 0;
+        return { thread: t, newCount: t.replies.length - seen, latest: t.replies[t.replies.length - 1] };
+      })
+      .sort((a, b) => b.thread.id - a.thread.id);
+  }
+
+  function renderNotifBadge() {
+    const count = getNotifications().length;
+    const badge = document.getElementById("notifBadge");
+    if (!badge) return;
+    badge.textContent = count;
+    badge.classList.toggle("show", count > 0);
+  }
+
+  function openNotifications() {
+    renderNotifications();
+    document.getElementById("notifOverlay").classList.add("show");
+  }
+  function closeNotifications() {
+    document.getElementById("notifOverlay").classList.remove("show");
+  }
+  document.getElementById("notifClose").addEventListener("click", closeNotifications);
+  document.getElementById("notifOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "notifOverlay") closeNotifications();
+  });
+  document.getElementById("notifMarkAllRead").addEventListener("click", () => {
+    threads.forEach(t => { notifSeen[t.id] = t.replies.length; });
+    saveNotifSeen();
+    renderNotifications();
+    renderNotifBadge();
+    showToast("All caught up.");
+  });
+
+  function renderNotifications() {
+    const items = getNotifications();
+    document.getElementById("notifList").innerHTML = items.length
+      ? items.map(item => `
+          <button class="activity-row" data-notif-thread="${item.thread.id}">
+            ${avatarHtml(item.latest.author)}
+            <div class="activity-row-text">
+              <div class="activity-row-title">${escapeHtml(item.thread.title)}</div>
+              <div class="activity-row-meta">${item.newCount} new repl${item.newCount === 1 ? "y" : "ies"} · latest from @${escapeHtml(item.latest.author)}: "${escapeHtml(item.latest.text.slice(0, 60))}${item.latest.text.length > 60 ? "…" : ""}"</div>
+            </div>
+          </button>
+        `).join("")
+      : `<div class="activity-empty">No new activity. You're all caught up.</div>`;
+    document.querySelectorAll("[data-notif-thread]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        closeNotifications();
+        jumpToThread(parseInt(btn.dataset.notifThread, 10));
+      });
+    });
   }
 
   /* ---------------- Likes ---------------- */
@@ -6956,6 +7104,7 @@
   });
 
   function renderThreads() {
+    renderNotifBadge();
     const list = document.getElementById("threadList");
     const q = forumSearchTerm.trim().toLowerCase();
     const filtered = threads
@@ -7122,7 +7271,7 @@
       card.querySelector(".thread-top").addEventListener("click", () => {
         const opening = openThreadId !== t.id;
         openThreadId = opening ? t.id : null;
-        if (opening) registerView(t);
+        if (opening) { registerView(t); markThreadSeen(t); }
         renderThreads();
       });
       card.querySelector("[data-watch]").addEventListener("click", (e) => {
@@ -7148,6 +7297,7 @@
           const text = quotedHere ? `@${quotedHere.author}: "${quotedHere.text}" — ${val}` : val;
           t.replies.push({ author: username, text });
           pendingQuote = null;
+          markThreadSeen(t);
           saveThreads();
           renderThreads();
           renderProfileCard();
