@@ -13,6 +13,14 @@
 <meta name="apple-mobile-web-app-title" content="LD">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="The definitive glossary of facial & frame aesthetics, plus a community forum, courses, and an AI face scanner.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Looksmaxxing Dictionary">
+<meta property="og:description" content="The definitive glossary of facial & frame aesthetics, plus a community forum, courses, and an AI face scanner.">
+<meta property="og:image" content="icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Looksmaxxing Dictionary">
+<meta name="twitter:description" content="The definitive glossary of facial & frame aesthetics, plus a community forum, courses, and an AI face scanner.">
+<meta name="twitter:image" content="icons/icon-512.png">
 <style>
   :root {
     --paper: #FAF5FF;
@@ -9261,6 +9269,34 @@
   if (!localStorage.getItem("looksmax_onboarded")) {
     document.getElementById("welcomeOverlay").classList.add("show");
   }
+
+  /* ---------------- Escape key closes whichever modal is open ---------------- */
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const overlayCloseFns = [
+      ["welcomeOverlay", closeWelcome],
+      ["paywallOverlay", closePaywall],
+      ["removeAdsOverlay", closeRemoveAds],
+      ["popupAdOverlay", closePopupAd],
+      ["scannerOverlay", closeScannerModal],
+      ["leaderboardOverlay", closeLeaderboard],
+      ["achievementsOverlay", closeAchievements],
+      ["myActivityOverlay", closeMyActivity],
+      ["memberOverlay", closeMemberProfile],
+      ["profileOverlay", closeProfileModal],
+      ["notifOverlay", closeNotifications],
+      ["newThreadOverlay", closeNewThreadModal],
+      ["sellCourseOverlay", closeSellCourseModal],
+      ["dashboardOverlay", closeDashboardModal]
+    ];
+    for (const [id, closeFn] of overlayCloseFns) {
+      const el = document.getElementById(id);
+      if (el && el.classList.contains("show")) {
+        closeFn();
+        return;
+      }
+    }
+  });
 
   /* ---------------- Init ---------------- */
   els.footerText.textContent = `${TERMS.length} terms & growing · Definitions always free`;
