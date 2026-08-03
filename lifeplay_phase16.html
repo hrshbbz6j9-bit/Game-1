@@ -20,20 +20,25 @@
      introduced), so only values change here; nothing downstream breaks.
      ========================================================================== */
   :root{
-    --bg:#DBD4BC;           /* the desk the paper sits on */
-    --panel:#F3EEDE;        /* newsprint page color */
-    --panel2:#E7DFC5;       /* secondary surface — byline boxes, inputs */
-    --accent:#3C6140;       /* "good" ink-green */
-    --accent2:#2A4566;      /* "info" ink-blue */
-    --danger:#9C231C;       /* "bad" ink-red */
-    --warn:#8A6A1E;         /* amber ink */
+    /* Jewel-tone pass: the newsprint bones stay (masthead, almanac, column
+       log) but the ink is no longer a single spot-red doing every job.
+       Gold is finally actually gold; green/blue/red/amber are pulled
+       toward saturated jewel tones instead of desaturated "ink" versions,
+       so the whole thing reads richer without losing paper legibility. */
+    --bg:#E8D8A0;           /* the desk the paper sits on — warm gilded parchment */
+    --panel:#F7EFDA;        /* newsprint page color */
+    --panel2:#EEE0B8;       /* secondary surface — byline boxes, inputs */
+    --accent:#0F6B4C;       /* "good" — deep emerald */
+    --accent2:#1E4D8C;      /* "info" — deep sapphire */
+    --danger:#A81C3E;       /* "bad" — deep ruby */
+    --warn:#B8860B;         /* amber / goldenrod */
     --text:#1C1A16;         /* warm black ink */
-    --sub:#69614F;          /* byline grey */
-    --border:#C6BC9C;       /* hairline rule on paper */
-    --gold:#9C231C;         /* the one spot color — masthead, Age Up, seals */
-    --gold-deep:#6E190F;
+    --sub:#6B5E3F;          /* byline, warmed toward gold */
+    --border:#D0BD7A;       /* hairline rule on paper, gold-tinted */
+    --gold:#C9A227;         /* the spot color — masthead, Age Up, seals, sparkle */
+    --gold-deep:#8B6914;
     --ink-line:#1C1A16;
-    --life-red:#9C231C; --life-green:#3C6140; --life-blue:#2A4566; --life-pink:#6C3450; --life-gold:#8A6A1E;
+    --life-red:#A81C3E; --life-green:#0F6B4C; --life-blue:#1E4D8C; --life-pink:#8C3565; --life-gold:#B8860B;
     --font-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
     --font-body: Georgia, 'Times New Roman', serif;
     --font-caption: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -47,8 +52,8 @@
      column on a big screen, so widen it modestly and let it rest on a proper
      desk surface instead of floating in empty white space. Mobile is untouched. */
   @media (min-width: 760px){
-    html,body{background:radial-gradient(ellipse at 50% 0%, #E7DFC5 0%, var(--bg) 55%, #C9BE9E 100%);}
-    #phone{max-width:560px;min-height:calc(100vh - 48px);margin:24px auto;box-shadow:0 18px 44px rgba(28,26,22,.28), 0 0 0 1px var(--border);border-radius:3px;}
+    html,body{background:radial-gradient(ellipse at 50% 0%, #EEDFA8 0%, var(--bg) 45%, #2A3B2E 100%);}
+    #phone{max-width:560px;min-height:calc(100vh - 48px);margin:24px auto;box-shadow:0 24px 60px rgba(15,20,15,.45), 0 0 0 1px var(--gold-deep);border-radius:3px;}
     .btn{cursor:pointer;transition:transform .08s, box-shadow .08s, filter .12s;}
     .btn:hover{filter:brightness(1.04);}
     .btn:hover:not(:active){transform:translateY(-1px);box-shadow:3px 4px 0 var(--ink-line);}
@@ -61,7 +66,8 @@
   button, input, select{font-family:inherit;}
   button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--gold-deep); outline-offset:2px;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
-  .masthead{text-align:center;padding:14px 14px 8px;background:var(--panel);}
+  .masthead{text-align:center;padding:14px 14px 8px;background:var(--panel);position:relative;}
+  .masthead::after{content:"";display:block;height:5px;margin-top:8px;background-image:linear-gradient(135deg, var(--gold) 25%, transparent 25%, transparent 50%, var(--gold) 50%, var(--gold) 75%, transparent 75%, transparent);background-size:8px 8px;opacity:.55;}
   .crest{display:block;margin:0 auto 4px;}
   #screen-loading .crest-big{margin-bottom:10px;}
   .masthead-title{font-family:var(--font-display);font-weight:700;font-size:1.7em;letter-spacing:.03em;text-transform:uppercase;border-top:3px double var(--ink-line);border-bottom:3px double var(--ink-line);padding:6px 0;text-wrap:balance;}
@@ -80,9 +86,9 @@
   .field input, .field select{width:100%;padding:11px;border-radius:2px;border:1px solid var(--ink-line);background:var(--panel);color:var(--text);font-size:1em;font-family:var(--font-body);}
   .btn{padding:12px 16px;border-radius:2px;border:1.5px solid var(--ink-line);background:var(--panel2);color:var(--text);font-size:.92em;font-weight:700;font-family:var(--font-caption);text-transform:uppercase;letter-spacing:.05em;cursor:pointer;text-align:center;transition:transform .08s, box-shadow .08s;box-shadow:2px 2px 0 var(--ink-line);}
   .btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line);}
-  .btn-primary{background:var(--gold);color:#F3EEDE;border-color:var(--gold-deep);}
-  .btn-danger{background:var(--danger);color:#F3EEDE;}
-  .btn-accent{background:var(--accent2);color:#F3EEDE;}
+  .btn-primary{background:linear-gradient(180deg, color-mix(in srgb, var(--gold) 82%, white) 0%, var(--gold) 55%, var(--gold-deep) 100%);color:#2A1F04;border-color:var(--gold-deep);text-shadow:0 1px 0 rgba(255,255,255,.25);}
+  .btn-danger{background:linear-gradient(180deg, color-mix(in srgb, var(--danger) 75%, white) 0%, var(--danger) 60%, color-mix(in srgb, var(--danger) 75%, black) 100%);color:#F7EFDA;}
+  .btn-accent{background:linear-gradient(180deg, color-mix(in srgb, var(--accent2) 75%, white) 0%, var(--accent2) 60%, color-mix(in srgb, var(--accent2) 75%, black) 100%);color:#F7EFDA;}
   .btn-block{width:100%;}
   .row{display:flex;gap:10px;}
   .row > *{flex:1;}
@@ -127,8 +133,10 @@
   #bottomnav{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border-top:2px solid var(--ink-line);}
   #bottomnav button{background:none;border:none;border-right:1px solid var(--border);color:var(--text);padding:8px 2px 7px;font-family:var(--font-caption);font-size:.58em;font-weight:700;text-transform:uppercase;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
   #bottomnav button:last-child{border-right:none;}
-  #bottomnav button .ic{font-size:1.15em;filter:grayscale(55%);}
-  #ageup-btn{position:sticky;bottom:0;margin:10px;width:calc(100% - 20px);border-radius:2px;padding:14px;font-size:.95em;letter-spacing:.08em;border:2px solid var(--gold-deep);position:relative;}
+  #bottomnav button .ic{font-size:1.15em;filter:saturate(1.15);}
+  #bottomnav button.active{color:var(--gold-deep);}
+  #bottomnav button.active .ic{filter:saturate(1.4) drop-shadow(0 0 2px color-mix(in srgb, var(--gold) 50%, transparent));}
+  #ageup-btn{position:sticky;bottom:0;margin:10px;width:calc(100% - 20px);border-radius:2px;padding:14px;font-size:.95em;letter-spacing:.08em;border:2px solid var(--gold-deep);position:relative;box-shadow:2px 2px 0 var(--gold-deep), 0 4px 14px rgba(139,105,20,.35);}
   /* Panel / modal */
   #panel-overlay{position:absolute;inset:0;background:rgba(28,26,22,.55);display:flex;align-items:flex-end;z-index:50;}
   #panel{background:var(--panel);width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;border-top:3px double var(--ink-line);}
@@ -451,13 +459,16 @@ const BODY_PATHS = [
   `<path d="M9,62 C9,43 18,36 32,36 C46,36 55,43 55,62 Z" fill="var(--ink-line)"/>`,
   `<path d="M15,62 C15,47 22,41 32,41 C42,41 49,47 49,62 Z" fill="var(--ink-line)"/>`,
 ];
-/* Gold outfit accents on the collar — a small formal touch that reads as
-   "dressed differently" without breaking the ink-and-gold palette. */
+/* Outfit accents on the collar — a small formal touch that reads as
+   "dressed differently." Each person's accent is picked from a jewel-tone
+   palette (not just gold), so the People/Family Tree/Album screens show
+   real color variety across a family rather than one repeated hue. */
+const OUTFIT_COLORS_P31 = ['var(--gold)', 'var(--accent)', 'var(--accent2)', 'var(--danger)', 'var(--life-pink)'];
 const OUTFIT_POOL = [
-  cy=>'',
-  cy=>`<path d="M27,42 L32,48 L37,42" fill="none" stroke="var(--gold)" stroke-width="1.6"/>`,
-  cy=>`<circle cx="32" cy="44" r="1.4" fill="var(--gold)"/><circle cx="32" cy="48" r="1.4" fill="var(--gold)"/>`,
-  cy=>`<rect x="29" y="41" width="6" height="10" fill="var(--gold)"/>`,
+  (cy,c)=>'',
+  (cy,c)=>`<path d="M27,42 L32,48 L37,42" fill="none" stroke="${c}" stroke-width="1.6"/>`,
+  (cy,c)=>`<circle cx="32" cy="44" r="1.4" fill="${c}"/><circle cx="32" cy="48" r="1.4" fill="${c}"/>`,
+  (cy,c)=>`<rect x="29" y="41" width="6" height="10" fill="${c}"/>`,
 ];
 /* Looks stat (0-100) is genetic, set at birth from the parents' own
    values rather than pure RNG (see P28 below) — and it drives actual
@@ -546,7 +557,7 @@ function personAvatarSVG(person){
     const accPool = accessoryPoolFor(bracket, g);
     accessory = accPool[Math.floor(seed/7) % accPool.length](headCy);
     marks = MARK_POOL[Math.floor(seed/17) % MARK_POOL.length](headCy);
-    outfit = OUTFIT_POOL[Math.floor(seed/41) % OUTFIT_POOL.length](headCy);
+    outfit = OUTFIT_POOL[Math.floor(seed/41) % OUTFIT_POOL.length](headCy, OUTFIT_COLORS_P31[Math.floor(seed/53) % OUTFIT_COLORS_P31.length]);
     face = eyesP29(band, headCy) + browsP29(band, headCy) + noseP29(band, headCy) + mouthP29(band, headCy) + faceExtrasP29(band, 32, headCy, headR);
     if(bracket==='elder') face += wrinklesP29(headCy);
   }
@@ -685,6 +696,8 @@ function startNewLife(){
 /* ============================ BOTTOM NAV WIRING =========================== */
 document.querySelectorAll('#bottomnav button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#bottomnav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
     const p = btn.dataset.panel;
     if(p==='career') openCareerPanel();
     else if(p==='assets') openAssetsPanel();
@@ -3591,6 +3604,73 @@ tryForBaby = function(){
     const kid = state.relationships.find(r=>r.id===state.kids[state.kids.length-1]);
     const spouse = state.relationships.find(r=>r.id===state.spouseId);
     if(kid) kid.looks = inheritedLooksP28(state.stats.looks, spouse ? spouse.looks : rand(15,90));
+  }
+};
+
+/* ---------------------------------------------------------------------
+   P30 — Gym & Plastic Surgery: genetics set the starting point, but
+   the looks stat can now actually move during play too, and since the
+   portrait is driven by that stat, changes here show up on the face.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, { surgery_glow_up:'Had a successful cosmetic procedure' });
+function gymWorkoutP30(){
+  state.stats.health = clamp(state.stats.health+rand(2,5),0,100);
+  state.stats.looks = clamp(state.stats.looks+rand(1,3),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  log(`You hit the gym. Feeling stronger already.`,'good');
+  closePanel(); render();
+}
+const SURGERY_OPTIONS_P30 = [
+  {name:'Nose Job', cost:3000, gain:[3,8]},
+  {name:'Face Lift', cost:6000, gain:[4,10]},
+  {name:'Liposuction', cost:4500, gain:[2,6]},
+  {name:'Hair Transplant', cost:2500, gain:[1,4]},
+];
+function getSurgeryP30(name){
+  const opt = SURGERY_OPTIONS_P30.find(o=>o.name===name);
+  if(!opt) return;
+  if(state.money<opt.cost){ log(`Not enough money for a ${opt.name}.`,'bad'); closePanel(); render(); return; }
+  state.money -= opt.cost;
+  if(chance(88)){
+    const gain = rand(opt.gain[0], opt.gain[1]);
+    state.stats.looks = clamp(state.stats.looks+gain,0,100);
+    log(`Your ${opt.name} was a success! Looks improved.`,'good');
+    checkAchievement('surgery_glow_up');
+  } else {
+    const loss = rand(2,6);
+    state.stats.looks = clamp(state.stats.looks-loss,0,100);
+    state.stats.health = clamp(state.stats.health-5,0,100);
+    log(`Your ${opt.name} didn't go as planned. Complications set you back.`,'bad');
+  }
+  closePanel(); render();
+}
+function openSurgeryPanelP30(){
+  let html = `<p style="color:var(--sub)">Cosmetic procedures can boost your looks — but there's always a small risk something goes wrong.</p>`;
+  SURGERY_OPTIONS_P30.forEach(o=>{
+    html += `<button class="btn btn-block" onclick='getSurgeryP30(${JSON.stringify(o.name)})'>${o.name} ($${o.cost.toLocaleString()})</button>`;
+  });
+  openPanel('Plastic Surgery', html);
+}
+const _origOpenActivitiesPanel_P30 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P30();
+  if(state.inPrison) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = 'Wellness & Looks';
+  body.appendChild(label);
+  const gymBtn = document.createElement('button');
+  gymBtn.className = 'btn btn-block';
+  gymBtn.textContent = '🏋️ Work Out (Free)';
+  gymBtn.onclick = gymWorkoutP30;
+  body.appendChild(gymBtn);
+  if(state.age>=18){
+    const surgeryBtn = document.createElement('button');
+    surgeryBtn.className = 'btn btn-block btn-accent';
+    surgeryBtn.textContent = '💉 Plastic Surgery';
+    surgeryBtn.onclick = openSurgeryPanelP30;
+    body.appendChild(surgeryBtn);
   }
 };
 /* =========================================================================
