@@ -4440,6 +4440,52 @@ openAssetsPanel = function(){
   btn.onclick = openStockPanelP40;
   body.appendChild(btn);
 };
+
+/* ---------------------------------------------------------------------
+   P41 — Prestige career ladders: Doctor and Lawyer stop being flat
+   single-salary jobs and get an internal rank track, the same shape
+   as the military/mafia ladders, driven by years on the job.
+   --------------------------------------------------------------------- */
+const PRESTIGE_TRACKS_P41 = {
+  Doctor: {titles:['Resident Physician','Attending Physician','Senior Physician','Chief of Medicine'], mult:[1, 1.4, 1.9, 2.6]},
+  Lawyer: {titles:['Associate Attorney','Senior Associate','Junior Partner','Senior Partner'], mult:[1, 1.35, 1.8, 2.5]},
+};
+Object.assign(ACHIEVEMENTS, {
+  chief_of_medicine_ach:'Rose to Chief of Medicine',
+  senior_partner_ach:'Made Senior Partner',
+});
+const _origApplyForJob_P41 = applyForJob;
+applyForJob = function(job){
+  const beforeJob = state.job;
+  _origApplyForJob_P41(job);
+  if(state.job && state.job!==beforeJob && PRESTIGE_TRACKS_P41[job.title]){
+    const track = PRESTIGE_TRACKS_P41[job.title];
+    state.job.prestigeBase = job.title;
+    state.job.prestigeRank = 0;
+    state.job.title = track.titles[0];
+  }
+};
+function tickPrestigeCareerP41(){
+  const j = state.job; if(!j || !j.prestigeBase) return;
+  const track = PRESTIGE_TRACKS_P41[j.prestigeBase];
+  if(j.prestigeRank < track.titles.length-1 && j.years >= (j.prestigeRank+1)*3 && chance(45)){
+    j.prestigeRank++;
+    j.title = track.titles[j.prestigeRank];
+    const stepRatio = track.mult[j.prestigeRank] / track.mult[j.prestigeRank-1];
+    j.salary = Math.round(j.salary * stepRatio);
+    log(`You were promoted to ${j.title}.`,'good');
+    newspaper(`${state.name.toUpperCase()} PROMOTED TO ${j.title.toUpperCase()}`, `A well-earned step forward in a demanding career.`, 'Business Desk');
+    if(j.prestigeBase==='Doctor' && j.prestigeRank===track.titles.length-1) checkAchievement('chief_of_medicine_ach');
+    if(j.prestigeBase==='Lawyer' && j.prestigeRank===track.titles.length-1) checkAchievement('senior_partner_ach');
+  }
+}
+const _origAgeUp_P41 = ageUp;
+ageUp = function(){
+  _origAgeUp_P41();
+  if(!state || !state.alive) return;
+  tickPrestigeCareerP41();
+  render();
+};
 </script>
 </body>
 </html>
