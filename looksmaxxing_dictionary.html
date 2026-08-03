@@ -1054,6 +1054,23 @@
   }
   .profile-progress-label b { color: var(--ink); }
 
+  .rank-progress-track {
+    width: 100%;
+    height: 8px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .rank-progress-fill { height: 100%; background: var(--ink); transition: width 0.4s ease; }
+
+  .rank-number {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+
   .leaderboard-btn {
     flex-shrink: 0;
     font-family: var(--font-mono);
@@ -6525,11 +6542,11 @@
   }
 
   const TIERS = [
-    { name: "Newcomer", min: 0, color: "#EAEAEA", fg: "#0D0D0D" },
-    { name: "Regular", min: 3, color: "#C4C4C4", fg: "#0D0D0D" },
-    { name: "Veteran", min: 8, color: "#8A8A8A", fg: "#FFFFFF" },
-    { name: "Elite", min: 16, color: "#4A4A4A", fg: "#FFFFFF" },
-    { name: "Legend", min: 30, color: "#0D0D0D", fg: "#FFFFFF" }
+    { name: "Newcomer", min: 0, color: "#EAEAEA", fg: "#0D0D0D", icon: "○" },
+    { name: "Regular", min: 3, color: "#C4C4C4", fg: "#0D0D0D", icon: "▪" },
+    { name: "Veteran", min: 8, color: "#8A8A8A", fg: "#FFFFFF", icon: "▪▪" },
+    { name: "Elite", min: 16, color: "#4A4A4A", fg: "#FFFFFF", icon: "▪▪▪" },
+    { name: "Legend", min: 30, color: "#0D0D0D", fg: "#FFFFFF", icon: "★" }
   ];
 
   function authorStats(name) {
@@ -6589,7 +6606,7 @@
           <div class="leaderboard-name-wrap">
             <div class="leaderboard-name">
               @${escapeHtml(a.name)}
-              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.icon} ${current.name}</span>
               ${staffBadgeHtml(a.name)}
             </div>
           </div>
@@ -6747,7 +6764,7 @@
   function tierBadgeHtml(name) {
     const { score } = authorStats(name);
     const { current } = tierForScore(score);
-    return `<span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>`;
+    return `<span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.icon} ${current.name}</span>`;
   }
 
   const STAFF_MEMBERS = new Set(["orthobound", "derma.simplified"]);
@@ -6795,7 +6812,7 @@
           <div>
             <div class="profile-name">@${escapeHtml(name)}</div>
             <div class="profile-badges">
-              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.icon} ${current.name}</span>
               ${staffBadgeHtml(name)}
               ${vipHtml}
             </div>
@@ -6844,18 +6861,31 @@
   function renderProfileCard() {
     const { threadCount, replyCount, score } = authorStats(username);
     const { current, next } = tierForScore(score);
+    const globalRank = getAllAuthors().findIndex(a => a.name === username) + 1;
     const vipHtml = isPremium ? `<span class="tier-badge vip">👑 VIP</span>` : "";
+    const pctToNext = next ? Math.min(100, Math.round(((score - current.min) / (next.min - current.min)) * 100)) : 100;
     const progressHtml = next
-      ? `<div class="profile-progress-label">${next.min - score} pts to <b>${next.name}</b></div>`
+      ? `<div class="profile-progress-label">${next.min - score} pts to <b>${next.icon} ${next.name}</b></div>`
       : `<div class="profile-progress-label">Max tier reached</div>`;
+
+    const prevTierName = localStorage.getItem("looksmax_last_tier");
+    if (prevTierName && prevTierName !== current.name) {
+      const prevIdx = TIERS.findIndex(t => t.name === prevTierName);
+      const curIdx = TIERS.indexOf(current);
+      if (curIdx > prevIdx) {
+        setTimeout(() => showToast(`🎉 Ranked up to ${current.icon} ${current.name}!`), 2400);
+      }
+    }
+    localStorage.setItem("looksmax_last_tier", current.name);
+
     document.getElementById("profileCard").innerHTML = `
       <div class="profile-top">
         <div style="display:flex; align-items:center; gap:12px;">
           ${avatarHtml(username, true)}
           <div>
-            <div class="profile-name">@${escapeHtml(username)}</div>
+            <div class="profile-name">@${escapeHtml(username)} <span class="rank-number">#${globalRank || "—"}</span></div>
             <div class="profile-badges">
-              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.name}</span>
+              <span class="tier-badge" style="background:${current.color};color:${current.fg};">${current.icon} ${current.name}</span>
               ${vipHtml}
             </div>
           </div>
@@ -6875,6 +6905,7 @@
       <div class="profile-progress-row">
         ${progressHtml}
       </div>
+      <div class="rank-progress-track"><div class="rank-progress-fill" style="width:${pctToNext}%;"></div></div>
       <div class="profile-action-row">
         <button class="leaderboard-btn" id="leaderboardBtn">🏆 Leaderboard</button>
         <button class="leaderboard-btn" id="achievementsBtn">🏅 Achievements</button>
