@@ -27,7 +27,7 @@
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --ad-banner-h: 40px;
+    --ad-banner-h: 64px;
     --bottom-nav-h: 62px;
   }
 
@@ -884,57 +884,94 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 150;
-    background: var(--ink-fixed);
-    border-bottom: 3px solid var(--ink-fixed);
     padding-top: var(--safe-top);
+    pointer-events: none;
   }
   .ad-banner.hidden { display: none; }
 
-  .ad-banner-inner {
+  .ad-banner-card {
+    pointer-events: auto;
     max-width: 480px;
-    margin: 0 auto;
+    margin: 10px auto 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 14px;
+    gap: 11px;
+    padding: 10px 12px;
+    background: var(--ink-fixed);
+    border-radius: 16px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.32), 0 2px 6px rgba(0,0,0,0.22);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    animation: adBannerIn 0.55s cubic-bezier(0.16,1,0.3,1);
+  }
+  .ad-banner-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  }
+  .ad-banner-card:active { transform: scale(0.985); }
+  @keyframes adBannerIn {
+    from { transform: translateY(-22px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
-  .ad-banner-tag {
+  .ad-banner-icon {
     flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: 9px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFFFFF, #C9C9C9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
     font-weight: 800;
-    letter-spacing: 0.4px;
+    font-size: 12px;
+    color: #0D0D0D;
+  }
+
+  .ad-banner-body { flex: 1; min-width: 0; }
+
+  .ad-banner-sponsored {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
-    color: var(--ink-fixed);
-    background: var(--yellow);
-    padding: 2px 6px;
-    border: 1.5px solid var(--card);
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 2px;
   }
 
   .ad-banner-text {
-    flex: 1;
-    min-width: 0;
-    font-family: var(--font-mono);
-    font-size: 11px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
     color: var(--card-fixed);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .ad-banner-remove {
+  .ad-banner-dismiss {
     flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--ink-fixed);
-    background: var(--lime);
-    border: 1.5px solid var(--card);
-    padding: 5px 9px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    white-space: nowrap;
-    text-transform: uppercase;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .ad-banner-dismiss:active { background: rgba(255,255,255,0.28); transform: scale(0.88);
   }
 
   /* ---------- Bottom Nav ---------- */
@@ -2250,10 +2287,13 @@
 </script>
 
 <div class="ad-banner" id="adBanner">
-  <div class="ad-banner-inner">
-    <span class="ad-banner-tag">Ad</span>
-    <span class="ad-banner-text" id="adBannerText">Sponsored — GlowLab Skincare: 20% off your first order</span>
-    <button class="ad-banner-remove" id="adBannerRemove">Remove Ads</button>
+  <div class="ad-banner-card" id="adBannerCard">
+    <div class="ad-banner-icon">GL</div>
+    <div class="ad-banner-body">
+      <span class="ad-banner-sponsored">Sponsored</span>
+      <div class="ad-banner-text" id="adBannerText">GlowLab Skincare — 20% off your first order</div>
+    </div>
+    <button class="ad-banner-dismiss" id="adBannerDismiss" aria-label="Dismiss for now">✕</button>
   </div>
 </div>
 
@@ -6323,7 +6363,8 @@
 
   const adEls = {
     banner: document.getElementById("adBanner"),
-    removeBtn: document.getElementById("adBannerRemove"),
+    bannerCard: document.getElementById("adBannerCard"),
+    dismissBtn: document.getElementById("adBannerDismiss"),
     removeAdsOverlay: document.getElementById("removeAdsOverlay"),
     removeAdsClose: document.getElementById("removeAdsClose"),
     removeAdsCta: document.getElementById("removeAdsCta"),
@@ -6347,6 +6388,17 @@
   function openRemoveAds() { adEls.removeAdsOverlay.classList.add("show"); }
   function closeRemoveAds() { adEls.removeAdsOverlay.classList.remove("show"); }
 
+  function dismissAdForSession() {
+    adEls.bannerCard.style.animation = "none";
+    adEls.bannerCard.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+    adEls.bannerCard.style.transform = "translateY(-24px)";
+    adEls.bannerCard.style.opacity = "0";
+    setTimeout(() => {
+      adEls.banner.classList.add("hidden");
+      adEls.appEl.classList.add("ads-removed");
+    }, 250);
+  }
+
   function unlockRemoveAds() {
     adsRemoved = true;
     localStorage.setItem("looksmax_noads", "true");
@@ -6356,7 +6408,11 @@
     showToast("Ads removed on this device.");
   }
 
-  adEls.removeBtn.addEventListener("click", openRemoveAds);
+  adEls.bannerCard.addEventListener("click", openRemoveAds);
+  adEls.dismissBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dismissAdForSession();
+  });
   adEls.removeAdsClose.addEventListener("click", closeRemoveAds);
   adEls.removeAdsOverlay.addEventListener("click", (e) => { if (e.target === adEls.removeAdsOverlay) closeRemoveAds(); });
   adEls.removeAdsCta.addEventListener("click", unlockRemoveAds);
