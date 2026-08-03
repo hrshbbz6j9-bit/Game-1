@@ -3693,6 +3693,292 @@ startNewLife = function(){
   _origStartNewLife_P32();
   if(state) generateGodparentsP32();
 };
+
+/* ---------------------------------------------------------------------
+   P33 — Mafia career: a proper rank ladder (Associate to Don) layered
+   on top of the normal job system, distinct from the street-gang
+   mechanic. Heat builds from every job and comes back around as arrest
+   or rival-family risk each year; walking away is its own gamble.
+   --------------------------------------------------------------------- */
+const MAFIA_RANKS_P33 = ['Associate','Soldier','Capo','Underboss','Consigliere','Don'];
+const MAFIA_SALARY_P33 = [12000, 30000, 65000, 110000, 160000, 260000];
+const MAFIA_FAMILIES_P33 = ['The Moretti Family','The Costa Family','The Falcone Family','The Vitale Family','The Russo Family','The Amato Family'];
+Object.assign(ACHIEVEMENTS, {
+  made_man_ach:'Became a made man in the Mafia',
+  mafia_don_ach:'Rose to Don of a crime family',
+});
+SECRET_ENDINGS.push({id:'godfather', title:'The Godfather', cond:s=>!!(s.flags && s.flags.becameDon)});
+
+function mafiaJobTitleP33(rank){ return 'Mafia '+MAFIA_RANKS_P33[rank]; }
+
+function joinMafiaP33(){
+  if(state.mafia || state.inPrison || state.job) return;
+  state.mafia = {rank:0, loyalty:0, heat:0, family: pick(MAFIA_FAMILIES_P33)};
+  state.job = {title:mafiaJobTitleP33(0), salary:MAFIA_SALARY_P33[0], tier:5, years:0, isMafia:true};
+  log(`You were brought into ${state.mafia.family} as an Associate. There's no easy way out now.`,'bad');
+  closePanel(); render();
+}
+
+function mafiaPromoteCheckP33(){
+  const m = state.mafia; if(!m) return;
+  const threshold = (m.rank+1)*22;
+  if(m.rank < MAFIA_RANKS_P33.length-1 && m.loyalty >= threshold){
+    m.rank++;
+    m.loyalty = 0;
+    state.job.title = mafiaJobTitleP33(m.rank);
+    state.job.salary = MAFIA_SALARY_P33[m.rank];
+    log(`You were promoted to ${MAFIA_RANKS_P33[m.rank]} in ${m.family}.`,'good');
+    newspaper(`UNDERWORLD SHAKEUP: NEW ${MAFIA_RANKS_P33[m.rank].toUpperCase()} NAMED`, `Sources whisper that a rising figure has been elevated within ${m.family}.`, 'Underworld Desk');
+    if(m.rank===1) checkAchievement('made_man_ach');
+    if(m.rank===MAFIA_RANKS_P33.length-1){ checkAchievement('mafia_don_ach'); state.flags.becameDon = true; }
+  }
+}
+
+function mafiaActivity(type){
+  const m = state.mafia; if(!m) return;
+  if(type==='numbers'){
+    const amt = rand(500,2000);
+    state.money += amt; m.heat = clamp(m.heat+rand(1,3),0,100); m.loyalty += rand(2,4);
+    log(`You ran numbers for the family, pulling in ${fmtMoney(amt)}.`,'good');
+  } else if(type==='extortion'){
+    const amt = rand(1200,4500);
+    state.money += amt; m.heat = clamp(m.heat+rand(3,7),0,100); m.loyalty += rand(3,6);
+    state.stats.karma = clamp(state.stats.karma-rand(2,5),0,100);
+    log(`You collected protection money from local businesses. ${fmtMoney(amt)} richer, one shopkeeper poorer.`,'good');
+  } else if(type==='hit'){
+    if(m.rank<1){ log(`You're not trusted with that kind of work yet.`,'bad'); closePanel(); render(); return; }
+    if(chance(70)){
+      const amt = rand(6000,16000);
+      state.money += amt; m.loyalty += rand(6,10); m.heat = clamp(m.heat+rand(6,12),0,100);
+      state.stats.karma = clamp(state.stats.karma-12,0,100);
+      state.murders = (state.murders||0)+1;
+      log(`The job was done clean. ${fmtMoney(amt)} landed in your pocket, and the family took notice.`,'bad');
+    } else if(chance(50)){
+      m.heat = 100;
+      state.inPrison = true; state.prisonYearsLeft = rand(10,25); state.prisonRep = 0;
+      log(`The job went sideways. You were pinched at the scene — ${state.prisonYearsLeft} years.`,'bad');
+      newspaper(`MOB HIT GONE WRONG: SUSPECT ARRESTED`, `Police say the botched job has ties to ${m.family}.`, 'Underworld Desk');
+    } else {
+      die("a rival family's retaliation");
+    }
+  } else if(type==='laylow'){
+    m.heat = clamp(m.heat-rand(12,22),0,100);
+    log(`You kept a low profile for a while.`,'neutral');
+  }
+  mafiaPromoteCheckP33();
+  closePanel(); render();
+}
+
+function leaveMafiaP33(){
+  const m = state.mafia; if(!m) return;
+  if(chance(65)){
+    log(`You managed to walk away from ${m.family} clean. Not everyone gets that chance.`,'good');
+    state.mafia = null;
+    if(state.job){ state.jobHistory.push(state.job); state.job = null; }
+  } else if(chance(50)){
+    m.heat = clamp(m.heat+25,0,100);
+    log(`"Nobody just walks away." They made sure you understood that.`,'bad');
+  } else {
+    die('trying to leave the family');
+  }
+  closePanel(); render();
+}
+
+function tickMafiaRiskP33(){
+  const m = state.mafia; if(!m || state.inPrison) return;
+  const hitChance = (m.rank>=2 ? m.heat*0.15 : m.heat*0.05);
+  if(chance(hitChance)){ die('a mob hit ordered by a rival family'); return; }
+  const arrestChance = m.heat*0.35;
+  if(chance(arrestChance)){
+    state.inPrison = true; state.prisonYearsLeft = rand(5,20); state.prisonRep = 0;
+    m.heat = clamp(m.heat-40,0,100);
+    log(`The feds finally caught up with you. RICO charges — ${state.prisonYearsLeft} years.`,'bad');
+    newspaper(`MOB FIGURE INDICTED IN SWEEPING RICO CASE`, `Federal prosecutors say the case could take down much of ${m.family}.`, 'Underworld Desk');
+  }
+}
+const _origAgeUp_P33 = ageUp;
+ageUp = function(){
+  _origAgeUp_P33();
+  if(!state || !state.alive) return;
+  tickMafiaRiskP33();
+  render();
+};
+const _origQuitJob_P33 = quitJob;
+quitJob = function(){
+  if(state.job && state.job.isMafia){ leaveMafiaP33(); return; }
+  _origQuitJob_P33();
+};
+const _origOpenCareerPanel_P33 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P33();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  if(state.mafia){
+    body.appendChild(hr);
+    const label = document.createElement('b');
+    label.textContent = `${state.mafia.family} — Heat ${state.mafia.heat}% · Loyalty ${state.mafia.loyalty}`;
+    body.appendChild(label);
+  } else if(state.age>=18 && !state.inPrison && !state.job){
+    body.appendChild(hr);
+    const label = document.createElement('b'); label.textContent = 'Underworld Opportunities'; body.appendChild(label);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-danger';
+    btn.textContent = '🕶️ Join the Mafia';
+    btn.onclick = joinMafiaP33;
+    body.appendChild(btn);
+  }
+};
+const _origOpenActivitiesPanel_P33 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P33();
+  if(state.inPrison || !state.mafia) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = `${state.mafia.family} Business`; body.appendChild(label);
+  const mk = (text, fn, cls)=>{
+    const b = document.createElement('button');
+    b.className = 'btn btn-block' + (cls ? (' '+cls) : '');
+    b.textContent = text;
+    b.onclick = fn;
+    body.appendChild(b);
+  };
+  mk('🎲 Run Numbers', ()=>mafiaActivity('numbers'));
+  mk('💰 Collect Protection Money', ()=>mafiaActivity('extortion'), 'btn-danger');
+  mk('🔫 Go on a Hit', ()=>mafiaActivity('hit'), 'btn-danger');
+  mk('🤫 Lay Low', ()=>mafiaActivity('laylow'));
+  mk('🚪 Try to Leave the Family', leaveMafiaP33, 'btn-danger');
+};
+
+/* ---------------------------------------------------------------------
+   P34 — Pro sports gets the rest of a real career: injury risk on the
+   way up and while pro, All-Star/MVP/championship moments, endorsement
+   deals, and a Retire button that gambles on the Hall of Fame instead
+   of just quietly disappearing once you go pro.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, {
+  all_star_ach:'Selected as a league All-Star',
+  sports_mvp_ach:'Won a league MVP award',
+  champion_ach:'Won a championship',
+  hall_of_fame_ach:'Inducted into the Hall of Fame',
+});
+const _origJoinSport_P34 = joinSport;
+joinSport = function(sport){
+  _origJoinSport_P34(sport);
+  if(state.sportsCareer){
+    state.sportsCareer.fame = 0;
+    state.sportsCareer.injuries = 0;
+    state.sportsCareer.championships = 0;
+    state.sportsCareer.proYears = 0;
+  }
+};
+function tickSportsInjuryP34(){
+  const sc = state.sportsCareer; if(!sc || sc.stage<2) return;
+  if(!chance(7)) return;
+  if(chance(80)){
+    const dip = rand(5,15);
+    sc.skill = clamp(sc.skill-dip,0,100);
+    sc.injuries = (sc.injuries||0)+1;
+    state.stats.health = clamp(state.stats.health-rand(5,15),0,100);
+    log(`You picked up an injury on the ${sc.sport} field. It'll take time to bounce back.`,'bad');
+  } else {
+    const wasPro = sc.stage===6;
+    log(`A career-ending injury. Your ${sc.sport} days are over${wasPro?' at the top of your game':''}.`,'bad');
+    sportsHeadline(`${(sc.sport||'').toUpperCase()} CAREER ENDS IN HEARTBREAK`, `An injury forces ${state.name} into early retirement.`);
+    if(wasPro && state.job && state.job.title===`Pro ${sc.sport} Athlete`){
+      state.jobHistory.push(state.job);
+      state.job = null;
+    }
+    state.sportsCareer = null;
+  }
+}
+const PRO_SPORTS_EVENT_LINES_P34 = {
+  allstar: ['named to the league All-Star roster', 'earned an All-Star selection for the first time', 'made the All-Star team again'],
+  mvp: ['took home the league MVP award', 'was crowned Most Valuable Player'],
+  championship: ['led the team to a championship', 'won it all this season'],
+  scandal: ['was caught up in a doping controversy', 'faced a gambling scandal that rocked the locker room'],
+};
+function tickProSportsEventsP34(){
+  const sc = state.sportsCareer; if(!sc || sc.stage!==6) return;
+  sc.proYears = (sc.proYears||0)+1;
+  if(chance(12)){
+    sc.fame = clamp((sc.fame||0)+10,0,100);
+    checkAchievement('all_star_ach');
+    sportsHeadline(`${state.name.toUpperCase()} ${pick(PRO_SPORTS_EVENT_LINES_P34.allstar).toUpperCase()}`, `Another standout season for the ${sc.sport} star.`);
+  }
+  if((sc.fame||0)>=40 && chance(6)){
+    sc.fame = clamp((sc.fame||0)+15,0,100);
+    checkAchievement('sports_mvp_ach');
+    sportsHeadline(`${state.name.toUpperCase()} ${pick(PRO_SPORTS_EVENT_LINES_P34.mvp).toUpperCase()}`, `The MVP trophy comes home this year.`);
+    if(state.job) state.job.salary = Math.round(state.job.salary*1.15);
+  }
+  if(chance(8)){
+    sc.championships = (sc.championships||0)+1;
+    state.stats.happiness = clamp(state.stats.happiness+8,0,100);
+    checkAchievement('champion_ach');
+    sportsHeadline(`${state.name.toUpperCase()} ${pick(PRO_SPORTS_EVENT_LINES_P34.championship).toUpperCase()}`, `Champions, once again.`);
+  }
+  if(chance(5)){
+    sc.fame = clamp((sc.fame||0)-15,0,100);
+    state.stats.karma = clamp(state.stats.karma-8,0,100);
+    if(state.job) state.job.salary = Math.round(state.job.salary*0.85);
+    sportsHeadline(`${state.name.toUpperCase()} ${pick(PRO_SPORTS_EVENT_LINES_P34.scandal).toUpperCase()}`, `The fallout could cost more than money.`);
+  }
+}
+const _origAgeUp_P34 = ageUp;
+ageUp = function(){
+  _origAgeUp_P34();
+  if(!state || !state.alive) return;
+  tickSportsInjuryP34();
+  tickProSportsEventsP34();
+  render();
+};
+function requestEndorsementDealP34(){
+  const sc = state.sportsCareer; if(!sc || sc.stage!==6) return;
+  const fame = sc.fame||0;
+  if(fame<15){ log(`No one wants to sponsor you yet — build up your fame first.`,'bad'); closePanel(); render(); return; }
+  const amt = Math.round(rand(2000,8000) * (1 + fame/40));
+  state.money += amt;
+  log(`You landed an endorsement deal worth ${fmtMoney(amt)}.`,'good');
+  closePanel(); render();
+}
+function retireFromSportsP34(){
+  const sc = state.sportsCareer; if(!sc || sc.stage!==6) return;
+  const score = (sc.fame||0) + sc.skill + (sc.championships||0)*15 + (sc.proYears||0)*3;
+  const inducted = score>=140;
+  log(`You retired from professional ${sc.sport} after ${sc.proYears||0} years at the top.`,'good');
+  if(state.job){ state.jobHistory.push(state.job); state.job = null; }
+  if(inducted){
+    checkAchievement('hall_of_fame_ach');
+    newspaper(`${state.name.toUpperCase()} INDUCTED INTO THE HALL OF FAME`, `A storied ${sc.sport} career earns its rightful place in history.`, 'Sports Desk');
+  } else {
+    newspaper(`${state.name.toUpperCase()} RETIRES FROM PRO ${sc.sport.toUpperCase()}`, `A quiet end to a professional career.`, 'Sports Desk');
+  }
+  state.sportsCareer = null;
+  closePanel(); render();
+}
+const _origOpenCareerPanel_P34 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P34();
+  const sc = state.sportsCareer;
+  if(!sc || sc.stage!==6) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b');
+  label.textContent = `Fame ${sc.fame||0}% · Championships ${sc.championships||0} · Injuries ${sc.injuries||0}`;
+  body.appendChild(label);
+  const dealBtn = document.createElement('button');
+  dealBtn.className = 'btn btn-block btn-accent';
+  dealBtn.textContent = '🤝 Request Endorsement Deal';
+  dealBtn.onclick = requestEndorsementDealP34;
+  body.appendChild(dealBtn);
+  const retireBtn = document.createElement('button');
+  retireBtn.className = 'btn btn-block btn-danger';
+  retireBtn.textContent = '🏁 Retire';
+  retireBtn.onclick = retireFromSportsP34;
+  body.appendChild(retireBtn);
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
