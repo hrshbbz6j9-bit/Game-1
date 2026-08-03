@@ -16,6 +16,7 @@
     --card-fixed: #FFFFFF;
     --lime: #EDEDED;
     --coral: #262626;
+    --coral-ink: #262626;
     --blue: #4A4A4A;
     --yellow: #C7C7C7;
     --orange: #5A5A5A;
@@ -35,6 +36,7 @@
     --ink: #F2F2F0;
     --ink-soft: #C4C4C0;
     --ink-mute: #8A8A86;
+    --coral-ink: #B8B8B2;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -218,7 +220,7 @@
     font-size: 11px;
     letter-spacing: 2px;
     font-weight: 800;
-    color: var(--coral);
+    color: var(--coral-ink);
     text-transform: uppercase;
     margin-bottom: 14px;
   }
@@ -576,7 +578,7 @@
     flex-shrink: 0;
     transition: transform 0.15s ease;
   }
-  .fav-btn.active { color: var(--coral); }
+  .fav-btn.active { color: var(--coral-ink); }
   .fav-btn:active { transform: scale(1.3); }
 
   /* ---------- Technique Guide (Premium) ---------- */
@@ -1138,7 +1140,7 @@
     gap: 4px;
     transition: transform 0.15s ease;
   }
-  .like-btn.liked { color: var(--coral); font-weight: 800; }
+  .like-btn.liked { color: var(--coral-ink); font-weight: 800; }
   .like-btn:active { transform: scale(1.2); }
 
   /* ---------- Bestseller Badge ---------- */
@@ -1271,7 +1273,7 @@
     font-size: 10.5px;
     color: var(--ink-mute);
   }
-  .thread-meta .author { color: var(--coral); font-weight: 800; }
+  .thread-meta .author { color: var(--coral-ink); font-weight: 800; }
 
   .thread-last-activity {
     display: flex;
@@ -1284,7 +1286,7 @@
     font-size: 10.5px;
     color: var(--ink-mute);
   }
-  .thread-last-activity .author { color: var(--coral); font-weight: 800; }
+  .thread-last-activity .author { color: var(--coral-ink); font-weight: 800; }
 
   .tier-badge.staff {
     background: #FFFFFF;
@@ -1318,10 +1320,61 @@
   }
 
   .reply-list { display: flex; flex-direction: column; gap: 10px; }
-  .reply-item { font-family: var(--font-body); font-size: 12.5px; line-height: 1.5; }
-  .reply-author { font-family: var(--font-mono); color: var(--coral); font-weight: 800; margin-right: 6px; }
+  .reply-item { display: flex; align-items: flex-start; gap: 4px; font-family: var(--font-body); font-size: 12.5px; line-height: 1.5; }
+  .reply-item-body { flex: 1; min-width: 0; }
+  .reply-author { font-family: var(--font-mono); color: var(--coral-ink); font-weight: 800; margin-right: 6px; }
   .reply-item .tier-badge { margin-right: 6px; }
   .reply-text { color: var(--ink-soft); }
+
+  .post-signature {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dotted var(--ink-mute);
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+
+  .quote-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    font-size: 15px;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 0 2px;
+  }
+  .quote-btn:active { transform: scale(1.2); }
+
+  .quoted-reply {
+    background: var(--paper);
+    border-left: 3px solid var(--ink);
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .quoted-reply span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .quoted-reply button { flex-shrink: 0; background: none; border: none; color: var(--ink-mute); cursor: pointer; font-size: 12px; }
+
+  .locked-message {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    text-align: center;
+    padding: 12px;
+    border: 1.5px dashed var(--ink);
+    margin-top: 4px;
+  }
+
+  .thread-tag.locked-tag { background: var(--coral); color: #fff; }
 
   .reply-input-row { display: flex; gap: 8px; margin-top: 12px; }
 
@@ -1528,7 +1581,7 @@
     gap: 8px;
     margin-bottom: 4px;
   }
-  .review-item-head .author { font-family: var(--font-mono); font-size: 11px; color: var(--coral); font-weight: 800; }
+  .review-item-head .author { font-family: var(--font-mono); font-size: 11px; color: var(--coral-ink); font-weight: 800; }
 
   .review-stars { font-size: 12px; color: var(--ink); letter-spacing: 1px; }
 
@@ -2071,6 +2124,8 @@
     <div class="paywall-sub" style="text-align:left;margin-bottom:16px;padding:0;">Your username shows on every thread and reply you post.</div>
     <label class="form-label">Username</label>
     <input type="text" class="form-input" id="profileUsernameInput" placeholder="e.g. jawline_journey" maxlength="24">
+    <label class="form-label">Signature</label>
+    <input type="text" class="form-input" id="profileSignatureInput" placeholder="e.g. 8 months mewing | trust the process" maxlength="60">
     <button class="cta-btn" id="profileSave">Save Profile</button>
   </div>
 </div>
@@ -5855,6 +5910,7 @@
     {
       id: 25,
       pinned: true,
+      locked: true,
       prefix: "ANNOUNCEMENT",
       title: "Welcome to the Forum — Community Guidelines",
       category: "Questions",
@@ -6175,10 +6231,32 @@
 
   /* ---------------- Username & Member Tiers ---------------- */
   let username = localStorage.getItem("looksmax_username") || "you";
+  let signature = localStorage.getItem("looksmax_signature") || "";
 
   function saveUsername(name) {
     username = name;
     localStorage.setItem("looksmax_username", name);
+  }
+
+  function saveSignature(sig) {
+    signature = sig;
+    localStorage.setItem("looksmax_signature", sig);
+  }
+
+  const SIGNATURES = {
+    "coach.leanmax": "Certified strength coach | natty since day one 💪",
+    "derma.simplified": "Skincare nerd | ask me about actives",
+    "orthobound": "Keep it civil, keep it useful.",
+    "quietjawline": "8 months mewing | trust the process",
+    "tailored_up": "Fit > brand. Always.",
+    "duneshadow": "Consistency beats intensity.",
+    "matte_or_bust": "Oily skin survivor 🧴"
+  };
+
+  function signatureHtml(name) {
+    const sig = name === username ? signature : SIGNATURES[name];
+    if (!sig) return "";
+    return `<div class="post-signature">"${escapeHtml(sig)}"</div>`;
   }
 
   const TIERS = [
@@ -6462,6 +6540,7 @@
   const profileOverlay = document.getElementById("profileOverlay");
   function openProfileModal() {
     document.getElementById("profileUsernameInput").value = username;
+    document.getElementById("profileSignatureInput").value = signature;
     profileOverlay.classList.add("show");
   }
   function closeProfileModal() { profileOverlay.classList.remove("show"); }
@@ -6471,6 +6550,7 @@
     const val = document.getElementById("profileUsernameInput").value.trim();
     if (!val) { showToast("Enter a username first."); return; }
     saveUsername(val);
+    saveSignature(document.getElementById("profileSignatureInput").value.trim());
     closeProfileModal();
     renderProfileCard();
     renderThreads();
@@ -6653,6 +6733,21 @@
 
   /* ---------------- Sort ---------------- */
   let threadSort = "newest";
+  let pendingQuote = null;
+
+  function setQuote(threadId, author, text) {
+    pendingQuote = { threadId, author, text };
+    renderThreads();
+    setTimeout(() => {
+      const input = document.querySelector(`.thread-card[data-thread-id="${threadId}"] .reply-input`);
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function clearQuote() {
+    pendingQuote = null;
+    renderThreads();
+  }
   document.querySelectorAll(".sort-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       threadSort = btn.dataset.sort;
@@ -6690,8 +6785,18 @@
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
       card.dataset.threadId = t.id;
       const repliesHtml = t.replies.length
-        ? t.replies.map(r => `<div class="reply-item">${avatarHtml(r.author)}<span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span></div>`).join("")
+        ? t.replies.map((r, idx) => `
+            <div class="reply-item">
+              ${avatarHtml(r.author)}
+              <div class="reply-item-body">
+                <span class="reply-author">${escapeHtml(r.author)}</span>${tierBadgeHtml(r.author)}<span class="reply-text">${escapeHtml(r.text)}</span>
+                ${signatureHtml(r.author)}
+              </div>
+              <button class="quote-btn" data-quote-idx="${idx}" aria-label="Quote">❝</button>
+            </div>
+          `).join("")
         : `<div class="reply-item"><span class="reply-text">No replies yet — be the first.</span></div>`;
+      const isLocked = !!t.locked;
       const views = t.views || (t.id * 37 + 120);
       const reactions = t.reactions || {};
       const reactionsHtml = REACTION_TYPES.map(r => {
@@ -6699,11 +6804,12 @@
         const active = userReactions.has(`${t.id}:${r.key}`);
         return `<button class="reaction-btn ${active ? "active" : ""}" data-react="${r.key}">${r.emoji} ${count}</button>`;
       }).join("");
+      const quotedHere = pendingQuote && pendingQuote.threadId === t.id ? pendingQuote : null;
       card.innerHTML = `
         <div class="thread-top">
-          <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
+          <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${isLocked ? '<span class="pin-icon">🔒</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
           <button class="watch-btn ${watchedThreads.has(t.id) ? "active" : ""}" data-watch="1" aria-label="Watch thread">${watchedThreads.has(t.id) ? "🔖" : "📑"}</button>
-          <span class="thread-tag" style="${categoryTagStyle(t.category)}">${escapeHtml(t.category)}</span>
+          <span class="thread-tag ${isLocked ? "locked-tag" : ""}" style="${isLocked ? "" : categoryTagStyle(t.category)}">${isLocked ? "LOCKED" : escapeHtml(t.category)}</span>
         </div>
         <div class="thread-meta">
           ${avatarHtml(t.author)}
@@ -6726,11 +6832,22 @@
         <div class="reaction-bar">${reactionsHtml}</div>
         <div class="thread-body">
           <div class="thread-preview">${highlight(escapeHtml(t.body), forumSearchTerm)}</div>
+          ${signatureHtml(t.author)}
           <div class="reply-list">${repliesHtml}</div>
-          <div class="reply-input-row">
-            <input type="text" placeholder="Write a reply..." class="reply-input">
-            <button class="reply-send-btn">Post</button>
-          </div>
+          ${isLocked ? `
+            <div class="locked-message">🔒 This thread is locked — no new replies.</div>
+          ` : `
+            ${quotedHere ? `
+              <div class="quoted-reply">
+                <span>Replying to @${escapeHtml(quotedHere.author)}: "${escapeHtml(quotedHere.text)}"</span>
+                <button data-cancel-quote="1">✕</button>
+              </div>
+            ` : ""}
+            <div class="reply-input-row">
+              <input type="text" placeholder="Write a reply..." class="reply-input">
+              <button class="reply-send-btn">Post</button>
+            </div>
+          `}
         </div>
       `;
       card.querySelector(".thread-top").addEventListener("click", () => {
@@ -6755,17 +6872,32 @@
       });
       const input = card.querySelector(".reply-input");
       const sendBtn = card.querySelector(".reply-send-btn");
-      const postReply = () => {
-        const val = input.value.trim();
-        if (!val) return;
-        t.replies.push({ author: username, text: val });
-        saveThreads();
-        renderThreads();
-        renderProfileCard();
-      };
-      sendBtn.addEventListener("click", (e) => { e.stopPropagation(); postReply(); });
-      input.addEventListener("click", (e) => e.stopPropagation());
-      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.stopPropagation(); postReply(); } });
+      if (input && sendBtn) {
+        const postReply = () => {
+          const val = input.value.trim();
+          if (!val) return;
+          const text = quotedHere ? `@${quotedHere.author}: "${quotedHere.text}" — ${val}` : val;
+          t.replies.push({ author: username, text });
+          pendingQuote = null;
+          saveThreads();
+          renderThreads();
+          renderProfileCard();
+        };
+        sendBtn.addEventListener("click", (e) => { e.stopPropagation(); postReply(); });
+        input.addEventListener("click", (e) => e.stopPropagation());
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.stopPropagation(); postReply(); } });
+      }
+      card.querySelectorAll("[data-quote-idx]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const r = t.replies[parseInt(btn.dataset.quoteIdx, 10)];
+          setQuote(t.id, r.author, r.text);
+        });
+      });
+      const cancelQuoteBtn = card.querySelector("[data-cancel-quote]");
+      if (cancelQuoteBtn) {
+        cancelQuoteBtn.addEventListener("click", (e) => { e.stopPropagation(); clearQuote(); });
+      }
       list.appendChild(card);
     });
   }
