@@ -2984,6 +2984,9 @@ tickSports = function(){
          ... 2-4 choices ...
        ]
      }
+   Optional: cond: s=>boolean — gates the event out of the pool entirely
+   unless true (e.g. only show it if s.mafia exists). Omit for an event
+   anyone in that life stage can hit.
    That's the whole contract. No other wiring is needed — rollChoiceEvent()
    already picks a random one from the current life stage and displays it.
    ========================================================================= */
@@ -2996,7 +2999,7 @@ function choiceBracketKey(){
   return 'elder';
 }
 function rollChoiceEvent(){
-  const pool = CHOICE_EVENTS[choiceBracketKey()];
+  const pool = CHOICE_EVENTS[choiceBracketKey()].filter(ev=>!ev.cond || ev.cond(state));
   if(!pool || !pool.length) return false;
   const ev = pick(pool);
   playScene({
@@ -4499,6 +4502,48 @@ SECRET_ENDINGS.push({
     return topKeys.filter(k=>s.achievements.has(k)).length >= 3;
   }
 });
+
+/* ---------------------------------------------------------------------
+   P43 — Branching choice events themed around this session's new
+   career tracks, using the cond gating added above.
+   --------------------------------------------------------------------- */
+CHOICE_EVENTS.adult.push(
+  {title:"The Consigliere's Test", text:"A senior member wants you to lean on a shopkeeper who's behind on payments to the family.", cond:s=>!!s.mafia, choices:[
+    {label:'Handle it quietly, no violence', type:'good', fx:s=>{s.stats.karma+=3; if(s.mafia) s.mafia.loyalty+=3;}, result:'You talked him down without laying a hand on him. Not everyone would have bothered.'},
+    {label:"Send a message he won't forget", type:'bad', fx:s=>{s.stats.karma-=8; if(s.mafia){s.mafia.loyalty+=10; s.mafia.heat=clamp(s.mafia.heat+8,0,100);}}, result:'Word got around fast. The family took notice — for better and worse.'},
+    {label:'Refuse the job outright', type:'neutral', fx:s=>{if(s.mafia) s.mafia.loyalty=clamp(s.mafia.loyalty-15,0,999); s.stats.happiness-=5;}, result:"They didn't like that. Your standing took a real hit."},
+  ]},
+  {title:'Under Fire', text:'Your unit is pinned down and a wounded comrade is exposed in the open.', cond:s=>!!s.military, choices:[
+    {label:'Risk it to pull them to safety', type:'good', fx:s=>{s.stats.health=clamp(s.stats.health-rand(5,15),0,100); s.stats.karma+=10; if(s.military) s.military.medals++;}, result:'You got them out. Command is putting you in for a commendation.'},
+    {label:'Stay in cover, follow protocol', type:'neutral', fx:s=>{s.stats.karma-=3; s.stats.happiness-=4;}, result:'You stayed put. It was the correct call by the book. It still haunts you.'},
+    {label:'Call in danger-close support', type:'bad', fx:s=>{s.stats.karma-=6; s.stats.happiness-=5;}, result:s=>chance(60)?'The strike worked, but too close for comfort.':'The strike went wrong. You will carry that.'},
+  ]},
+  {title:'The Casting Couch', text:'A producer makes it clear your next role depends on more than your audition tape.', cond:s=>!!(s.acting && s.acting.stage>0), choices:[
+    {label:'Walk out and report them', type:'good', fx:s=>{s.stats.karma+=10; if(s.acting) s.acting.fame=clamp(s.acting.fame-5,0,100);}, result:'You did the right thing. It cost you the role, not your integrity.'},
+    {label:'Play along for the part', type:'bad', fx:s=>{s.stats.karma-=15; s.stats.happiness-=10; if(s.acting) s.acting.fame=clamp(s.acting.fame+10,0,100);}, result:"You got the part. You don't feel good about how."},
+    {label:'Quietly network around them instead', type:'neutral', fx:s=>{if(s.acting) s.acting.fame=clamp(s.acting.fame+3,0,100);}, result:'You found another way in. Slower, but yours.'},
+  ]},
+  {title:'Creative Differences', text:'Your label wants you to chase a trending sound instead of the record you actually want to make.', cond:s=>!!(s.music && s.music.stage>0), choices:[
+    {label:'Stay true to your sound', type:'good', fx:s=>{s.stats.karma+=3; s.stats.happiness+=5; if(s.music) s.music.fame=clamp(s.music.fame-5,0,100);}, result:'You made the record you wanted. Critics respect it, even if it undersells.'},
+    {label:'Chase the trend for the hit', type:'neutral', fx:s=>{s.money+=rand(2000,8000); s.stats.karma-=3; if(s.music) s.music.fame=clamp(s.music.fame+10,0,100);}, result:'It charted. It also wasn\'t really you.'},
+    {label:'Walk away from the label entirely', type:'bad', fx:s=>{s.money-=rand(1000,5000); s.stats.karma+=5; s.stats.happiness+=3;}, result:'The buyout hurt. The creative freedom is worth it.'},
+  ]},
+  {title:'Unrealistic Standards', text:'An agency pressures you to drop weight fast ahead of a major shoot.', cond:s=>!!(s.modeling && s.modeling.stage>0), choices:[
+    {label:'Refuse and set a boundary', type:'good', fx:s=>{s.stats.karma+=5; s.stats.happiness+=3; if(s.modeling) s.modeling.fame=clamp(s.modeling.fame-3,0,100);}, result:'You held your ground. The shoot happened anyway, on your terms.'},
+    {label:'Go along with it', type:'bad', fx:s=>{s.stats.health=clamp(s.stats.health-rand(5,15),0,100); if(s.modeling) s.modeling.fame=clamp(s.modeling.fame+8,0,100);}, result:'The shoot went well. Your body is still sending you the bill.'},
+    {label:'Find a body-positive agency instead', type:'good', fx:s=>{s.stats.karma+=8; s.stats.happiness+=5; if(s.modeling) s.modeling.fame=clamp(s.modeling.fame+2,0,100);}, result:'A better fit, and it turns out good business too.'},
+  ]},
+  {title:'Insider Whisper', text:'A friend at Techora hints that a big announcement is coming before it goes public.', cond:s=>stockPortfolioValueP40()>=1000 || s.money>=5000, choices:[
+    {label:'Buy in before the news breaks', type:'bad', fx:s=>{s.stats.karma-=8;}, result:s=>{ if(chance(50)){ s.money+=rand(3000,15000); return 'The tip paid off big. Insider trading is illegal, but you got away with it.'; } else { s.money=clamp(s.money-rand(1000,5000),0,999999999); s.criminalRecord.push('Insider Trading'); return 'Regulators caught wind of the trade. You paid a hefty fine.'; } }},
+    {label:'Report it to compliance', type:'good', fx:s=>{s.stats.karma+=8;}, result:'You did the right thing and stayed clean.'},
+    {label:'Let the moment pass', type:'neutral', fx:s=>{}, result:'You let it go. Some tips aren\'t worth the risk.'},
+  ]},
+  {title:'Burning the Candle at Both Ends', text:'Juggling everything on your plate is starting to catch up with you.', cond:s=>[s.acting&&s.acting.stage>0, s.music&&s.music.stage>0, s.modeling&&s.modeling.stage>0, !!s.job].filter(Boolean).length>=2, choices:[
+    {label:'Push through, sleep is for the weak', type:'bad', fx:s=>{s.stats.health=clamp(s.stats.health-10,0,100); s.stats.happiness=clamp(s.stats.happiness-8,0,100);}, result:'You powered through. Your body is keeping score.'},
+    {label:'Scale back and focus on one thing', type:'good', fx:s=>{s.stats.happiness=clamp(s.stats.happiness+8,0,100); s.stats.health=clamp(s.stats.health+5,0,100);}, result:'You made peace with doing one thing well instead of everything half-well.'},
+    {label:'Hire help to manage it all', type:'neutral', fx:s=>{s.money=clamp(s.money-rand(2000,5000),0,999999999); s.stats.happiness=clamp(s.stats.happiness+5,0,100);}, result:'Not cheap, but suddenly there are enough hours in the day again.'},
+  ]},
+);
 </script>
 </body>
 </html>
