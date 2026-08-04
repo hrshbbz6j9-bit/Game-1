@@ -5900,6 +5900,75 @@ openCareerPanel = function(){
   }
 };
 Object.assign(ACHIEVEMENTS, { greek_member_ach:'Became a full Greek life member', greek_officer_ach:'Became an officer in your Greek org', greek_president_ach:'Became president of your Greek org' });
+
+/* ---------------------------------------------------------------------
+   P68 — Home Renovation & House Selling: houses could be bought but
+   never sold, and had no way to increase in value beyond the purchase
+   price. This adds a House Manager panel with six renovation options
+   (each raising both resale value and happiness) and a real Sell
+   button. House objects gain an optional .renovations array lazily,
+   the first time a renovation is applied — freshState() doesn't need
+   to know about it since it only exists once a house is purchased.
+   --------------------------------------------------------------------- */
+const RENOVATION_OPTIONS_P68 = [
+  {name:'Kitchen Remodel', cost:15000, valueBoost:20000, happyBoost:5},
+  {name:'Swimming Pool', cost:35000, valueBoost:45000, happyBoost:8},
+  {name:'Home Theater', cost:20000, valueBoost:25000, happyBoost:6},
+  {name:'Smart Home System', cost:12000, valueBoost:16000, happyBoost:4},
+  {name:'Backyard Landscaping', cost:8000, valueBoost:10000, happyBoost:3},
+  {name:'Master Suite Addition', cost:50000, valueBoost:65000, happyBoost:10},
+];
+function renovateHouseP68(idx, renoName){
+  const h = state.assets.houses[idx]; if(!h) return;
+  const r = RENOVATION_OPTIONS_P68.find(x=>x.name===renoName); if(!r) return;
+  if(!h.renovations) h.renovations = [];
+  if(h.renovations.includes(renoName)) return;
+  if(state.money<r.cost){ log(`Not enough money for a ${renoName.toLowerCase()}.`,'bad'); openHouseManagerP68(); return; }
+  state.money -= r.cost;
+  h.value += r.valueBoost;
+  h.renovations.push(renoName);
+  state.stats.happiness = clamp(state.stats.happiness+r.happyBoost,0,100);
+  log(`You renovated ${h.name} with a ${renoName}. It's worth ${fmtMoney(h.value)} now.`,'good');
+  if(h.renovations.length>=3) checkAchievement('renovator_ach');
+  openHouseManagerP68();
+}
+function sellHouseP68(idx){
+  const h = state.assets.houses[idx]; if(!h) return;
+  const sale = Math.round(h.value*0.85);
+  state.money += sale;
+  log(`You sold ${h.name} for ${fmtMoney(sale)}.`,'neutral');
+  state.assets.houses.splice(idx,1);
+  openHouseManagerP68();
+}
+function openHouseManagerP68(){
+  let html = '';
+  if(!state.assets.houses.length){
+    html += `<p style="color:var(--sub)">You don't own any houses yet.</p>`;
+  }
+  state.assets.houses.forEach((h,idx)=>{
+    html += `<div class="list-item"><div class="li-main"><b>${h.name}</b><span>${fmtMoney(h.value)}${h.renovations&&h.renovations.length?(' · '+h.renovations.length+' upgrade'+(h.renovations.length===1?'':'s')):''}</span></div>
+      <button class="btn btn-danger" onclick='sellHouseP68(${idx})'>Sell</button></div>`;
+    RENOVATION_OPTIONS_P68.forEach(r=>{
+      const done = h.renovations && h.renovations.includes(r.name);
+      if(done) return;
+      html += `<button class="btn btn-block" onclick='renovateHouseP68(${idx},${JSON.stringify(r.name)})'>${r.name} (${fmtMoney(r.cost)})</button>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  });
+  openPanel('House Manager', html);
+}
+const _origOpenAssetsPanel_P68 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P68();
+  if(!state.assets.houses.length) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '🏠 House Manager';
+  btn.onclick = openHouseManagerP68;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { renovator_ach:'Made 3+ renovations to a single house' });
 </script>
 </body>
 </html>
