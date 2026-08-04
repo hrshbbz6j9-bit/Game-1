@@ -6990,6 +6990,101 @@ openCareerPanel = function(){
 };
 SECRET_ENDINGS.push({id:'mars_pioneer', title:'Mars Pioneer', cond:s=>!!(s.astronaut && s.astronaut.missions>=10)});
 Object.assign(ACHIEVEMENTS, { nasa_trainee_ach:'Joined the astronaut training program', astronaut_ach:'Completed your first space mission', mars_astronaut_ach:'Flew 10+ space missions, including Mars' });
+
+/* ---------------------------------------------------------------------
+   P84 — Vehicle Customization & Street Racing: deepens the existing car
+   ownership system. Car objects gain optional .mods and .speedRating
+   fields lazily on first tune-up, the same lazy-init pattern already
+   used for house .renovations in P68. Racing risks a crash (damages the
+   car, hurts health) or a police bust (impounds the car, adds a
+   criminal record) on top of the base win/lose roll.
+   --------------------------------------------------------------------- */
+const CAR_MODS_P84 = [
+  {name:'Racing Tires', cost:1200, speedBoost:10},
+  {name:'ECU Tune', cost:1800, speedBoost:12},
+  {name:'Turbo Kit', cost:2000, speedBoost:15},
+  {name:'Engine Rebuild', cost:5000, speedBoost:20},
+  {name:'Nitrous System', cost:3500, speedBoost:25},
+];
+function installModP84(carIdx, modName){
+  const car = state.assets.cars[carIdx]; if(!car) return;
+  const mod = CAR_MODS_P84.find(x=>x.name===modName); if(!mod) return;
+  if(!car.mods) car.mods = [];
+  if(car.speedRating==null) car.speedRating = 50;
+  if(car.mods.includes(modName)) return;
+  if(state.money<mod.cost){ log(`Not enough money for a ${modName}.`,'bad'); openCarTuningPanelP84(carIdx); return; }
+  state.money -= mod.cost;
+  car.mods.push(modName);
+  car.speedRating += mod.speedBoost;
+  car.value += Math.round(mod.cost*0.5);
+  log(`You installed a ${modName} on your ${car.name}.`,'good');
+  checkAchievement('tuner_ach');
+  openCarTuningPanelP84(carIdx);
+}
+function openCarTuningPanelP84(carIdx){
+  const car = state.assets.cars[carIdx]; if(!car) return;
+  let html = `<div class="list-item"><div class="li-main"><b>${car.name}</b><span>Speed Rating: ${car.speedRating||50}</span></div></div>`;
+  CAR_MODS_P84.forEach(m=>{
+    const done = car.mods && car.mods.includes(m.name);
+    if(done) return;
+    html += `<button class="btn btn-block" onclick='installModP84(${carIdx},${JSON.stringify(m.name)})'>${m.name} (${fmtMoney(m.cost)}, +${m.speedBoost} speed)</button>`;
+  });
+  openPanel('Tune Up: '+car.name, html);
+}
+function streetRaceP84(carIdx){
+  const car = state.assets.cars[carIdx]; if(!car) return;
+  const wager = 500;
+  if(state.money<wager){ log(`Not enough money to enter a street race.`,'bad'); openStreetRacingPanelP84(); return; }
+  state.money -= wager;
+  const mySpeed = car.speedRating||50;
+  const opponentSpeed = rand(40,90);
+  const winChance = clamp(50+(mySpeed-opponentSpeed)*1.5,10,90);
+  if(chance(winChance)){
+    const prize = wager*rand(2,4);
+    state.money += prize;
+    state.stats.happiness = clamp(state.stats.happiness+rand(5,12),0,100);
+    state.flags.raceWins = (state.flags.raceWins||0)+1;
+    log(`You won the street race in your ${car.name}! Prize: ${fmtMoney(prize)}.`,'good');
+    checkAchievement('street_racer_ach');
+    if(state.flags.raceWins>=10) checkAchievement('racing_legend_ach');
+  } else if(chance(20)){
+    car.value = Math.max(1000, Math.round(car.value*0.6));
+    state.stats.health = clamp(state.stats.health-rand(5,20),0,100);
+    log(`You crashed during the race! Your ${car.name} took serious damage.`,'bad');
+  } else if(chance(15)){
+    const idx = state.assets.cars.indexOf(car);
+    state.assets.cars.splice(idx,1);
+    state.criminalRecord.push('Illegal Street Racing');
+    state.stats.karma = clamp(state.stats.karma-5,0,100);
+    log(`Police busted the race and impounded your ${car.name}!`,'bad');
+  } else {
+    log(`You lost the street race in your ${car.name}. Better luck next time.`,'bad');
+  }
+  openStreetRacingPanelP84();
+}
+function openStreetRacingPanelP84(){
+  let html = `<p style="color:var(--sub)">Higher speed rating beats bigger opponents. Racing risks a crash — or getting busted.</p>`;
+  if(!state.assets.cars.length){
+    html += `<p style="color:var(--sub)">You need a car to race.</p>`;
+  }
+  state.assets.cars.forEach((car,idx)=>{
+    html += `<div class="list-item"><div class="li-main"><b>${car.name}</b><span>Speed Rating: ${car.speedRating||50}</span></div></div>`;
+    html += `<div class="row"><button class="btn" onclick='openCarTuningPanelP84(${idx})'>Tune Up</button><button class="btn btn-danger" onclick='streetRaceP84(${idx})'>Race ($500)</button></div>`;
+  });
+  openPanel('Street Racing', html);
+}
+const _origOpenAssetsPanel_P84 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P84();
+  if(!state.assets.cars.length) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🏁 Street Racing' + (state.flags.raceWins?(' ('+state.flags.raceWins+' wins)'):'');
+  btn.onclick = openStreetRacingPanelP84;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { tuner_ach:'Installed your first car modification', street_racer_ach:'Won a street race', racing_legend_ach:'Won 10+ street races' });
 </script>
 </body>
 </html>
