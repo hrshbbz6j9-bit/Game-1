@@ -353,7 +353,7 @@ function freshState(){
     job:null, jobHistory:[],
     relationships:[], // {id,name,type,rel,alive,gender,age}
     spouseId:null, kids:[],
-    assets:{cars:[], houses:[], businesses:[]},
+    assets:{cars:[], houses:[], businesses:[], luxury:[]},
     pets:[],
     crypto:{btc:0, eth:0, lifecoin:0, memetoken:0},
     criminalRecord:[], inPrison:false, prisonYearsLeft:0, prisonRep:0, escapePlan:0,
@@ -6115,6 +6115,69 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { fashionista_ach:'Bought 5+ wardrobe items', clotheshorse_ach:'Bought a Bespoke Wardrobe' });
+
+/* ---------------------------------------------------------------------
+   P71 — Luxury Lifestyle: extends the asset system beyond cars/houses
+   for the ultra-wealthy. Speedboats up through private islands, each
+   giving a real happiness boost and counting toward net worth — netWorth()
+   is a pure formula function (no DOM/array-rebuild concerns) so it's
+   safe to wrap and extend its return value directly.
+   --------------------------------------------------------------------- */
+const LUXURY_ITEMS_P71 = [
+  {name:'Speedboat', cost:150000, happyBoost:8},
+  {name:'Private Yacht', cost:5000000, happyBoost:20},
+  {name:'Private Jet', cost:20000000, happyBoost:30},
+  {name:'Private Island', cost:80000000, happyBoost:45},
+];
+function buyLuxuryP71(name){
+  const item = LUXURY_ITEMS_P71.find(x=>x.name===name); if(!item) return;
+  if(state.money<item.cost){ log(`Not enough money for a ${item.name.toLowerCase()}.`,'bad'); openLuxuryPanelP71(); return; }
+  state.money -= item.cost;
+  state.assets.luxury.push({name:item.name, value:item.cost});
+  state.stats.happiness = clamp(state.stats.happiness+item.happyBoost,0,100);
+  log(`You bought a ${item.name}! The lifestyle of the rich and famous.`,'good');
+  newspaper(`${state.name.toUpperCase()} BUYS ${item.name.toUpperCase()}`, `Living large: ${state.name} has added a ${item.name.toLowerCase()} to their collection.`, 'Society Page');
+  checkAchievement('yacht_owner_ach');
+  if(item.name==='Private Island') checkAchievement('billionaire_lifestyle_ach');
+  openLuxuryPanelP71();
+}
+function sellLuxuryP71(idx){
+  const item = state.assets.luxury[idx]; if(!item) return;
+  const sale = Math.round(item.value*0.7);
+  state.money += sale;
+  log(`You sold your ${item.name} for ${fmtMoney(sale)}.`,'neutral');
+  state.assets.luxury.splice(idx,1);
+  openLuxuryPanelP71();
+}
+function openLuxuryPanelP71(){
+  let html = `<p style="color:var(--sub)">For when cars and houses just aren't enough.</p>`;
+  state.assets.luxury.forEach((item,idx)=>{
+    html += `<div class="list-item"><div class="li-main"><b>${item.name}</b><span>${fmtMoney(item.value)}</span></div>
+      <button class="btn btn-danger" onclick='sellLuxuryP71(${idx})'>Sell</button></div>`;
+  });
+  if(state.assets.luxury.length) html += `<hr style="border-color:var(--border)">`;
+  LUXURY_ITEMS_P71.forEach(item=>{
+    html += `<button class="btn btn-block" onclick='buyLuxuryP71(${JSON.stringify(item.name)})'>Buy a ${item.name} (${fmtMoney(item.cost)})</button>`;
+  });
+  openPanel('Luxury Lifestyle', html);
+}
+const _origOpenAssetsPanel_P71 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P71();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '🛥️ Luxury Lifestyle' + (state.assets.luxury.length?(' ('+state.assets.luxury.length+')'):'');
+  btn.onclick = openLuxuryPanelP71;
+  body.appendChild(btn);
+};
+const _origNetWorth_P71 = netWorth;
+netWorth = function(){
+  let nw = _origNetWorth_P71();
+  state.assets.luxury.forEach(item=>nw+=item.value);
+  return nw;
+};
+Object.assign(ACHIEVEMENTS, { yacht_owner_ach:'Bought your first luxury asset', billionaire_lifestyle_ach:'Bought a private island' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
