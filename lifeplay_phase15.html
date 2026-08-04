@@ -384,6 +384,7 @@ function freshState(){
     stocks:{},
     agent:null,
     insurance:{life:null, auto:null, home:null},
+    pension:{fund:0, retired:false},
   };
 }
 
@@ -5233,6 +5234,76 @@ die = function(cause){
   }
 };
 Object.assign(ACHIEVEMENTS, { insured_ach:'Signed up for an insurance policy' });
+Object.assign(ACHIEVEMENTS, { retired_ach:'Retired with a pension' });
+
+/* ---------------------------------------------------------------------
+   P59 — Retirement & Pension: working a job quietly builds a pension
+   fund (8% of that year's salary). At 50+ the player can retire, which
+   quits their job and starts paying an annual pension (6% of the fund
+   plus a flat social-security-style base) for the rest of their life —
+   the fund itself is an annuity and never depletes, so retiring is
+   never a trap. Re-entering the workforce (getting hired again) clears
+   the retired flag automatically.
+   --------------------------------------------------------------------- */
+function tickPensionP59(salaryEarnedThisYear){
+  if(!state.pension) state.pension = {fund:0, retired:false};
+  if(salaryEarnedThisYear>0 && !state.pension.retired){
+    state.pension.fund += Math.round(salaryEarnedThisYear*0.08);
+  }
+  if(state.pension.retired){
+    const payout = Math.round(state.pension.fund*0.06) + 12000;
+    state.money += payout;
+  }
+}
+function retireP59(){
+  if(!state.pension) state.pension = {fund:0, retired:false};
+  if(state.job){ state.jobHistory.push(state.job); state.job = null; }
+  state.pension.retired = true;
+  log(`You retired after a long career, with a pension fund of ${fmtMoney(state.pension.fund)}.`,'good');
+  newspaper(`${state.name.toUpperCase()} RETIRES`, `After years of hard work, ${state.name} is ready to enjoy a well-earned rest.`);
+  checkAchievement('retired_ach');
+  closePanel();
+  render();
+}
+const _origApplyForJob_P59 = applyForJob;
+applyForJob = function(job){
+  _origApplyForJob_P59(job);
+  if(state.job && state.pension) state.pension.retired = false;
+};
+const _origAgeUp_P59 = ageUp;
+ageUp = function(){
+  const salaryThisYear = (state.job && !state.pension.retired) ? state.job.salary : 0;
+  _origAgeUp_P59();
+  if(!state || !state.alive) return;
+  tickPensionP59(salaryThisYear);
+  render();
+};
+const _origOpenCareerPanel_P59 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P59();
+  const body = $('panel-body');
+  const hr = document.createElement('hr');
+  hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  if(state.pension.retired){
+    const info = document.createElement('div');
+    info.className = 'list-item';
+    info.innerHTML = `<div class="li-main"><b>Retired</b><span>Pension fund: ${fmtMoney(state.pension.fund)} · ~${fmtMoney(Math.round(state.pension.fund*0.06)+12000)}/yr</span></div>`;
+    body.appendChild(info);
+  } else {
+    const info = document.createElement('div');
+    info.className = 'list-item';
+    info.innerHTML = `<div class="li-main"><b>Pension Fund</b><span>${fmtMoney(state.pension.fund)}</span></div>`;
+    body.appendChild(info);
+    if(state.age>=50 && state.job){
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-block btn-accent';
+      btn.textContent = '🏖️ Retire';
+      btn.onclick = retireP59;
+      body.appendChild(btn);
+    }
+  }
+};
 </script>
 </body>
 </html>
