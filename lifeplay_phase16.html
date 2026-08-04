@@ -383,6 +383,7 @@ function freshState(){
     modeling:{stage:0, fame:0, gigs:0, covers:0},
     stocks:{},
     agent:null,
+    insurance:{life:null, auto:null, home:null},
   };
 }
 
@@ -5095,6 +5096,143 @@ ageUp = function(){
   tickRelationshipDeathsP57();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   P58 — Insurance: life, auto, and home policies with three coverage
+   tiers each. Premiums are billed every ageUp; unpaid premiums lapse
+   the policy. Owning a car/house exposes you to random incident events
+   (accidents, theft, fire, storm damage) whose out-of-pocket cost is
+   cut down by whatever coverage % you're carrying. Life insurance pays
+   out a lump sum to your estate the moment you die, bumping the net
+   worth shown on the obituary/death screen.
+   --------------------------------------------------------------------- */
+const INSURANCE_POLICIES_P58 = {
+  life: [
+    {tier:'Basic', premium:20, payout:50000},
+    {tier:'Standard', premium:50, payout:150000},
+    {tier:'Premium', premium:120, payout:400000},
+  ],
+  auto: [
+    {tier:'Basic', premium:30, coverage:0.5},
+    {tier:'Standard', premium:60, coverage:0.8},
+    {tier:'Premium', premium:100, coverage:1.0},
+  ],
+  home: [
+    {tier:'Basic', premium:40, coverage:0.5},
+    {tier:'Standard', premium:80, coverage:0.8},
+    {tier:'Premium', premium:150, coverage:1.0},
+  ],
+};
+const INSURANCE_LABELS_P58 = {life:'Life', auto:'Auto', home:'Home'};
+function buyInsuranceP58(kind, tier){
+  const policy = INSURANCE_POLICIES_P58[kind].find(p=>p.tier===tier);
+  if(!policy) return;
+  state.insurance[kind] = {tier:policy.tier};
+  log(`You signed up for ${policy.tier} ${INSURANCE_LABELS_P58[kind]} Insurance.`,'good');
+  checkAchievement('insured_ach');
+  openInsurancePanelP58();
+}
+function cancelInsuranceP58(kind){
+  if(!state.insurance[kind]) return;
+  log(`You cancelled your ${INSURANCE_LABELS_P58[kind]} Insurance policy.`,'neutral');
+  state.insurance[kind] = null;
+  openInsurancePanelP58();
+}
+function openInsurancePanelP58(){
+  let html = `<p style="color:var(--sub)">Insurance softens the blow when life throws a wrench at you — and life insurance leaves something behind for your family.</p>`;
+  ['life','auto','home'].forEach(kind=>{
+    html += `<hr style="border-color:var(--border)"><b>${INSURANCE_LABELS_P58[kind]} Insurance</b>`;
+    const active = state.insurance[kind];
+    if(active){
+      const policy = INSURANCE_POLICIES_P58[kind].find(p=>p.tier===active.tier);
+      const detail = kind==='life' ? `Payout: ${fmtMoney(policy.payout)}` : `Coverage: ${Math.round(policy.coverage*100)}%`;
+      html += `<div class="list-item"><div class="li-main"><b>${policy.tier} Plan</b><span>${fmtMoney(policy.premium)}/yr · ${detail}</span></div><button class="btn btn-danger" onclick="cancelInsuranceP58('${kind}')">Cancel</button></div>`;
+    } else {
+      html += `<p style="color:var(--sub)">No active policy.</p>`;
+    }
+    INSURANCE_POLICIES_P58[kind].forEach(p=>{
+      if(active && active.tier===p.tier) return;
+      const detail = kind==='life' ? `${fmtMoney(p.payout)} payout` : `${Math.round(p.coverage*100)}% coverage`;
+      html += `<button class="btn btn-block" onclick="buyInsuranceP58('${kind}','${p.tier}')">${active?'Switch to':'Buy'} ${p.tier} — ${fmtMoney(p.premium)}/yr (${detail})</button>`;
+    });
+  });
+  openPanel('Insurance', html);
+}
+const _origOpenAssetsPanel_P58 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P58();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  const activeCount = ['life','auto','home'].filter(k=>state.insurance[k]).length;
+  btn.textContent = '🛡️ Insurance' + (activeCount?(' ('+activeCount+' active)'):'');
+  btn.onclick = openInsurancePanelP58;
+  body.appendChild(btn);
+};
+const INSURANCE_AUTO_CAUSES_P58 = ['got into a fender bender','had your car broken into','hit a deer on the highway','got sideswiped in a parking lot'];
+const INSURANCE_HOME_CAUSES_P58 = ['had a kitchen fire', 'suffered storm damage to the roof', 'had a pipe burst and flood the basement', 'was broken into'];
+function tickInsuranceP58(){
+  ['life','auto','home'].forEach(kind=>{
+    const active = state.insurance[kind];
+    if(!active) return;
+    const policy = INSURANCE_POLICIES_P58[kind].find(p=>p.tier===active.tier);
+    if(!policy) return;
+    if(state.money < policy.premium){
+      log(`You couldn't afford your ${INSURANCE_LABELS_P58[kind]} Insurance premium, so the policy lapsed.`,'bad');
+      state.insurance[kind] = null;
+      return;
+    }
+    state.money -= policy.premium;
+  });
+  if(state.assets.cars.length && chance(6)){
+    const cost = rand(500,5000);
+    const cause = pick(INSURANCE_AUTO_CAUSES_P58);
+    const active = state.insurance.auto;
+    if(active){
+      const policy = INSURANCE_POLICIES_P58.auto.find(p=>p.tier===active.tier);
+      const outOfPocket = Math.round(cost*(1-policy.coverage));
+      state.money -= outOfPocket;
+      log(`You ${cause}. Insurance covered most of it — you paid ${fmtMoney(outOfPocket)}.`,'neutral');
+    } else {
+      state.money -= cost;
+      log(`You ${cause}, costing you ${fmtMoney(cost)} out of pocket. (No auto insurance!)`,'bad');
+    }
+  }
+  if(state.assets.houses.length && chance(4)){
+    const cost = rand(1000,15000);
+    const cause = pick(INSURANCE_HOME_CAUSES_P58);
+    const active = state.insurance.home;
+    if(active){
+      const policy = INSURANCE_POLICIES_P58.home.find(p=>p.tier===active.tier);
+      const outOfPocket = Math.round(cost*(1-policy.coverage));
+      state.money -= outOfPocket;
+      log(`Your home ${cause}. Insurance covered most of it — you paid ${fmtMoney(outOfPocket)}.`,'neutral');
+    } else {
+      state.money -= cost;
+      log(`Your home ${cause}, costing you ${fmtMoney(cost)} out of pocket. (No home insurance!)`,'bad');
+    }
+  }
+}
+const _origAgeUp_P58 = ageUp;
+ageUp = function(){
+  _origAgeUp_P58();
+  if(!state || !state.alive) return;
+  tickInsuranceP58();
+  render();
+};
+const _origDie_P58 = die;
+die = function(cause){
+  const life = state.insurance.life;
+  _origDie_P58(cause);
+  if(life){
+    const policy = INSURANCE_POLICIES_P58.life.find(p=>p.tier===life.tier);
+    if(policy){
+      state.money += policy.payout;
+      log(`Your ${policy.tier} Life Insurance policy paid out ${fmtMoney(policy.payout)} to your family.`,'good');
+    }
+  }
+};
+Object.assign(ACHIEVEMENTS, { insured_ach:'Signed up for an insurance policy' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
