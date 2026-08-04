@@ -1615,6 +1615,7 @@
   [data-author] { cursor: pointer; }
   span.author[data-author]:active, span.reply-author[data-author]:active { text-decoration: underline; }
   .leaderboard-row[data-author]:active { opacity: 0.85; }
+  [data-author]:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
   .member-since { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); margin-top: 4px; }
   .reply-item .tier-badge { margin-right: 6px; }
   .reply-text { color: var(--ink-soft); }
@@ -7721,6 +7722,26 @@
     e.stopPropagation();
     openMemberProfile(el.dataset.author);
   });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const el = e.target.closest("[data-author]");
+    if (!el) return;
+    if (el.closest("#memberProfileBody, #profileCard")) return;
+    e.preventDefault();
+    openMemberProfile(el.dataset.author);
+  });
+
+  function makeAuthorLinksFocusable() {
+    document.querySelectorAll("[data-author]:not([tabindex])").forEach(el => {
+      if (el.closest("#memberProfileBody, #profileCard")) return;
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("role", "button");
+      el.setAttribute("aria-label", `View @${el.dataset.author}'s profile`);
+    });
+  }
+  new MutationObserver(makeAuthorLinksFocusable).observe(document.body, { childList: true, subtree: true });
+  makeAuthorLinksFocusable();
 
   function renderProfileCard() {
     const { threadCount, replyCount, score } = authorStats(username);
