@@ -4848,6 +4848,58 @@ ageUp = function(){
   tickSiblingLifeUpdatesP51();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   P52 — Family wealth tier: every character used to start from an
+   identical blank slate (always $0, no variation in circumstances).
+   Now a weighted family background at birth nudges starting stats and,
+   for the rare Elite tier, sets up a trust fund that matures at 18.
+   --------------------------------------------------------------------- */
+const FAMILY_WEALTH_TIERS_P52 = [
+  {name:'Poor', weight:15, statMod:{health:-5, looks:-3, smarts:-2}, flavor:'Money was always tight growing up.'},
+  {name:'Working Class', weight:30, statMod:{health:-2, looks:0, smarts:0}, flavor:'Your family got by, paycheck to paycheck.'},
+  {name:'Middle Class', weight:35, statMod:{health:0, looks:0, smarts:0}, flavor:'A pretty ordinary upbringing, all things considered.'},
+  {name:'Wealthy', weight:15, statMod:{health:3, looks:4, smarts:3}, flavor:'You grew up comfortable, never wanting for much.'},
+  {name:'Elite', weight:5, statMod:{health:5, looks:6, smarts:5}, flavor:'Private schools, household staff — you were born into serious money.'},
+];
+Object.assign(ACHIEVEMENTS, { trust_fund_ach:'Came into your trust fund' });
+function pickWeightedP52(pool){
+  const total = pool.reduce((sum,p)=>sum+p.weight,0);
+  let r = Math.random()*total;
+  for(const p of pool){ if(r<p.weight) return p; r-=p.weight; }
+  return pool[pool.length-1];
+}
+function assignFamilyWealthP52(){
+  const tier = pickWeightedP52(FAMILY_WEALTH_TIERS_P52);
+  state.flags.familyWealthTier = tier.name;
+  state.stats.health = clamp(state.stats.health+tier.statMod.health,0,100);
+  state.stats.looks = clamp(state.stats.looks+tier.statMod.looks,0,100);
+  state.stats.smarts = clamp(state.stats.smarts+tier.statMod.smarts,0,100);
+  if(tier.name==='Elite') state.flags.trustFundEligible = true;
+  log(tier.flavor,'neutral',0);
+}
+const _origStartNewLife_P52 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P52();
+  if(state) assignFamilyWealthP52();
+};
+function tickTrustFundP52(){
+  if(state.flags.trustFundEligible && !state.flags.trustFundClaimed && state.age>=18){
+    const amount = rand(50000,250000);
+    state.money += amount;
+    state.flags.trustFundClaimed = true;
+    log(`You came into your trust fund on your 18th birthday: ${fmtMoney(amount)}.`,'good');
+    newspaper(`${state.name.toUpperCase()} COMES INTO FAMILY FORTUNE`, `A significant trust fund matures as the heir turns 18.`, 'Business Desk');
+    checkAchievement('trust_fund_ach');
+  }
+}
+const _origAgeUp_P52 = ageUp;
+ageUp = function(){
+  _origAgeUp_P52();
+  if(!state || !state.alive) return;
+  tickTrustFundP52();
+  render();
+};
 </script>
 </body>
 </html>
