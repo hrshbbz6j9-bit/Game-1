@@ -407,6 +407,7 @@ function freshState(){
     fosterChild:null,
     staff:[],
     weapons:[],
+    citizenships:[],
   };
 }
 
@@ -7724,6 +7725,45 @@ function handleFuneralP95(r){
   }
 }
 Object.assign(ACHIEVEMENTS, { eulogy_ach:'Attended a loved one\'s funeral' });
+
+/* ---------------------------------------------------------------------
+   P96 — Second Citizenship: builds on P61's International Travel and
+   Move Abroad — moving to a country is relocation, but citizenship is
+   its own real step with its own cost and denial risk, gated behind
+   already having moved there (state.flags.livedAbroad, set by P61's
+   moveAbroadP61) and currently living in that country's city.
+   --------------------------------------------------------------------- */
+function applyForCitizenshipP96(countryName){
+  if(state.citizenships.includes(countryName)) return;
+  const cost = 2000;
+  if(state.money<cost){ log(`Not enough money for citizenship application fees.`,'bad'); openWorldPanel(); return; }
+  state.money -= cost;
+  if(chance(70)){
+    state.citizenships.push(countryName);
+    state.stats.happiness = clamp(state.stats.happiness+5,0,100);
+    log(`You were granted citizenship of ${countryName}! Welcome to your second homeland.`,'good');
+    checkAchievement('dual_citizen_ach');
+    if(state.citizenships.length>=3) checkAchievement('global_citizen_ach');
+  } else {
+    log(`Your citizenship application for ${countryName} was denied. You can try again.`,'bad');
+  }
+  openWorldPanel();
+}
+const _origOpenWorldPanel_P96 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P96();
+  if(!state.flags.livedAbroad) return;
+  const country = typeof COUNTRIES_P61!=='undefined' ? COUNTRIES_P61.find(c=>c.city===state.city) : null;
+  if(!country || state.citizenships.includes(country.name)) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = `🛂 Apply for ${country.name} Citizenship ($2,000)`;
+  btn.onclick = ()=>applyForCitizenshipP96(country.name);
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { dual_citizen_ach:'Earned citizenship of a second country', global_citizen_ach:'Earned citizenship of 3+ countries' });
 </script>
 </body>
 </html>
