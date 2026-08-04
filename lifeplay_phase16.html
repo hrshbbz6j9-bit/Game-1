@@ -5370,6 +5370,95 @@ openRelationshipsPanel = function(){
   }
 };
 Object.assign(ACHIEVEMENTS, { contested_divorce_ach:'Fought a contested divorce battle' });
+
+/* ---------------------------------------------------------------------
+   P61 — International Travel: the existing travel mechanic (P17) only
+   ever covered domestic US cities. This adds a real international
+   destination list with per-country flavor events (good and bad),
+   a chance to make a new friend abroad, and a "Move Abroad" option
+   that permanently relocates state.city once you've visited a place
+   at least once — a proper emigration arc, not just a vacation.
+   --------------------------------------------------------------------- */
+const COUNTRIES_P61 = [
+  {name:'France', city:'Paris', cost:1800},
+  {name:'Japan', city:'Tokyo', cost:2200},
+  {name:'Italy', city:'Rome', cost:1900},
+  {name:'Brazil', city:'Rio de Janeiro', cost:1600},
+  {name:'Australia', city:'Sydney', cost:2400},
+  {name:'Egypt', city:'Cairo', cost:1700},
+  {name:'Thailand', city:'Bangkok', cost:1500},
+  {name:'United Kingdom', city:'London', cost:2000},
+  {name:'Kenya', city:'Nairobi', cost:1900},
+  {name:'Iceland', city:'Reykjavik', cost:2100},
+];
+const TRAVEL_GOOD_LINES_P61 = ['toured the local landmarks and took a thousand photos','tried incredible street food','made friends with a group of fellow travelers','found a hidden gem of a cafe','watched the most beautiful sunset of your life'];
+const TRAVEL_BAD_LINES_P61 = ['got lost for hours in an unfamiliar city','had your wallet pickpocketed','came down with a nasty case of food poisoning','missed a connecting flight and lost a day of the trip'];
+function travelInternationalP61(countryName){
+  const c = COUNTRIES_P61.find(x=>x.name===countryName);
+  if(!c) return;
+  if(state.money<c.cost){ log(`Not enough money for a trip to ${c.name}.`,'bad'); openWorldPanel(); return; }
+  state.money -= c.cost;
+  if(!state.flags.countriesVisited) state.flags.countriesVisited = [];
+  if(!state.flags.countriesVisited.includes(c.name)){
+    state.flags.countriesVisited.push(c.name);
+    checkAchievement('international_ach');
+    if(state.flags.countriesVisited.length>=5) checkAchievement('jetsetter_ach');
+  }
+  if(chance(70)){
+    const line = pick(TRAVEL_GOOD_LINES_P61);
+    state.stats.happiness = clamp(state.stats.happiness+rand(6,15),0,100);
+    log(`In ${c.city}, you ${line}.`,'good');
+  } else {
+    const line = pick(TRAVEL_BAD_LINES_P61);
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,6),0,100);
+    if(line.includes('food poisoning')) state.stats.health = clamp(state.stats.health-8,0,100);
+    if(line.includes('pickpocketed')) state.money -= rand(100,500);
+    log(`In ${c.city}, you ${line}.`,'bad');
+  }
+  if(chance(15)){
+    const friend = newRelationship('friend', {name:randomFirstName(pick(['Male','Female']))+' '+pick(['Nakamura','Silva','Kowalski','Dubois','Andersen','Osei','Petrov','Nguyen']), age: state.age+rand(-5,5), rel:rand(40,70)});
+    state.relationships.push(friend);
+    log(`You hit it off with ${friend.name}, a local you met in ${c.city}, and stayed in touch.`,'good');
+  }
+  openWorldPanel();
+}
+function moveAbroadP61(countryName){
+  const c = COUNTRIES_P61.find(x=>x.name===countryName);
+  if(!c) return;
+  const moveCost = c.cost*3;
+  if(state.money<moveCost){ log(`Not enough money to move to ${c.city}.`,'bad'); openWorldPanel(); return; }
+  state.money -= moveCost;
+  state.city = c.city;
+  state.flags.livedAbroad = true;
+  state.stats.happiness = clamp(state.stats.happiness+10,0,100);
+  log(`You packed up your life and moved to ${c.city}, ${c.name}. A brand new chapter begins.`,'good');
+  newspaper(`${state.name.toUpperCase()} MOVES ABROAD`, `${state.name} has relocated to ${c.city}, ${c.name}, seeking a fresh start.`);
+  checkAchievement('expat_ach');
+  openWorldPanel();
+}
+const _origOpenWorldPanel_P61 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P61();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = '🌍 International Travel'; body.appendChild(label);
+  COUNTRIES_P61.filter(c=>c.city!==state.city).forEach(c=>{
+    const visited = state.flags.countriesVisited && state.flags.countriesVisited.includes(c.name);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block';
+    btn.textContent = `Visit ${c.city}, ${c.name} (${fmtMoney(c.cost)})`;
+    btn.onclick = ()=>travelInternationalP61(c.name);
+    body.appendChild(btn);
+    if(visited){
+      const moveBtn = document.createElement('button');
+      moveBtn.className = 'btn btn-block btn-accent';
+      moveBtn.textContent = `🏡 Move to ${c.city} (${fmtMoney(c.cost*3)})`;
+      moveBtn.onclick = ()=>moveAbroadP61(c.name);
+      body.appendChild(moveBtn);
+    }
+  });
+};
+Object.assign(ACHIEVEMENTS, { international_ach:'Traveled to another country', jetsetter_ach:'Visited 5+ countries', expat_ach:'Moved abroad to a new country' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
