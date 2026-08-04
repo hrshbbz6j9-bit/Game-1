@@ -401,6 +401,7 @@ function freshState(){
     bodybuilding:{tier:0, workouts:0},
     poker:{skill:0, tournamentWins:0},
     volunteer:{rank:0, hoursLogged:0},
+    astronaut:null,
   };
 }
 
@@ -6904,6 +6905,91 @@ openWorldPanel = function(){
 };
 SECRET_ENDINGS.push({id:'humanitarian', title:'Global Humanitarian', cond:s=>s.volunteer && s.volunteer.rank>=5 && s.stats.karma>=85});
 Object.assign(ACHIEVEMENTS, { volunteer_ach:'Volunteered your time', peace_corps_ach:'Became a Peace Corps Volunteer', humanitarian_ach:'Became an International Humanitarian Envoy' });
+
+/* ---------------------------------------------------------------------
+   P83 — Astronaut career: a special career that replaces state.job
+   entirely, the same pattern already used by Mafia (P33) and Military
+   (P37) — isAstronaut:true marks it, same as isMafia/isMilitary. Flying
+   a mission carries a small, tier-scaled death risk that routes through
+   the trusted die() hook, and reaching the top tier with enough
+   missions flown unlocks a Mars-themed secret ending.
+   --------------------------------------------------------------------- */
+const ASTRONAUT_TIERS_P83 = [
+  {name:'NASA Trainee', minMissions:0, deathChance:0, pay:[5000,15000]},
+  {name:'Mission Specialist', minMissions:1, deathChance:0.5, pay:[20000,50000]},
+  {name:'Pilot Astronaut', minMissions:3, deathChance:1, pay:[50000,120000]},
+  {name:'Commander', minMissions:6, deathChance:1.5, pay:[120000,300000]},
+  {name:'Mars Mission Astronaut', minMissions:10, deathChance:3, pay:[300000,1000000]},
+];
+function astronautTierP83(){
+  let best = ASTRONAUT_TIERS_P83[0];
+  for(const t of ASTRONAUT_TIERS_P83){ if(state.astronaut.missions>=t.minMissions) best=t; }
+  return best;
+}
+function joinAstronautProgramP83(){
+  if(state.job && state.job.isAstronaut) return;
+  if(state.age<22 || state.age>45 || state.stats.smarts<70 || state.stats.health<70){
+    log(`You don't meet the requirements for the astronaut program yet (need age 22-45, 70+ smarts, 70+ health).`,'bad');
+    openAstronautPanelP83(); return;
+  }
+  const acceptChance = clamp(20+(state.stats.smarts-70)*1.5,5,80);
+  if(chance(acceptChance)){
+    if(state.job) state.jobHistory.push(state.job);
+    state.job = {title:'NASA Trainee', salary:60000, tier:5, years:0, isAstronaut:true};
+    state.astronaut = {missions:0};
+    log(`You were accepted into the astronaut training program!`,'good');
+    newspaper(`${state.name.toUpperCase()} JOINS ASTRONAUT PROGRAM`, `A giant leap in a remarkable career.`, 'Science Desk');
+    checkAchievement('nasa_trainee_ach');
+  } else {
+    log(`Your astronaut program application was rejected. Keep training and try again.`,'bad');
+  }
+  openAstronautPanelP83();
+}
+function flyMissionP83(){
+  if(!state.job || !state.job.isAstronaut || !state.astronaut) return;
+  const tier = astronautTierP83();
+  if(chance(tier.deathChance)){
+    die(`a catastrophic failure during a ${tier.name} mission`);
+    return;
+  }
+  const pay = rand(tier.pay[0],tier.pay[1]);
+  state.money += pay;
+  state.astronaut.missions++;
+  state.stats.happiness = clamp(state.stats.happiness+rand(10,20),0,100);
+  const newTier = astronautTierP83();
+  state.job.title = newTier.name;
+  log(`Mission successful! You earned ${fmtMoney(pay)} and made history.`,'good');
+  newspaper(`${state.name.toUpperCase()} RETURNS FROM SUCCESSFUL MISSION`, `Another triumph for ${state.name}, now a ${newTier.name}.`, 'Science Desk');
+  checkAchievement('astronaut_ach');
+  if(state.astronaut.missions>=10) checkAchievement('mars_astronaut_ach');
+  render();
+}
+function openAstronautPanelP83(){
+  let html = '';
+  if(state.job && state.job.isAstronaut && state.astronaut){
+    const tier = astronautTierP83();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name}</b><span>${state.astronaut.missions} mission${state.astronaut.missions===1?'':'s'} flown</span></div></div>`;
+    html += `<button class="btn btn-block btn-danger" onclick="flyMissionP83()">🚀 Fly a Mission</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">NASA is looking for the best and brightest. Requirements: age 22-45, 70+ smarts, 70+ health.</p>`;
+    html += `<button class="btn btn-block btn-accent" onclick="joinAstronautProgramP83()">Apply to the Astronaut Program</button>`;
+  }
+  openPanel('Astronaut Program', html);
+}
+const _origOpenCareerPanel_P83 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P83();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🚀 Astronaut Program' + (state.astronaut?(' ('+state.astronaut.missions+' missions)'):'');
+  btn.onclick = openAstronautPanelP83;
+  body.appendChild(btn);
+};
+SECRET_ENDINGS.push({id:'mars_pioneer', title:'Mars Pioneer', cond:s=>!!(s.astronaut && s.astronaut.missions>=10)});
+Object.assign(ACHIEVEMENTS, { nasa_trainee_ach:'Joined the astronaut training program', astronaut_ach:'Completed your first space mission', mars_astronaut_ach:'Flew 10+ space missions, including Mars' });
 </script>
 </body>
 </html>
