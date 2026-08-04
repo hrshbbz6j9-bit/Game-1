@@ -403,6 +403,7 @@ function freshState(){
     volunteer:{rank:0, hoursLogged:0},
     astronaut:null,
     studentDebt:0,
+    esports:null,
   };
 }
 
@@ -7203,6 +7204,90 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { homeowner_at_last_ach:'Bought your first house after 5+ years of renting' });
+
+/* ---------------------------------------------------------------------
+   P87 — Esports career: a special career that replaces state.job, the
+   same pattern already used by Mafia (P33), Military (P37), and
+   Astronaut (P83) — isEsports:true marks it. Free practice builds a
+   skill stat (same shape as Hacking's P77 and Poker's P81), and
+   competing climbs a 5-tier ladder gated by cumulative wins, from
+   Amateur up to World Champion.
+   --------------------------------------------------------------------- */
+const GAME_TITLES_P87 = ['Battle Arena Legends','Tactical Strike Force','Galaxy Conquest','Speedway Royale','Grid Commander'];
+const ESPORTS_TIERS_P87 = [
+  {name:'Amateur', minWins:0, pay:[500,2000]},
+  {name:'Semi-Pro', minWins:5, pay:[2000,8000]},
+  {name:'Pro Player', minWins:15, pay:[8000,30000]},
+  {name:'Team Captain', minWins:30, pay:[30000,100000]},
+  {name:'World Champion', minWins:50, pay:[100000,2000000]},
+];
+function esportsTierP87(){
+  let best = ESPORTS_TIERS_P87[0];
+  for(const t of ESPORTS_TIERS_P87){ if(state.esports.wins>=t.minWins) best=t; }
+  return best;
+}
+function joinEsportsTeamP87(game){
+  if(state.job && state.job.isEsports) return;
+  if(state.age<16){ log(`You need to be at least 16 to go pro in esports.`,'bad'); openEsportsPanelP87(); return; }
+  if(state.job) state.jobHistory.push(state.job);
+  state.job = {title:'Amateur '+game, salary:15000, tier:3, years:0, isEsports:true};
+  state.esports = {game, skill:0, wins:0};
+  log(`You joined the competitive ${game} scene!`,'good');
+  checkAchievement('esports_rookie_ach');
+  openEsportsPanelP87();
+}
+function practiceEsportsP87(){
+  if(!state.esports) return;
+  state.esports.skill = clamp(state.esports.skill+rand(2,6),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  log(`You grinded the ranked ladder in ${state.esports.game}.`,'neutral');
+  openEsportsPanelP87();
+}
+function competeEsportsP87(){
+  if(!state.job || !state.job.isEsports || !state.esports) return;
+  const tier = esportsTierP87();
+  const winChance = clamp(30+state.esports.skill*0.6,10,85);
+  if(chance(winChance)){
+    const pay = rand(tier.pay[0],tier.pay[1]);
+    state.money += pay;
+    state.esports.wins++;
+    state.stats.happiness = clamp(state.stats.happiness+rand(5,12),0,100);
+    const newTier = esportsTierP87();
+    state.job.title = newTier.name+' '+state.esports.game;
+    log(`You won your ${state.esports.game} match! Prize: ${fmtMoney(pay)}.`,'good');
+    if(newTier.name==='Pro Player') checkAchievement('pro_gamer_ach');
+    if(state.esports.wins>=50) checkAchievement('esports_goat_ach');
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+    log(`You lost your ${state.esports.game} match. Back to the practice room.`,'bad');
+  }
+  openEsportsPanelP87();
+}
+function openEsportsPanelP87(){
+  let html = '';
+  if(state.job && state.job.isEsports && state.esports){
+    const tier = esportsTierP87();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name} — ${state.esports.game}</b><span>Skill ${state.esports.skill}/100 · ${state.esports.wins} wins</span></div></div>`;
+    html += `<button class="btn btn-block" onclick="practiceEsportsP87()">Grind Ranked Ladder</button>`;
+    html += `<button class="btn btn-block btn-accent" onclick="competeEsportsP87()">🎮 Compete in a Match</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">Go pro in competitive gaming. Pick your title:</p>`;
+    GAME_TITLES_P87.forEach(g=>{ html += `<button class="btn btn-block" onclick='joinEsportsTeamP87(${JSON.stringify(g)})'>${g}</button>`; });
+  }
+  openPanel('Esports', html);
+}
+const _origOpenCareerPanel_P87 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P87();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎮 Esports' + (state.esports?(' ('+state.esports.wins+' wins)'):'');
+  btn.onclick = openEsportsPanelP87;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { esports_rookie_ach:'Joined a competitive esports team', pro_gamer_ach:'Reached Pro Player in esports', esports_goat_ach:'Won 50+ esports matches, reaching World Champion' });
 </script>
 </body>
 </html>
