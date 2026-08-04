@@ -5098,6 +5098,9 @@ function tickRelationshipDeathsP57(){
       state.spouseId = null;
       newspaper(`${state.name.toUpperCase()} LOSES BELOVED SPOUSE`, `${r.name} is remembered fondly by family and friends.`);
     }
+    if(r.type==='parent' && typeof handleParentInheritanceP75==='function'){
+      handleParentInheritanceP75(r);
+    }
   });
 }
 const _origAgeUp_P57 = ageUp;
@@ -6399,6 +6402,47 @@ netWorth = function(){
   return nw;
 };
 Object.assign(ACHIEVEMENTS, { art_collector_ach:'Bought your first piece of art', curator_ach:'Own 10+ pieces of art' });
+
+/* ---------------------------------------------------------------------
+   P75 — Sibling Rivalry & Inheritance Disputes: hooked directly into
+   P57's tickRelationshipDeathsP57 (my own earlier same-session code,
+   edited in place rather than re-wrapped) so that a parent's death now
+   has real financial and family consequences. With no living siblings,
+   the player inherits everything; with siblings, there's a 30% chance
+   of a bitter dispute (a smaller, uneven cut and a damaged relationship
+   with one sibling) versus an even, relationship-building split.
+   handleParentInheritanceP75 is a plain function declaration, so it's
+   hoisted and safely callable from P57 above despite being defined here.
+   --------------------------------------------------------------------- */
+const INHERITANCE_POOL_BY_TIER_P75 = {
+  'Poor': [1000,8000], 'Working Class': [3000,20000], 'Middle Class': [8000,50000],
+  'Wealthy': [30000,150000], 'Elite': [100000,500000],
+};
+function handleParentInheritanceP75(parent){
+  const range = INHERITANCE_POOL_BY_TIER_P75[state.flags.familyWealthTier] || [5000,40000];
+  const pool = rand(range[0],range[1]);
+  const livingSiblings = state.relationships.filter(r=>r.alive && r.type==='sibling');
+  if(!livingSiblings.length){
+    state.money += pool;
+    log(`As their only surviving child, you inherited ${fmtMoney(pool)} from ${parent.name}'s estate.`,'good');
+  } else if(chance(30)){
+    const playerShare = clamp(0.3+((parent.rel-50)/200)+rand(-10,10)/100,0.1,0.8);
+    const playerCut = Math.round(pool*playerShare);
+    state.money += playerCut;
+    state.stats.happiness = clamp(state.stats.happiness-5,0,100);
+    const rivalSib = pick(livingSiblings);
+    rivalSib.rel = clamp(rivalSib.rel-rand(10,25),0,100);
+    log(`The inheritance from ${parent.name} turned into a bitter dispute with ${rivalSib.name}. You ended up with ${fmtMoney(playerCut)} after lawyers took their cut.`,'bad');
+    checkAchievement('inheritance_dispute_ach');
+  } else {
+    const share = Math.round(pool/(livingSiblings.length+1));
+    state.money += share;
+    livingSiblings.forEach(s=>{ s.rel = clamp(s.rel+rand(2,6),0,100); });
+    log(`You and your ${livingSiblings.length} sibling${livingSiblings.length===1?'':'s'} split ${parent.name}'s ${fmtMoney(pool)} estate evenly. You received ${fmtMoney(share)}.`,'good');
+  }
+  checkAchievement('inheritor_ach');
+}
+Object.assign(ACHIEVEMENTS, { inheritor_ach:'Inherited money from a parent', inheritance_dispute_ach:'Had a bitter inheritance dispute with a sibling' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
