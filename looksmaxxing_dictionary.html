@@ -2508,7 +2508,11 @@
   (function () {
     try {
       var t = localStorage.getItem("looksmax_theme");
-      if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+      if (t === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", "#140A24");
+      }
     } catch (e) {}
   })();
 </script>
@@ -6342,12 +6346,15 @@
   const themeToggleIcon = document.getElementById("themeToggleIcon");
 
   function applyTheme() {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (isDarkMode) {
       document.documentElement.setAttribute("data-theme", "dark");
       themeToggleIcon.textContent = "☀️";
+      if (themeColorMeta) themeColorMeta.setAttribute("content", "#140A24");
     } else {
       document.documentElement.removeAttribute("data-theme");
       themeToggleIcon.textContent = "🌙";
+      if (themeColorMeta) themeColorMeta.setAttribute("content", "#FAF5FF");
     }
   }
 
