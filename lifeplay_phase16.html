@@ -400,6 +400,7 @@ function freshState(){
     extremeActivitiesDone:0,
     bodybuilding:{tier:0, workouts:0},
     poker:{skill:0, tournamentWins:0},
+    volunteer:{rank:0, hoursLogged:0},
   };
 }
 
@@ -6849,6 +6850,60 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { poker_shark_ach:'Reached 50 poker skill', world_series_ach:'Won the World Series Championship' });
+
+/* ---------------------------------------------------------------------
+   P82 — Volunteer & Peace Corps: turns the flavor-only "volunteered"
+   random events into a real repeatable system with a 6-tier rank ladder
+   from Local Volunteer up through an International Humanitarian Envoy,
+   gated by cumulative hours logged. The log lines deliberately include
+   the word "volunteered" so this mechanic organically feeds the
+   pre-existing 'saint' secret ending's condition, and a new capstone
+   ending rewards reaching the very top rank with high karma.
+   --------------------------------------------------------------------- */
+const VOLUNTEER_TIERS_P82 = [
+  {name:'Local Volunteer', minHours:0},
+  {name:'Community Organizer', minHours:20},
+  {name:'Regional Coordinator', minHours:60},
+  {name:'National Program Director', minHours:150},
+  {name:'Peace Corps Volunteer', minHours:300},
+  {name:'International Humanitarian Envoy', minHours:600},
+];
+function doVolunteerWorkP82(){
+  state.volunteer.hoursLogged += rand(5,15);
+  state.stats.karma = clamp(state.stats.karma+rand(2,5),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+rand(2,4),0,100);
+  log(`You volunteered your time helping others. It felt good to give back.`,'good');
+  checkAchievement('volunteer_ach');
+  const nextTier = VOLUNTEER_TIERS_P82[state.volunteer.rank+1];
+  if(nextTier && state.volunteer.hoursLogged>=nextTier.minHours){
+    state.volunteer.rank++;
+    log(`Your dedication was recognized — you've been promoted to ${nextTier.name}.`,'good');
+    newspaper(`${state.name.toUpperCase()} NAMED ${nextTier.name.toUpperCase()}`, `A well-earned recognition for years of service to others.`, 'Community Desk');
+    if(nextTier.name==='Peace Corps Volunteer') checkAchievement('peace_corps_ach');
+    if(nextTier.name==='International Humanitarian Envoy') checkAchievement('humanitarian_ach');
+  }
+  openVolunteerPanelP82();
+}
+function openVolunteerPanelP82(){
+  const tier = VOLUNTEER_TIERS_P82[state.volunteer.rank];
+  const next = VOLUNTEER_TIERS_P82[state.volunteer.rank+1];
+  let html = `<div class="list-item"><div class="li-main"><b>${tier.name}</b><span>${state.volunteer.hoursLogged} hours logged${next?(' · '+next.minHours+' needed for '+next.name):' · Top rank reached'}</span></div></div>`;
+  html += `<button class="btn btn-block btn-accent" onclick="doVolunteerWorkP82()">Volunteer Your Time</button>`;
+  openPanel('Volunteer Work', html);
+}
+const _origOpenWorldPanel_P82 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P82();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🤝 Volunteer Work' + (state.volunteer.rank?(' ('+VOLUNTEER_TIERS_P82[state.volunteer.rank].name+')'):'');
+  btn.onclick = openVolunteerPanelP82;
+  body.appendChild(btn);
+};
+SECRET_ENDINGS.push({id:'humanitarian', title:'Global Humanitarian', cond:s=>s.volunteer && s.volunteer.rank>=5 && s.stats.karma>=85});
+Object.assign(ACHIEVEMENTS, { volunteer_ach:'Volunteered your time', peace_corps_ach:'Became a Peace Corps Volunteer', humanitarian_ach:'Became an International Humanitarian Envoy' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
