@@ -7288,6 +7288,35 @@ openCareerPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { esports_rookie_ach:'Joined a competitive esports team', pro_gamer_ach:'Reached Pro Player in esports', esports_goat_ach:'Won 50+ esports matches, reaching World Champion' });
+
+/* ---------------------------------------------------------------------
+   P88 — Achievements Gallery: the Profile panel has always shown a
+   count and pills for EARNED achievements only, with no way to browse
+   the full list (152 and counting) to see what's still locked. This
+   adds a dedicated gallery panel listing every achievement in
+   ACHIEVEMENTS, unlocked ones highlighted, locked ones dimmed but still
+   readable — no mystery-box hiding, since none of these are spoilers.
+   --------------------------------------------------------------------- */
+function openAchievementsGalleryP88(){
+  const keys = Object.keys(ACHIEVEMENTS);
+  const unlockedCount = keys.filter(k=>state.achievements.has(k)).length;
+  let html = `<div class="list-item"><div class="li-main"><b>Progress</b><span>${unlockedCount}/${keys.length} unlocked</span></div></div>`;
+  keys.forEach(k=>{
+    const unlocked = state.achievements.has(k);
+    html += `<div class="list-item"${unlocked?'':' style="opacity:.5"'}><div class="li-main"><b>${unlocked?'🏆':'🔒'} ${ACHIEVEMENTS[k]}</b></div></div>`;
+  });
+  openPanel('Achievements', html);
+}
+const _origOpenProfilePanel_P88 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P88();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '🏆 View All Achievements';
+  btn.onclick = openAchievementsGalleryP88;
+  body.appendChild(btn);
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
