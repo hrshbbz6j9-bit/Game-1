@@ -444,7 +444,7 @@
     gap: 10px;
     cursor: pointer;
   }
-  .term-top:focus-visible, .thread-top:focus-visible {
+  .term-top:focus-visible, .thread-top:focus-visible, .totd-card:focus-visible {
     outline: 3px solid var(--violet);
     outline-offset: 2px;
   }
@@ -2558,7 +2558,7 @@
     </div>
 
     <div class="totd-wrap">
-      <div class="totd-card" id="totdCard">
+      <div class="totd-card" id="totdCard" tabindex="0" role="button" aria-expanded="false" aria-label="Term of the Day, toggle details">
         <div class="totd-label"><span class="dot"></span>Term of the Day</div>
         <div class="totd-term" id="totdTerm">—</div>
         <div class="totd-def" id="totdDef">—</div>
@@ -6400,8 +6400,13 @@
     els.totdDef.textContent = t.definition;
   }
 
-  els.totdCard.addEventListener("click", () => {
-    els.totdCard.classList.toggle("expanded");
+  const toggleTotdCard = () => {
+    const expanded = els.totdCard.classList.toggle("expanded");
+    els.totdCard.setAttribute("aria-expanded", String(expanded));
+  };
+  els.totdCard.addEventListener("click", toggleTotdCard);
+  els.totdCard.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTotdCard(); }
   });
 
   /* ---------------- Index Bar ---------------- */
