@@ -6479,7 +6479,7 @@
       const diff = difficultyMeta(t.difficulty);
       const card = document.createElement("div");
       card.className = "term-card" + (openIndex === t._idx ? " open" : "");
-      card.style.animationDelay = (renderPos * 0.03) + "s";
+      card.style.animationDelay = (Math.min(renderPos, 12) * 0.03) + "s";
 
       const dots = Array.from({ length: 5 }, (_, i) =>
         `<span class="${i < t.difficulty ? "filled" : ""}"></span>`
