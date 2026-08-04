@@ -7556,6 +7556,52 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { has_staff_ach:'Hired your first household staff member', full_household_ach:'Employed 4+ household staff at once' });
+
+/* ---------------------------------------------------------------------
+   P93 — Sentence Appeal: prisonActivity() is an if-chain keyed by a
+   `kind` string with a shared closePanel()/render() trailer at the end
+   (line ~1230), so it's safe to extend by checking a new 'appeal' kind
+   before calling the original — an unrecognized kind harmlessly falls
+   through none of the existing branches and still gets the shared
+   trailer for free. Costs scale with years left; success chance is
+   driven by smarts and karma (a sympathetic, well-argued case).
+   --------------------------------------------------------------------- */
+const _origPrisonActivity_P93 = prisonActivity;
+prisonActivity = function(kind){
+  if(kind==='appeal'){
+    const cost = clamp(1500*state.prisonYearsLeft,1500,20000);
+    if(state.money<cost){ log(`Not enough money to hire an appeals lawyer.`,'bad'); }
+    else {
+      state.money -= cost;
+      const successChance = clamp(20+(state.stats.smarts-50)*0.4+(state.stats.karma-50)*0.2,5,70);
+      if(chance(successChance)){
+        const reduction = Math.min(state.prisonYearsLeft, rand(1,3));
+        state.prisonYearsLeft -= reduction;
+        log(`Your lawyer won an appeal! Your sentence was reduced by ${reduction} year${reduction===1?'':'s'}.`,'good');
+        checkAchievement('appeal_won_ach');
+        if(state.prisonYearsLeft<=0){
+          state.inPrison = false;
+          log(`You were released from prison!`,'good');
+        }
+      } else {
+        log(`Your appeal was denied. The sentence stands.`,'bad');
+      }
+    }
+  }
+  _origPrisonActivity_P93(kind);
+};
+const _origOpenActivitiesPanel_P93 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P93();
+  if(!state.inPrison) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-danger';
+  btn.textContent = `⚖️ Appeal Sentence (${fmtMoney(clamp(1500*state.prisonYearsLeft,1500,20000))})`;
+  btn.onclick = ()=>prisonActivity('appeal');
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { appeal_won_ach:'Successfully appealed a prison sentence' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
