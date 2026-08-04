@@ -409,6 +409,7 @@ function freshState(){
     weapons:[],
     citizenships:[],
     timeCapsules:[],
+    farm:{plots:[]},
   };
 }
 
@@ -7916,6 +7917,78 @@ calcLegacyScore = function(){
   return score;
 };
 Object.assign(ACHIEVEMENTS, { time_capsule_ach:'Buried a time capsule', capsule_collector_ach:'Opened 3+ time capsules in one lifetime' });
+
+/* ---------------------------------------------------------------------
+   P99 — Farming & Homestead: a plant-wait-harvest cycle gated behind
+   owning at least one house (it's your land, after all), giving real
+   backing to the pre-existing Bucket List's "Plant a garden that
+   outlives you" line. Annual crops are harvested once and cleared; the
+   Apple Orchard is perennial and regrows automatically after each
+   harvest rather than needing to be replanted.
+   --------------------------------------------------------------------- */
+const CROPS_P99 = [
+  {name:'Corn', cost:100, growYears:1, yieldRange:[300,900]},
+  {name:'Wheat', cost:150, growYears:1, yieldRange:[400,1100]},
+  {name:'Pumpkins', cost:200, growYears:1, yieldRange:[500,1400]},
+  {name:'Apple Orchard', cost:2000, growYears:3, yieldRange:[3000,9000]},
+];
+function plantCropP99(cropName){
+  if(!state.assets.houses.length){ log(`You need a house before you can start a farm.`,'bad'); openFarmPanelP99(); return; }
+  const crop = CROPS_P99.find(c=>c.name===cropName); if(!crop) return;
+  if(state.money<crop.cost){ log(`Not enough money to plant ${cropName}.`,'bad'); openFarmPanelP99(); return; }
+  state.money -= crop.cost;
+  state.farm.plots.push({crop:cropName, plantedAge:state.age, readyAge:state.age+crop.growYears});
+  log(`You planted a plot of ${cropName}.`,'good');
+  checkAchievement('farmer_ach');
+  openFarmPanelP99();
+}
+function harvestCropP99(idx){
+  const plot = state.farm.plots[idx]; if(!plot || state.age<plot.readyAge) return;
+  const crop = CROPS_P99.find(c=>c.name===plot.crop); if(!crop) return;
+  const yieldAmt = rand(crop.yieldRange[0],crop.yieldRange[1]);
+  state.money += yieldAmt;
+  state.stats.happiness = clamp(state.stats.happiness+5,0,100);
+  state.flags.harvestCount = (state.flags.harvestCount||0)+1;
+  log(`You harvested your ${plot.crop} for ${fmtMoney(yieldAmt)}.`,'good');
+  if(state.flags.harvestCount>=10) checkAchievement('master_farmer_ach');
+  if(crop.name==='Apple Orchard'){
+    plot.plantedAge = state.age;
+    plot.readyAge = state.age+crop.growYears;
+  } else {
+    state.farm.plots.splice(idx,1);
+  }
+  openFarmPanelP99();
+}
+function openFarmPanelP99(){
+  let html = `<p style="color:var(--sub)">Plant crops on your land and harvest them once they're ready.</p>`;
+  if(state.farm.plots.length){
+    html += `<b>Your Plots</b>`;
+    state.farm.plots.forEach((plot,idx)=>{
+      const ready = state.age>=plot.readyAge;
+      html += `<div class="list-item"><div class="li-main"><b>${plot.crop}</b><span>${ready?'Ready to harvest!':('Ready at age '+plot.readyAge)}</span></div>
+        <button class="btn"${ready?'':' disabled'} onclick='harvestCropP99(${idx})'>Harvest</button></div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Plant a Crop</b>`;
+  CROPS_P99.forEach(c=>{
+    html += `<button class="btn btn-block" onclick='plantCropP99(${JSON.stringify(c.name)})'>${c.name} (${fmtMoney(c.cost)}, ${c.growYears} yr${c.growYears===1?'':'s'})</button>`;
+  });
+  openPanel('Farm', html);
+}
+const _origOpenWorldPanel_P99 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P99();
+  if(!state.assets.houses.length) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🌾 Farm' + (state.farm.plots.length?(' ('+state.farm.plots.length+' plots)'):'');
+  btn.onclick = openFarmPanelP99;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { farmer_ach:'Planted your first crop', master_farmer_ach:'Harvested 10+ crops in one lifetime' });
 </script>
 </body>
 </html>
