@@ -395,6 +395,7 @@ function freshState(){
     kidJobEarnings:0,
     will:{beneficiaryId:null},
     artCollection:[],
+    fertilityAttempts:0,
   };
 }
 
@@ -6443,6 +6444,68 @@ function handleParentInheritanceP75(parent){
   checkAchievement('inheritor_ach');
 }
 Object.assign(ACHIEVEMENTS, { inheritor_ach:'Inherited money from a parent', inheritance_dispute_ach:'Had a bitter inheritance dispute with a sibling' });
+
+/* ---------------------------------------------------------------------
+   P76 — Twins & Fertility Treatment: tryForBaby() has been wrapped
+   twice before (P28 for looks inheritance, P49 for the naming panel);
+   this adds a third wrap on top that detects success/failure by
+   comparing kids.length, giving every successful birth a small twin
+   chance and tracking repeated failures toward an IVF option that
+   guarantees a baby (with an even higher twin chance, matching the
+   real-world statistical bump fertility treatment gives multiples).
+   --------------------------------------------------------------------- */
+function spawnTwinP76(firstKid){
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  const kid = newRelationship('child',{gender:pick(['Male','Female']), age:0, rel:90});
+  state.relationships.push(kid); state.kids.push(kid.id);
+  kid.looks = inheritedLooksP28(state.stats.looks, spouse?spouse.looks:rand(15,90));
+  log(`Surprise — it's twins! ${firstKid?firstKid.name:'Your new baby'} has a twin sibling, ${kid.name}.`,'good');
+  checkAchievement('twins_ach');
+  return kid;
+}
+const _origTryForBaby_P76 = tryForBaby;
+tryForBaby = function(){
+  const before = state.kids.length;
+  _origTryForBaby_P76();
+  if(state.kids.length>before){
+    state.fertilityAttempts = 0;
+    if(chance(3)){
+      const firstKid = state.relationships.find(r=>r.id===state.kids[before]);
+      spawnTwinP76(firstKid);
+    }
+  } else {
+    state.fertilityAttempts = (state.fertilityAttempts||0)+1;
+  }
+};
+function startIVFP76(){
+  const cost = 15000;
+  if(state.money<cost){ log(`Not enough money for IVF treatment.`,'bad'); openRelationshipsPanel(); return; }
+  state.money -= cost;
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  const kid = newRelationship('child',{gender:pick(['Male','Female']), age:0, rel:90});
+  state.relationships.push(kid); state.kids.push(kid.id);
+  kid.looks = inheritedLooksP28(state.stats.looks, spouse?spouse.looks:rand(15,90));
+  log(`After IVF treatment, you welcomed a baby! Welcome, ${kid.name}.`,'good');
+  newspaper(`WELCOME TO THE WORLD`, `${state.name} welcomes a new child, ${kid.name}, after a long fertility journey.`);
+  checkAchievement('parent');
+  checkAchievement('ivf_ach');
+  state.fertilityAttempts = 0;
+  if(chance(12)) spawnTwinP76(kid);
+  openRenameChildPanelP49(kid.id);
+};
+const _origOpenRelationshipsPanel_P76 = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P76();
+  if(state.spouseId && state.age>=18 && (state.fertilityAttempts||0)>=3){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = '🧬 Try IVF Treatment ($15,000)';
+    btn.onclick = startIVFP76;
+    body.appendChild(btn);
+  }
+};
+Object.assign(ACHIEVEMENTS, { twins_ach:'Had twins', ivf_ach:'Had a baby through IVF treatment' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
