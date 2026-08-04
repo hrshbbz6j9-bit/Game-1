@@ -386,6 +386,7 @@ function freshState(){
     insurance:{life:null, auto:null, home:null},
     pension:{fund:0, retired:false},
     hobbies:{},
+    bodyMods:{tattoos:[], piercings:[]},
   };
 }
 
@@ -5521,6 +5522,83 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { hobbyist_ach:'Picked up a hobby', hobby_master_ach:'Mastered a hobby (level 10)' });
+
+/* ---------------------------------------------------------------------
+   P63 — Tattoo & Piercing Parlor: a real body-customization system to
+   back up the single flavor-only tattoo event line that already
+   existed. Tattoos carry a small regret risk (looks can dip as well as
+   rise); piercings are cheaper and safer. Laser removal lets you undo
+   a tattoo you regret, at a price.
+   --------------------------------------------------------------------- */
+const TATTOO_OPTIONS_P63 = ['Rose','Skull','Anchor','Tribal Band','Phoenix','Dragon','Butterfly','Meaningful Quote','Portrait','Compass'];
+const PIERCING_OPTIONS_P63 = ['Ear','Nose','Eyebrow','Lip','Tongue','Belly Button'];
+function getTattooP63(name){
+  const cost = rand(80,350);
+  if(state.money<cost){ log(`Not enough money for a ${name} tattoo.`,'bad'); openBodyModPanelP63(); return; }
+  state.money -= cost;
+  state.bodyMods.tattoos.push(name);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  if(chance(20)){
+    state.stats.looks = clamp(state.stats.looks-rand(1,4),0,100);
+    log(`You got a ${name} tattoo... and immediately started regretting it.`,'bad');
+  } else {
+    state.stats.looks = clamp(state.stats.looks+rand(1,3),0,100);
+    log(`You got a ${name} tattoo. It looks great on you.`,'good');
+  }
+  if(state.bodyMods.tattoos.length===1) checkAchievement('tattooed_ach');
+  if(state.bodyMods.tattoos.length+state.bodyMods.piercings.length>=5) checkAchievement('ink_collector_ach');
+  openBodyModPanelP63();
+}
+function getPiercingP63(name){
+  const cost = rand(30,150);
+  if(state.money<cost){ log(`Not enough money for a ${name} piercing.`,'bad'); openBodyModPanelP63(); return; }
+  state.money -= cost;
+  state.bodyMods.piercings.push(name);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  state.stats.looks = clamp(state.stats.looks+rand(0,2),0,100);
+  log(`You got your ${name} pierced.`,'good');
+  if(state.bodyMods.tattoos.length+state.bodyMods.piercings.length>=5) checkAchievement('ink_collector_ach');
+  openBodyModPanelP63();
+}
+function removeTattooP63(idx){
+  const name = state.bodyMods.tattoos[idx]; if(!name) return;
+  const cost = rand(300,900);
+  if(state.money<cost){ log(`Laser removal is too expensive right now.`,'bad'); openBodyModPanelP63(); return; }
+  state.money -= cost;
+  state.bodyMods.tattoos.splice(idx,1);
+  log(`You had your ${name} tattoo laser-removed. Painful, but worth it.`,'neutral');
+  openBodyModPanelP63();
+}
+function openBodyModPanelP63(){
+  let html = `<p style="color:var(--sub)">Express yourself — for a price. Tattoos carry a small risk of regret; piercings are safer bets.</p>`;
+  html += `<b>Your Tattoos</b>`;
+  if(!state.bodyMods.tattoos.length) html += `<p style="color:var(--sub)">None yet.</p>`;
+  state.bodyMods.tattoos.forEach((t,i)=>{
+    html += `<div class="list-item"><div class="li-main"><b>${t}</b></div><button class="btn btn-danger" onclick="removeTattooP63(${i})">Laser Off</button></div>`;
+  });
+  html += `<hr style="border-color:var(--border)"><b>Get a Tattoo</b>`;
+  TATTOO_OPTIONS_P63.forEach(t=>{ html += `<button class="btn btn-block" onclick='getTattooP63(${JSON.stringify(t)})'>${t}</button>`; });
+  html += `<hr style="border-color:var(--border)"><b>Your Piercings</b>`;
+  if(!state.bodyMods.piercings.length) html += `<p style="color:var(--sub)">None yet.</p>`;
+  html += state.bodyMods.piercings.map(p=>`<div class="list-item"><div class="li-main"><b>${p}</b></div></div>`).join('');
+  html += `<hr style="border-color:var(--border)"><b>Get a Piercing</b>`;
+  PIERCING_OPTIONS_P63.forEach(p=>{ html += `<button class="btn btn-block" onclick='getPiercingP63(${JSON.stringify(p)})'>${p}</button>`; });
+  openPanel('Tattoo & Piercing Parlor', html);
+}
+const _origOpenActivitiesPanel_P63 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P63();
+  if(state.inPrison) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const count = state.bodyMods.tattoos.length + state.bodyMods.piercings.length;
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '💉 Tattoo & Piercing Parlor' + (count?(' ('+count+')'):'');
+  btn.onclick = openBodyModPanelP63;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { tattooed_ach:'Got your first tattoo', ink_collector_ach:'Got 5+ tattoos and piercings combined' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
