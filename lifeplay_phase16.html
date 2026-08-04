@@ -382,6 +382,7 @@ function freshState(){
     music:{stage:0, fame:0, songs:0, grammys:0},
     modeling:{stage:0, fame:0, gigs:0, covers:0},
     stocks:{},
+    agent:null,
   };
 }
 
@@ -4915,6 +4916,77 @@ openProfilePanel = function(){
   const photoBtn = [...body.querySelectorAll('button')].find(b=>b.textContent.includes('Photo Album'));
   if(photoBtn) photoBtn.insertAdjacentElement('afterend', row);
   else body.insertBefore(row, body.firstChild);
+};
+
+/* ---------------------------------------------------------------------
+   P54 — Talent Agent: ties the acting/music/modeling tracks together.
+   Takes a cut of each payout, gives a small passive fame trickle every
+   year across all three, no change to any of the underlying odds.
+   --------------------------------------------------------------------- */
+function signWithAgentP54(){
+  if(state.agent) return;
+  const cut = rand(10,20);
+  state.agent = {name: randomFirstName(pick(['Male','Female']))+' '+pick(LAST_NAMES), cut, signedAge: state.age};
+  log(`You signed with talent agent ${state.agent.name}, who takes a ${cut}% cut of your earnings.`,'neutral');
+  closePanel(); render();
+}
+function dropAgentP54(){
+  if(!state.agent) return;
+  log(`You parted ways with your agent, ${state.agent.name}.`,'neutral');
+  state.agent = null;
+  closePanel(); render();
+}
+function takeAgentCutP54(before){
+  if(!state.agent) return;
+  const gain = state.money-before;
+  if(gain>0) state.money -= Math.round(gain*state.agent.cut/100);
+}
+const _origAuditionForRoleP35_P54 = auditionForRoleP35;
+auditionForRoleP35 = function(){ const before=state.money; _origAuditionForRoleP35_P54(); takeAgentCutP54(before); };
+const _origWriteSongP36_P54 = writeSongP36;
+writeSongP36 = function(){ const before=state.money; _origWriteSongP36_P54(); takeAgentCutP54(before); };
+const _origBookModelingGigP38_P54 = bookModelingGigP38;
+bookModelingGigP38 = function(){ const before=state.money; _origBookModelingGigP38_P54(); takeAgentCutP54(before); };
+function tickAgentP54(){
+  if(!state.agent) return;
+  const boost = rand(1,3);
+  if(state.acting && state.acting.stage>0) state.acting.fame = clamp(state.acting.fame+boost,0,100);
+  if(state.music && state.music.stage>0) state.music.fame = clamp(state.music.fame+boost,0,100);
+  if(state.modeling && state.modeling.stage>0) state.modeling.fame = clamp(state.modeling.fame+boost,0,100);
+}
+const _origAgeUp_P54 = ageUp;
+ageUp = function(){
+  _origAgeUp_P54();
+  if(!state || !state.alive) return;
+  tickAgentP54();
+  render();
+};
+const _origOpenActivitiesPanel_P54 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P54();
+  if(state.inPrison) return;
+  const hasEntertainmentCareer = (state.acting&&state.acting.stage>0) || (state.music&&state.music.stage>0) || (state.modeling&&state.modeling.stage>0);
+  if(!hasEntertainmentCareer && !state.agent) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = 'Representation'; body.appendChild(label);
+  if(state.agent){
+    const info = document.createElement('div'); info.className = 'list-item';
+    info.innerHTML = `<div class="li-main"><b>${state.agent.name}</b><span>Takes ${state.agent.cut}% of your entertainment earnings</span></div>`;
+    body.appendChild(info);
+    const dropBtn = document.createElement('button');
+    dropBtn.className = 'btn btn-block btn-danger';
+    dropBtn.textContent = 'Part Ways with Agent';
+    dropBtn.onclick = dropAgentP54;
+    body.appendChild(dropBtn);
+  } else {
+    const signBtn = document.createElement('button');
+    signBtn.className = 'btn btn-block btn-accent';
+    signBtn.textContent = '🤝 Sign with a Talent Agent';
+    signBtn.onclick = signWithAgentP54;
+    body.appendChild(signBtn);
+  }
 };
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
