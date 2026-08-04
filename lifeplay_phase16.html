@@ -5237,7 +5237,8 @@ function tickInsuranceP58(){
       log(`You ${cause}, costing you ${fmtMoney(cost)} out of pocket. (No auto insurance!)`,'bad');
     }
   }
-  if(state.assets.houses.length && chance(4)){
+  const hasSecuritySystem = state.assets.houses.some(h=>h.hasSecuritySystem);
+  if(state.assets.houses.length && chance(hasSecuritySystem?1.5:4)){
     const cost = rand(1000,15000);
     const cause = pick(INSURANCE_HOME_CAUSES_P58);
     const active = state.insurance.home;
@@ -5987,6 +5988,11 @@ function openHouseManagerP68(){
       if(done) return;
       html += `<button class="btn btn-block" onclick='renovateHouseP68(${idx},${JSON.stringify(r.name)})'>${r.name} (${fmtMoney(r.cost)})</button>`;
     });
+    if(h.hasSecuritySystem){
+      html += `<div class="list-item"><div class="li-main"><b>🔒 Security System Installed</b></div></div>`;
+    } else {
+      html += `<button class="btn btn-block btn-accent" onclick='installSecuritySystemP102(${idx})'>Install Security System (${fmtMoney(2000)})</button>`;
+    }
     html += `<hr style="border-color:var(--border)">`;
   });
   openPanel('House Manager', html);
@@ -8057,6 +8063,28 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { treasure_hunter_ach:'Found treasure worth $1,000+ metal detecting', legendary_treasure_ach:'Found 3+ big treasures in one lifetime' });
+
+/* ---------------------------------------------------------------------
+   P102 — Home Security System: ties directly into P58's Insurance
+   (both edited in place — openHouseManagerP68 and tickInsuranceP58 are
+   my own earlier same-session code). A house gains an optional
+   .hasSecuritySystem field (lazy init, same pattern as .renovations),
+   installed via a new button in the House Manager panel. Owning one
+   genuinely lowers the home insurance incident chance from 4% to 1.5%
+   per year, rather than being a purely cosmetic purchase.
+   --------------------------------------------------------------------- */
+function installSecuritySystemP102(idx){
+  const h = state.assets.houses[idx]; if(!h || h.hasSecuritySystem) return;
+  const cost = 2000;
+  if(state.money<cost){ log(`Not enough money for a security system.`,'bad'); openHouseManagerP68(); return; }
+  state.money -= cost;
+  h.hasSecuritySystem = true;
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  log(`You installed a security system at ${h.name}. Peace of mind, well earned.`,'good');
+  checkAchievement('secured_home_ach');
+  openHouseManagerP68();
+}
+Object.assign(ACHIEVEMENTS, { secured_home_ach:'Installed a home security system' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
