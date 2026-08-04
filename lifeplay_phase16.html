@@ -385,6 +385,7 @@ function freshState(){
     agent:null,
     insurance:{life:null, auto:null, home:null},
     pension:{fund:0, retired:false},
+    hobbies:{},
   };
 }
 
@@ -5459,6 +5460,67 @@ openWorldPanel = function(){
   });
 };
 Object.assign(ACHIEVEMENTS, { international_ach:'Traveled to another country', jetsetter_ach:'Visited 5+ countries', expat_ach:'Moved abroad to a new country' });
+
+/* ---------------------------------------------------------------------
+   P62 — Hobbies & Skills: a real skill-building system to back up the
+   flavor-only "picked up a hobby" event lines that already existed.
+   Ten hobbies, each tied to a stat that practicing nudges upward, with
+   an XP/level track (0-10) so mastery actually means something.
+   --------------------------------------------------------------------- */
+const HOBBIES_P62 = [
+  {key:'guitar', name:'Guitar', icon:'🎸', stat:'happiness'},
+  {key:'painting', name:'Painting', icon:'🎨', stat:'happiness'},
+  {key:'chess', name:'Chess', icon:'♟️', stat:'smarts'},
+  {key:'cooking', name:'Cooking', icon:'🍳', stat:'happiness'},
+  {key:'martial_arts', name:'Martial Arts', icon:'🥋', stat:'health'},
+  {key:'writing', name:'Creative Writing', icon:'✍️', stat:'smarts'},
+  {key:'yoga', name:'Yoga', icon:'🧘', stat:'health'},
+  {key:'photography', name:'Photography', icon:'📷', stat:'looks'},
+  {key:'coding', name:'Coding', icon:'💻', stat:'smarts'},
+  {key:'dance', name:'Dance', icon:'💃', stat:'looks'},
+];
+function practiceHobbyP62(key){
+  const h = HOBBIES_P62.find(x=>x.key===key);
+  if(!h) return;
+  if(!state.hobbies[key]) state.hobbies[key] = {level:0, xp:0};
+  const rec = state.hobbies[key];
+  const wasZero = rec.level===0 && rec.xp===0;
+  rec.xp += rand(8,20);
+  while(rec.xp>=100 && rec.level<10){ rec.xp -= 100; rec.level++; }
+  if(rec.level>=10) rec.xp = 0;
+  state.stats[h.stat] = clamp(state.stats[h.stat]+rand(1,3),0,100);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  if(wasZero) checkAchievement('hobbyist_ach');
+  if(rec.level>=10) checkAchievement('hobby_master_ach');
+  log(`You spent time on ${h.name}${rec.level>=10?' — you\'ve truly mastered it':''}.`,'good');
+  openHobbiesPanelP62();
+}
+function openHobbiesPanelP62(){
+  let html = `<p style="color:var(--sub)">Practicing a hobby builds skill over time and lifts your mood along the way.</p>`;
+  HOBBIES_P62.forEach(h=>{
+    const rec = state.hobbies[h.key];
+    const level = rec?rec.level:0;
+    const xp = rec?rec.xp:0;
+    const label = level>=10 ? 'MASTERED' : `Level ${level} · ${xp}/100 XP`;
+    html += `<div class="list-item"><div class="li-main"><b>${h.icon} ${h.name}</b><span>${label}</span></div>
+      <button class="btn" onclick="practiceHobbyP62('${h.key}')">Practice</button></div>`;
+  });
+  openPanel('Hobbies', html);
+}
+const _origOpenActivitiesPanel_P62 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P62();
+  if(state.inPrison) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const masteredCount = HOBBIES_P62.filter(h=>state.hobbies[h.key] && state.hobbies[h.key].level>=10).length;
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block btn-accent';
+  btn.textContent = '🎨 Hobbies' + (masteredCount?(' ('+masteredCount+' mastered)'):'');
+  btn.onclick = openHobbiesPanelP62;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { hobbyist_ach:'Picked up a hobby', hobby_master_ach:'Mastered a hobby (level 10)' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
