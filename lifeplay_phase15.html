@@ -397,6 +397,7 @@ function freshState(){
     artCollection:[],
     fertilityAttempts:0,
     hacker:{skill:0, heat:0, whiteHatJobs:0},
+    extremeActivitiesDone:0,
   };
 }
 
@@ -6643,6 +6644,61 @@ openCareerPanel = function(){
   }
 };
 Object.assign(ACHIEVEMENTS, { executive_chef_ach:'Rose to Executive Chef', michelin_star_ach:'Earned a Michelin Star' });
+
+/* ---------------------------------------------------------------------
+   P79 — Extreme Sports: one-off adrenaline activities with a genuine
+   (small) death risk that routes through the existing die() — same
+   trusted hook point already used by Insurance's life-payout and Will's
+   inheritance flavor — plus a larger injury chance and a solid
+   happiness payoff on success.
+   --------------------------------------------------------------------- */
+const EXTREME_ACTIVITIES_P79 = [
+  {name:'Skydiving', cost:300, deathChance:1, injuryChance:8, happyRange:[15,25]},
+  {name:'Bungee Jumping', cost:150, deathChance:0.5, injuryChance:6, happyRange:[12,20]},
+  {name:'Cave Diving', cost:400, deathChance:2, injuryChance:12, happyRange:[15,25]},
+  {name:'Base Jumping', cost:500, deathChance:3, injuryChance:15, happyRange:[18,30]},
+  {name:'White Water Rafting', cost:200, deathChance:0.3, injuryChance:5, happyRange:[10,18]},
+  {name:'Free Solo Rock Climbing', cost:0, deathChance:2, injuryChance:14, happyRange:[15,22]},
+];
+function doExtremeActivityP79(name){
+  const a = EXTREME_ACTIVITIES_P79.find(x=>x.name===name); if(!a) return;
+  if(state.money<a.cost){ log(`Not enough money for ${name.toLowerCase()}.`,'bad'); openWorldPanel(); return; }
+  state.money -= a.cost;
+  if(chance(a.deathChance)){
+    die(`a ${name.toLowerCase()} accident`);
+    return;
+  }
+  if(chance(a.injuryChance)){
+    const dmg = rand(15,40);
+    state.stats.health = clamp(state.stats.health-dmg,0,100);
+    state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+    log(`You got hurt ${name==='Free Solo Rock Climbing'?'free solo climbing':name.toLowerCase()+'ing'}. That's going to leave a mark.`,'bad');
+  } else {
+    const happy = rand(a.happyRange[0],a.happyRange[1]);
+    state.stats.happiness = clamp(state.stats.happiness+happy,0,100);
+    state.stats.karma = clamp(state.stats.karma+1,0,100);
+    state.extremeActivitiesDone++;
+    log(`${name} was an absolute rush! Best decision you've made in years.`,'good');
+    if(state.extremeActivitiesDone>=5) checkAchievement('daredevil_ach');
+    if(state.extremeActivitiesDone>=15) checkAchievement('adrenaline_junkie_ach');
+  }
+  openWorldPanel();
+}
+const _origOpenWorldPanel_P79 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P79();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = '🪂 Extreme Sports'; body.appendChild(label);
+  EXTREME_ACTIVITIES_P79.forEach(a=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-danger';
+    btn.textContent = `${a.name}${a.cost?(' ('+fmtMoney(a.cost)+')'):' (Free)'}`;
+    btn.onclick = ()=>doExtremeActivityP79(a.name);
+    body.appendChild(btn);
+  });
+};
+Object.assign(ACHIEVEMENTS, { daredevil_ach:'Survived 5 extreme sports activities', adrenaline_junkie_ach:'Survived 15 extreme sports activities' });
 </script>
 </body>
 </html>
