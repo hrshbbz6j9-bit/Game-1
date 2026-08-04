@@ -4988,6 +4988,35 @@ openActivitiesPanel = function(){
     body.appendChild(signBtn);
   }
 };
+
+/* ---------------------------------------------------------------------
+   P55 — Most Wanted: high heat (mafia or drug empire) previously just
+   sat there as a number with no dramatic payoff. Crossing 70 now flips
+   a WANTED badge in the header and runs a one-time newspaper card.
+   --------------------------------------------------------------------- */
+function tickWantedStatusP55(){
+  const heat = Math.max(state.mafia?state.mafia.heat:0, state.drugEmpire?state.drugEmpire.heat:0);
+  const wasWanted = !!state.flags.isWanted;
+  const isWanted = heat>=70;
+  state.flags.isWanted = isWanted;
+  if(isWanted && !wasWanted){
+    newspaper(`${state.name.toUpperCase()} NAMED ON MOST WANTED LIST`, `Authorities are closing in — heat has never been higher.`, 'Underworld Desk');
+  }
+}
+const _origAgeUp_P55 = ageUp;
+ageUp = function(){
+  _origAgeUp_P55();
+  if(!state || !state.alive) return;
+  tickWantedStatusP55();
+  render();
+};
+const _origRender_P55 = render;
+render = function(){
+  _origRender_P55();
+  if(!state || !state.alive) return;
+  const sub = $('hd-sub');
+  if(state.flags.isWanted && sub) sub.textContent = '🚨 WANTED · ' + sub.textContent;
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
