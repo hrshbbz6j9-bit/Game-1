@@ -406,6 +406,7 @@ function freshState(){
     esports:null,
     fosterChild:null,
     staff:[],
+    weapons:[],
   };
 }
 
@@ -7602,6 +7603,92 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { appeal_won_ach:'Successfully appealed a prison sentence' });
+
+/* ---------------------------------------------------------------------
+   P94 — Firearms & Self-Defense: legal purchases (the "Armed Robbery"
+   crime already implies guns exist in this world), framed as a real
+   tradeoff rather than a pure upgrade — ownership brings peace of mind
+   on purchase but carries a genuine small yearly accident risk (and a
+   smaller theft risk) rather than being glorified, echoing how the
+   real-world statistics — and BitLife's own version of this mechanic —
+   treat home firearm ownership.
+   --------------------------------------------------------------------- */
+const WEAPON_TYPES_P94 = [
+  {name:'Pepper Spray', cost:20, riskTier:0},
+  {name:'Handgun', cost:400, riskTier:1},
+  {name:'Shotgun', cost:600, riskTier:1},
+  {name:'Rifle', cost:1200, riskTier:2},
+];
+function buyWeaponP94(name){
+  const w = WEAPON_TYPES_P94.find(x=>x.name===name); if(!w) return;
+  if(state.money<w.cost){ log(`Not enough money for a ${name}.`,'bad'); openWeaponsPanelP94(); return; }
+  state.money -= w.cost;
+  state.weapons.push(name);
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  log(`You purchased a ${name} for home defense.`,'neutral');
+  if(w.riskTier>=1) checkAchievement('gun_owner_ach');
+  if(state.weapons.length>=4) checkAchievement('arsenal_ach');
+  openWeaponsPanelP94();
+}
+function sellWeaponP94(idx){
+  const name = state.weapons[idx]; if(!name) return;
+  const w = WEAPON_TYPES_P94.find(x=>x.name===name);
+  const sale = w ? Math.round(w.cost*0.5) : 0;
+  state.money += sale;
+  state.weapons.splice(idx,1);
+  log(`You sold your ${name} for ${fmtMoney(sale)}.`,'neutral');
+  openWeaponsPanelP94();
+}
+function tickWeaponRiskP94(){
+  const stolen = [];
+  state.weapons.forEach(name=>{
+    const w = WEAPON_TYPES_P94.find(x=>x.name===name);
+    if(!w || w.riskTier===0) return;
+    if(chance(2)){
+      const dmg = rand(10,35);
+      state.stats.health = clamp(state.stats.health-dmg,0,100);
+      state.stats.happiness = clamp(state.stats.happiness-8,0,100);
+      log(`There was an accident involving your ${name}. You were injured.`,'bad');
+    } else if(chance(1)){
+      log(`Your ${name} was stolen in a break-in.`,'bad');
+      stolen.push(name);
+    }
+  });
+  stolen.forEach(name=>{ const idx=state.weapons.indexOf(name); if(idx>-1) state.weapons.splice(idx,1); });
+}
+function openWeaponsPanelP94(){
+  let html = `<p style="color:var(--sub)">Ownership brings peace of mind — but real risk. Store safely.</p>`;
+  if(state.weapons.length){
+    html += `<b>Owned</b>`;
+    state.weapons.forEach((name,idx)=>{
+      html += `<div class="list-item"><div class="li-main"><b>${name}</b></div><button class="btn btn-danger" onclick='sellWeaponP94(${idx})'>Sell</button></div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Available</b>`;
+  WEAPON_TYPES_P94.forEach(w=>{
+    html += `<button class="btn btn-block" onclick='buyWeaponP94(${JSON.stringify(w.name)})'>${w.name} (${fmtMoney(w.cost)})</button>`;
+  });
+  openPanel('Firearms & Self-Defense', html);
+}
+const _origOpenAssetsPanel_P94 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P94();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🔫 Firearms & Self-Defense' + (state.weapons.length?(' ('+state.weapons.length+')'):'');
+  btn.onclick = openWeaponsPanelP94;
+  body.appendChild(btn);
+};
+const _origAgeUp_P94 = ageUp;
+ageUp = function(){
+  _origAgeUp_P94();
+  if(!state || !state.alive) return;
+  tickWeaponRiskP94();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { gun_owner_ach:'Purchased your first firearm', arsenal_ach:'Own 4+ weapons' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
