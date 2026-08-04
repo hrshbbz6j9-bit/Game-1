@@ -389,6 +389,7 @@ function freshState(){
     bodyMods:{tattoos:[], piercings:[]},
     donor:{organDonor:false, bloodDonations:0},
     greekLife:null,
+    author:{books:[]},
   };
 }
 
@@ -5969,6 +5970,100 @@ openAssetsPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { renovator_ach:'Made 3+ renovations to a single house' });
+
+/* ---------------------------------------------------------------------
+   P69 — Author career: a distinct creative path from the existing
+   Music/Acting/Modeling fame tracks. Write a manuscript (quality driven
+   by smarts and the Creative Writing hobby level from P62), submit it
+   to publishers for a chance at an advance, and once published it
+   keeps earning royalties every year — with a real shot at hitting the
+   bestseller list.
+   --------------------------------------------------------------------- */
+const BOOK_GENRES_P69 = ['Mystery','Romance','Sci-Fi','Fantasy','Thriller','Memoir','Self-Help','Historical Fiction'];
+const BOOK_TITLE_ADJ_P69 = ['The Last','Shadows of','Whispers of the','The Secret','Beyond the','The Forgotten'];
+const BOOK_TITLE_NOUN_P69 = ['Garden','Kingdom','Ocean','Mirror','City','Storm','Heart','Truth'];
+function generateBookTitleP69(){ return pick(BOOK_TITLE_ADJ_P69)+' '+pick(BOOK_TITLE_NOUN_P69); }
+function writeBookP69(genre){
+  const hobbyLevel = (state.hobbies.writing && state.hobbies.writing.level) || 0;
+  const quality = clamp(Math.round(30+state.stats.smarts*0.4+hobbyLevel*3+rand(-10,10)),1,100);
+  const book = {title:generateBookTitleP69(), genre, quality, sales:0, published:false, revisions:0};
+  state.author.books.push(book);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  log(`You finished writing your manuscript, "${book.title}" — a ${genre.toLowerCase()} novel.`,'good');
+  checkAchievement('author_ach');
+  openAuthorPanelP69();
+}
+function submitToPublisherP69(idx){
+  const book = state.author.books[idx]; if(!book || book.published) return;
+  const acceptChance = clamp(20+book.quality*0.6,5,90);
+  if(chance(acceptChance)){
+    book.published = true;
+    const advance = Math.round(rand(500,3000)*(book.quality/50));
+    state.money += advance;
+    log(`"${book.title}" was accepted for publication! You received a ${fmtMoney(advance)} advance.`,'good');
+    newspaper(`LOCAL AUTHOR ${state.name.toUpperCase()} PUBLISHES NEW NOVEL`, `"${book.title}" hits shelves this week.`, 'Arts & Culture');
+    const publishedCount = state.author.books.filter(b=>b.published).length;
+    if(publishedCount>=5) checkAchievement('prolific_author_ach');
+  } else {
+    book.revisions = (book.revisions||0)+1;
+    book.quality = clamp(book.quality+5,1,100);
+    state.stats.happiness = clamp(state.stats.happiness-2,0,100);
+    log(`"${book.title}" was rejected by the publisher. Back to revisions.`,'bad');
+  }
+  openAuthorPanelP69();
+}
+function tickBookRoyaltiesP69(){
+  if(!state.author || !state.author.books.length) return;
+  state.author.books.forEach(b=>{
+    if(!b.published) return;
+    const growth = Math.round(rand(50,300)*(b.quality/50));
+    b.sales += growth;
+    const royalty = Math.round(growth*2.5);
+    state.money += royalty;
+    if(b.sales>=100000 && !b.bestseller){
+      b.bestseller = true;
+      log(`"${b.title}" hit the BESTSELLER list!`,'good');
+      checkAchievement('bestseller_ach');
+      newspaper(`"${b.title.toUpperCase()}" HITS BESTSELLER LIST`, `${state.name}'s novel is flying off shelves nationwide.`, 'Arts & Culture');
+    }
+  });
+}
+function openAuthorPanelP69(){
+  let html = `<p style="color:var(--sub)">Writing draws on your smarts — and a knack for Creative Writing helps too.</p>`;
+  if(state.author.books.length){
+    html += `<b>Your Books</b>`;
+    state.author.books.forEach((b,i)=>{
+      const status = b.published ? (b.bestseller?'BESTSELLER':`Published · ${b.sales} copies sold`) : `Unpublished · Quality ${b.quality}`;
+      html += `<div class="list-item"><div class="li-main"><b>${b.title}</b><span>${b.genre} · ${status}</span></div>
+        ${!b.published?`<button class="btn" onclick='submitToPublisherP69(${i})'>Submit</button>`:''}</div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Write a New Book</b>`;
+  BOOK_GENRES_P69.forEach(g=>{ html += `<button class="btn btn-block" onclick='writeBookP69(${JSON.stringify(g)})'>Write a ${g} Novel</button>`; });
+  openPanel('Author', html);
+}
+const _origOpenActivitiesPanel_P69 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P69();
+  if(state.inPrison || state.age<12) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const publishedCount = state.author.books.filter(b=>b.published).length;
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '✍️ Author' + (publishedCount?(' ('+publishedCount+' published)'):'');
+  btn.onclick = openAuthorPanelP69;
+  body.appendChild(btn);
+};
+const _origAgeUp_P69 = ageUp;
+ageUp = function(){
+  _origAgeUp_P69();
+  if(!state || !state.alive) return;
+  tickBookRoyaltiesP69();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { author_ach:'Wrote your first book', bestseller_ach:'Had a book hit the bestseller list', prolific_author_ach:'Published 5+ books' });
 </script>
 </body>
 </html>
