@@ -402,6 +402,7 @@ function freshState(){
     poker:{skill:0, tournamentWins:0},
     volunteer:{rank:0, hoursLogged:0},
     astronaut:null,
+    studentDebt:0,
   };
 }
 
@@ -7085,6 +7086,84 @@ openAssetsPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { tuner_ach:'Installed your first car modification', street_racer_ach:'Won a street race', racing_legend_ach:'Won 10+ street races' });
+
+/* ---------------------------------------------------------------------
+   P85 — College Tuition & Student Loans: college acceptance was
+   entirely free with no cost modeling at all. Now a merit scholarship
+   (scaled by smarts) is rolled on acceptance, annual tuition is charged
+   each year while enrolled, and anything the player can't cover becomes
+   student debt that accrues modest interest every year — win or lose,
+   in school or not — until paid off.
+   --------------------------------------------------------------------- */
+const COLLEGE_ANNUAL_TUITION_P85 = 12000;
+const _origApplyCollege_P85 = applyCollege;
+applyCollege = function(){
+  const before = state.eduStage;
+  _origApplyCollege_P85();
+  if(state.eduStage==='college' && before!=='college'){
+    const scholarshipPct = clamp(Math.round((state.stats.smarts-50)*1.5),0,80);
+    state.flags.scholarshipPct = scholarshipPct;
+    if(scholarshipPct>0){
+      log(`Thanks to your academic record, you earned a ${scholarshipPct}% merit scholarship.`,'good');
+      checkAchievement('scholarship_ach');
+    }
+  }
+};
+function tickTuitionP85(){
+  if(state.eduStage==='college' && !state.dropped && state.eduYear>=1 && state.eduYear<=4){
+    const pct = state.flags.scholarshipPct||0;
+    const cost = Math.round(COLLEGE_ANNUAL_TUITION_P85*(1-pct/100));
+    if(state.money>=cost){
+      state.money -= cost;
+      log(`You paid ${fmtMoney(cost)} in tuition this year.`,'neutral');
+    } else {
+      const shortfall = cost-state.money;
+      state.money = 0;
+      state.studentDebt += shortfall;
+      log(`You couldn't cover tuition, so you took on ${fmtMoney(shortfall)} in student loans.`,'bad');
+    }
+  }
+  if(state.studentDebt>0){
+    state.studentDebt = Math.round(state.studentDebt*1.05);
+  }
+}
+function payStudentDebtP85(amount){
+  const pay = Math.min(amount, state.money, state.studentDebt);
+  if(pay<=0) return;
+  state.money -= pay;
+  state.studentDebt -= pay;
+  log(`You paid ${fmtMoney(pay)} toward your student loans.`,'good');
+  if(state.studentDebt<=0){
+    state.studentDebt = 0;
+    checkAchievement('debt_free_ach');
+  }
+  openCareerPanel();
+}
+const _origOpenCareerPanel_P85 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P85();
+  if(state.studentDebt>0){
+    const body = $('panel-body');
+    const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+    const info = document.createElement('div');
+    info.className = 'list-item';
+    info.innerHTML = `<div class="li-main"><b>Student Loan Debt</b><span>${fmtMoney(state.studentDebt)}</span></div>`;
+    body.appendChild(info);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-danger';
+    btn.textContent = 'Pay Off $' + Math.min(state.money,state.studentDebt).toLocaleString() + ' Toward Loans';
+    btn.onclick = ()=>payStudentDebtP85(state.money);
+    body.appendChild(btn);
+  }
+};
+const _origAgeUp_P85 = ageUp;
+ageUp = function(){
+  _origAgeUp_P85();
+  if(!state || !state.alive) return;
+  tickTuitionP85();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { scholarship_ach:'Earned a merit scholarship', debt_free_ach:'Paid off all student loan debt' });
 </script>
 </body>
 </html>
