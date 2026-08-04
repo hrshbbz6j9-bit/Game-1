@@ -7317,6 +7317,68 @@ openProfilePanel = function(){
   btn.onclick = openAchievementsGalleryP88;
   body.appendChild(btn);
 };
+
+/* ---------------------------------------------------------------------
+   P89 — Secret Endings Collection: unlike achievements, secret endings
+   are meant to stay hidden until discovered (their conditions are the
+   whole point), so this isn't a full spoiler gallery — it's a
+   persistent, cross-life trophy case. Discovering an ending on any
+   death screen (via the existing checkSecretEndings(), wrapped here)
+   permanently records it in localStorage, the same storage mechanism
+   already used for the AI chat's API key/model (lines ~2070-2073), so
+   the collection survives "Begin a New Volume" and even closing the
+   tab. Undiscovered endings show only a lock — no title, no hint.
+   --------------------------------------------------------------------- */
+const ENDINGS_STORAGE_KEY_P89 = 'lifeplay_endings_discovered';
+function getDiscoveredEndingsP89(){
+  try{ return new Set(JSON.parse(localStorage.getItem(ENDINGS_STORAGE_KEY_P89)||'[]')); }
+  catch(e){ return new Set(); }
+}
+function saveDiscoveredEndingsP89(set){
+  try{ localStorage.setItem(ENDINGS_STORAGE_KEY_P89, JSON.stringify([...set])); }catch(e){}
+}
+const _origCheckSecretEndings_P89 = checkSecretEndings;
+checkSecretEndings = function(){
+  const earned = _origCheckSecretEndings_P89();
+  if(earned.length){
+    const discovered = getDiscoveredEndingsP89();
+    let changed = false;
+    earned.forEach(e=>{ if(!discovered.has(e.id)){ discovered.add(e.id); changed=true; } });
+    if(changed) saveDiscoveredEndingsP89(discovered);
+  }
+  return earned;
+};
+function openEndingsGalleryP89(){
+  const discovered = getDiscoveredEndingsP89();
+  let html = `<div class="list-item"><div class="li-main"><b>Progress</b><span>${discovered.size}/${SECRET_ENDINGS.length} discovered</span></div></div>`;
+  html += `<p style="color:var(--sub)">Secret endings stay hidden until you live the life that unlocks them — across every playthrough.</p>`;
+  SECRET_ENDINGS.forEach(e=>{
+    const found = discovered.has(e.id);
+    html += `<div class="list-item"${found?'':' style="opacity:.5"'}><div class="li-main"><b>${found?('🏅 '+e.title):'🔒 ???'}</b></div></div>`;
+  });
+  openPanel('Secret Endings', html);
+}
+const _origOpenProfilePanel_P89 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P89();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🏅 Secret Endings Collection';
+  btn.onclick = openEndingsGalleryP89;
+  body.appendChild(btn);
+};
+(function(){
+  const nlStartBtn = document.getElementById('nl-start');
+  if(nlStartBtn){
+    const endingsBtn = document.createElement('button');
+    endingsBtn.className = 'btn btn-block';
+    endingsBtn.style.marginTop = '8px';
+    endingsBtn.textContent = '🏅 Secret Endings Collection';
+    endingsBtn.onclick = openEndingsGalleryP89;
+    nlStartBtn.insertAdjacentElement('afterend', endingsBtn);
+  }
+})();
 </script>
 </body>
 </html>
