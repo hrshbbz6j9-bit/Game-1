@@ -4779,6 +4779,47 @@ adoptPet = function(type){
   _origAdoptPet_P49(type);
   if(state.pets.length>before) openRenamePetPanelP49(state.pets.length-1);
 };
+
+/* ---------------------------------------------------------------------
+   P50 — Dating App: findDate() used to just roll a single auto-
+   committed match with no say from the player. Now it opens a small
+   set of candidates, portraits included, and the player picks who (if
+   anyone) to message — same underlying odds, more BitLife-like feel.
+   --------------------------------------------------------------------- */
+function generateDateCandidatesP50(){
+  const candidates = [];
+  for(let i=0;i<3;i++){
+    const gender = pick(['Male','Female']);
+    const age = clamp(state.age+rand(-3,3),16,99);
+    candidates.push({name: randomFirstName(gender)+' '+pick(LAST_NAMES), gender, age, looks: rand(15,95)});
+  }
+  return candidates;
+}
+function openDatingAppPanelP50(){
+  const candidates = generateDateCandidatesP50();
+  state.flags._dateCandidates = candidates;
+  let html = `<p style="color:var(--sub)">A few people catch your eye tonight.</p>`;
+  candidates.forEach((c,i)=>{
+    html += `<div class="list-item"><div class="li-portrait">${personAvatarSVG(c)}</div><div class="li-main"><b>${c.name}</b><span>${c.gender} · Age ${c.age}</span></div>
+      <button class="btn" onclick='messageDateCandidateP50(${i})'>Message</button></div>`;
+  });
+  html += `<button class="btn btn-block" onclick="closePanel()">Not feeling it today</button>`;
+  openPanel('Dating App', html);
+}
+function messageDateCandidateP50(i){
+  const c = state.flags._dateCandidates && state.flags._dateCandidates[i];
+  if(!c) return;
+  if(chance(60)){
+    const p = newRelationship('datingpartner',{name:c.name, gender:c.gender, age:c.age, looks:c.looks, rel:rand(45,70)});
+    state.relationships.push(p);
+    log(`You started dating ${p.name}.`,'good');
+  } else {
+    log(`You messaged ${c.name}, but there was no spark.`,'neutral');
+  }
+  delete state.flags._dateCandidates;
+  closePanel(); render();
+}
+findDate = openDatingAppPanelP50;
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
