@@ -390,6 +390,7 @@ function freshState(){
     donor:{organDonor:false, bloodDonations:0},
     greekLife:null,
     author:{books:[]},
+    wardrobe:{owned:[]},
   };
 }
 
@@ -6064,6 +6065,56 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { author_ach:'Wrote your first book', bestseller_ach:'Had a book hit the bestseller list', prolific_author_ach:'Published 5+ books' });
+
+/* ---------------------------------------------------------------------
+   P70 — Wardrobe Shop: a real clothing-purchase system to sit alongside
+   the existing procedural (random) outfit rendering. Each tier gives an
+   immediate, permanent looks and happiness boost, the same "buy it and
+   keep the effect" pattern already established by Gym/Plastic Surgery
+   (P30) — no separate equip/worn-outfit layer needed.
+   --------------------------------------------------------------------- */
+const CLOTHING_TIERS_P70 = [
+  {name:'Casual Wear', cost:50, looksBoost:1, happyBoost:2},
+  {name:'Business Attire', cost:200, looksBoost:3, happyBoost:3},
+  {name:'Designer Outfit', cost:800, looksBoost:6, happyBoost:5},
+  {name:'Luxury Couture', cost:3000, looksBoost:12, happyBoost:8},
+  {name:'Bespoke Wardrobe', cost:10000, looksBoost:20, happyBoost:12},
+];
+function buyOutfitP70(name){
+  const t = CLOTHING_TIERS_P70.find(x=>x.name===name); if(!t) return;
+  if(state.money<t.cost){ log(`Not enough money for ${name}.`,'bad'); openWardrobeP70(); return; }
+  state.money -= t.cost;
+  state.wardrobe.owned.push(name);
+  state.stats.looks = clamp(state.stats.looks+t.looksBoost,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+t.happyBoost,0,100);
+  log(`You bought a new ${name.toLowerCase()}. Looking good.`,'good');
+  if(state.wardrobe.owned.length>=5) checkAchievement('fashionista_ach');
+  if(name==='Bespoke Wardrobe') checkAchievement('clotheshorse_ach');
+  openWardrobeP70();
+}
+function openWardrobeP70(){
+  let html = `<p style="color:var(--sub)">New clothes give an instant, lasting boost to your looks and mood.</p>`;
+  if(state.wardrobe.owned.length){
+    html += `<div class="list-item"><div class="li-main"><b>Wardrobe</b><span>${state.wardrobe.owned.length} item${state.wardrobe.owned.length===1?'':'s'} owned</span></div></div>`;
+  }
+  CLOTHING_TIERS_P70.forEach(t=>{
+    html += `<button class="btn btn-block" onclick='buyOutfitP70(${JSON.stringify(t.name)})'>${t.name} (${fmtMoney(t.cost)})</button>`;
+  });
+  openPanel('Wardrobe', html);
+}
+const _origOpenActivitiesPanel_P70 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P70();
+  if(state.inPrison) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '👗 Wardrobe' + (state.wardrobe.owned.length?(' ('+state.wardrobe.owned.length+')'):'');
+  btn.onclick = openWardrobeP70;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { fashionista_ach:'Bought 5+ wardrobe items', clotheshorse_ach:'Bought a Bespoke Wardrobe' });
 </script>
 </body>
 </html>
