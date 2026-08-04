@@ -393,6 +393,7 @@ function freshState(){
     wardrobe:{owned:[]},
     kidJob:null,
     kidJobEarnings:0,
+    will:{beneficiaryId:null},
   };
 }
 
@@ -6262,6 +6263,65 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { entrepreneur_kid_ach:'Held a kid job before turning 16', hustler_ach:'Earned $500+ total from kid jobs' });
+
+/* ---------------------------------------------------------------------
+   P73 — Will & Estate: lets the player name a beneficiary among living
+   immediate family. Having a will nudges the legacy score up slightly
+   (a smaller, distinct bump from the organ-donor one in P64) and, on
+   death, fires a dedicated inheritance flavor line and newspaper notice
+   if the named beneficiary is still alive.
+   --------------------------------------------------------------------- */
+function setBeneficiaryP73(id){
+  const r = state.relationships.find(x=>x.id===id); if(!r) return;
+  state.will.beneficiaryId = id;
+  log(`You updated your will, naming ${r.name} as your primary beneficiary.`,'neutral');
+  checkAchievement('planner_ach');
+  openWillPanelP73();
+}
+function openWillPanelP73(){
+  let html = `<p style="color:var(--sub)">Choose who inherits your estate when you're gone. You can change your mind anytime.</p>`;
+  const beneficiary = state.will.beneficiaryId ? state.relationships.find(r=>r.id===state.will.beneficiaryId) : null;
+  if(beneficiary && beneficiary.alive){
+    html += `<div class="list-item"><div class="li-main"><b>Current Beneficiary</b><span>${beneficiary.name} (${relLabel(beneficiary.type)})</span></div></div>`;
+  }
+  const eligible = state.relationships.filter(r=>r.alive && ['spouse','child','parent','sibling'].includes(r.type) && r.id!==state.will.beneficiaryId);
+  if(!eligible.length && !(beneficiary && beneficiary.alive)){
+    html += `<p style="color:var(--sub)">No eligible family members yet.</p>`;
+  }
+  eligible.forEach(r=>{
+    html += `<div class="list-item"><div class="li-main"><b>${r.name}</b><span>${relLabel(r.type)}</span></div><button class="btn" onclick='setBeneficiaryP73(${JSON.stringify(r.id)})'>Name as Beneficiary</button></div>`;
+  });
+  openPanel('Will & Estate', html);
+}
+const _origOpenWorldPanel_P73 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P73();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '📜 Will & Estate';
+  btn.onclick = openWillPanelP73;
+  body.appendChild(btn);
+};
+const _origDie_P73 = die;
+die = function(cause){
+  _origDie_P73(cause);
+  if(state.will.beneficiaryId){
+    const b = state.relationships.find(r=>r.id===state.will.beneficiaryId);
+    if(b && b.alive){
+      log(`Per your will, your estate passes to ${b.name}.`,'good');
+      newspaper(`${state.name.toUpperCase()}'S ESTATE PASSES TO ${b.name.toUpperCase()}`, `${b.name} inherits according to ${state.name}'s final wishes.`, 'Legal Notices');
+    }
+  }
+};
+const _origCalcLegacyScore_P73 = calcLegacyScore;
+calcLegacyScore = function(){
+  let score = _origCalcLegacyScore_P73();
+  if(state.will.beneficiaryId) score = clamp(score+2,0,100);
+  return score;
+};
+Object.assign(ACHIEVEMENTS, { planner_ach:'Wrote a will naming a beneficiary' });
 </script>
 </body>
 </html>
