@@ -414,6 +414,7 @@ function freshState(){
     freelanceEarnings:0,
     realityShow:null,
     realityShowWins:0,
+    cult:null,
   };
 }
 
@@ -8230,6 +8231,127 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { reality_cast_ach:'Got cast on a reality TV show', reality_winner_ach:'Won a reality TV show', reality_flop_ach:'Got eliminated from a reality TV show', reality_dynasty_ach:'Won 3+ reality TV shows in one lifetime' });
+
+/* ---------------------------------------------------------------------
+   P105 — Cult of the Devoted: distinct from the existing mainstream
+   Religion system (a peaceful faith-practice loop with no risk or
+   hierarchy) — this is a satirical, abstracted fringe-group arc in the
+   BitLife tradition: join a group, rise in devotion, and optionally
+   found your own as leader. Everything stays at the "game abstraction"
+   level (a devotion meter, a members count, a tithe-income number, a
+   raid risk) — no real-world recruitment/manipulation mechanics are
+   modeled, matching how the source material handles it.
+   --------------------------------------------------------------------- */
+const CULT_NAMES_P105 = ['The Radiant Path','Order of the Silver Dawn','The Ascending Circle','Children of the New Horizon','The Eternal Flame Fellowship'];
+function joinCultP105(){
+  if(state.age<16 || state.cult) return;
+  const name = pick(CULT_NAMES_P105);
+  state.cult = {name, role:'member', devotion:10, members:0, tithesPaid:0};
+  state.stats.happiness = clamp(state.stats.happiness+rand(3,8),0,100);
+  log(`You joined ${name}, drawn in by a sense of belonging.`,'neutral');
+  checkAchievement('cult_joined_ach');
+  openCultPanelP105();
+}
+function attendGatheringP105(){
+  const c = state.cult; if(!c) return;
+  c.devotion = clamp(c.devotion+rand(3,10),0,100);
+  const tithe = rand(50,300);
+  if(state.money>=tithe){
+    state.money -= tithe;
+    c.tithesPaid += tithe;
+  }
+  state.stats.happiness = clamp(state.stats.happiness+rand(-2,5),0,100);
+  state.stats.smarts = clamp(state.stats.smarts-1,0,100);
+  log(`You attended a gathering of ${c.name}. Devotion: ${c.devotion}/100.`,'neutral');
+  if(chance(3)){
+    state.inPrison = true;
+    state.prisonYearsLeft = rand(1,3);
+    state.criminalRecord.push('Cult Raid');
+    log(`Authorities raided ${c.name}. You were arrested along with the rest of the group.`,'bad');
+    newspaper(`FRINGE GROUP RAIDED BY AUTHORITIES`, `${c.name} dissolves in the wake of a dawn raid.`, 'The Gazette');
+    state.cult = null;
+  }
+  openCultPanelP105();
+}
+function leaveCultP105(){
+  if(!state.cult) return;
+  log(`You walked away from ${state.cult.name} for good.`,'neutral');
+  state.cult = null;
+  openCultPanelP105();
+}
+function foundCultP105(){
+  const c = state.cult; if(!c || c.role==='leader') return;
+  if(c.devotion<60){ log(`You need at least 60 devotion before members will follow you.`,'bad'); openCultPanelP105(); return; }
+  c.role = 'leader';
+  c.members = rand(3,8);
+  log(`You broke away and founded your own following, ${c.name} Reborn, taking ${c.members} loyal members with you.`,'good');
+  c.name = c.name+' Reborn';
+  checkAchievement('cult_leader_ach');
+  openCultPanelP105();
+}
+function recruitFollowersP105(){
+  const c = state.cult; if(!c || c.role!=='leader') return;
+  const recruitChance = clamp(30+(state.stats.looks-50)*0.3+(state.stats.happiness-50)*0.2,10,75);
+  if(chance(recruitChance)){
+    const gained = rand(1,5);
+    c.members += gained;
+    log(`You recruited ${gained} new follower${gained===1?'':'s'} to ${c.name}. Total: ${c.members}.`,'good');
+    if(c.members>=50) checkAchievement('cult_empire_ach');
+  } else {
+    log(`Your recruitment pitch fell flat this time.`,'neutral');
+  }
+  openCultPanelP105();
+}
+function collectTithesP105(){
+  const c = state.cult; if(!c || c.role!=='leader') return;
+  const income = c.members * rand(20,80);
+  state.money += income;
+  c.tithesPaid += income;
+  state.stats.happiness = clamp(state.stats.happiness+rand(1,4),0,100);
+  log(`You collected ${fmtMoney(income)} in tithes from ${c.members} followers.`,'good');
+  if(c.tithesPaid>=100000) checkAchievement('cult_fortune_ach');
+  if(chance(4)){
+    state.inPrison = true;
+    state.prisonYearsLeft = rand(3,10);
+    state.criminalRecord.push('Cult Fraud');
+    log(`Federal investigators raided ${c.name} and arrested you as its leader.`,'bad');
+    newspaper(`CULT LEADER ARRESTED IN DAWN RAID`, `${c.name} collapses as its leader faces fraud charges.`, 'The Gazette');
+    state.cult = null;
+  }
+  openCultPanelP105();
+}
+function openCultPanelP105(){
+  let html = '';
+  if(state.cult){
+    const c = state.cult;
+    html += `<div class="list-item"><div class="li-main"><b>${c.name}</b><span>${c.role==='leader'?('Leader · '+c.members+' members'):('Member · Devotion '+c.devotion+'/100')}</span></div></div>`;
+    if(c.role==='member'){
+      html += `<button class="btn btn-block" onclick="attendGatheringP105()">🕯️ Attend a Gathering</button>`;
+      html += `<button class="btn btn-block btn-accent" onclick="foundCultP105()">👑 Break Away & Found Your Own</button>`;
+      html += `<button class="btn btn-block btn-danger" onclick="leaveCultP105()">🚪 Leave the Group</button>`;
+    } else {
+      html += `<button class="btn btn-block" onclick="recruitFollowersP105()">📣 Recruit New Followers</button>`;
+      html += `<button class="btn btn-block btn-accent" onclick="collectTithesP105()">💰 Collect Tithes</button>`;
+      html += `<p style="color:var(--sub)">Lifetime tithes collected: ${fmtMoney(c.tithesPaid)}</p>`;
+    }
+  } else {
+    html += `<p style="color:var(--sub)">A charismatic stranger invites you to a gathering. Curious?</p>`;
+    html += `<button class="btn btn-block btn-accent" onclick="joinCultP105()">🕯️ Join a Fringe Group</button>`;
+  }
+  openPanel('Cult of the Devoted', html);
+}
+const _origOpenActivitiesPanel_P105 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P105();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🕯️ Cult of the Devoted' + (state.cult?(state.cult.role==='leader'?' (Leader)':' (Member)'):'');
+  btn.onclick = openCultPanelP105;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { cult_joined_ach:'Joined a fringe group', cult_leader_ach:'Broke away to found your own following', cult_empire_ach:'Grew your following to 50+ members', cult_fortune_ach:'Collected $100,000+ in lifetime tithes as a cult leader' });
 </script>
 </body>
 </html>
