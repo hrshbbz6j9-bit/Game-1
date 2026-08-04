@@ -405,6 +405,7 @@ function freshState(){
     studentDebt:0,
     esports:null,
     fosterChild:null,
+    staff:[],
   };
 }
 
@@ -7476,6 +7477,85 @@ openVolunteerPanelP82 = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { foster_parent_ach:'Became a foster parent', foster_to_adopt_ach:'Adopted a foster child permanently', big_sibling_ach:'Mentored an at-risk youth 10+ times' });
+
+/* ---------------------------------------------------------------------
+   P91 — Household Staff: a real mechanic behind the "household staff"
+   flavor line already used by the Elite family wealth tier (P52). Each
+   role costs a small hiring fee plus an ongoing yearly salary (charged
+   the same way Insurance premiums already are), for a modest passive
+   stat benefit. Falling behind on salary auto-fires staff, same lapse
+   pattern as an unaffordable insurance premium.
+   --------------------------------------------------------------------- */
+const STAFF_ROLES_P91 = [
+  {name:'Personal Chef', salary:40000, stat:'health', amount:2},
+  {name:'Housekeeper', salary:28000, stat:'happiness', amount:2},
+  {name:'Personal Driver', salary:35000, stat:'happiness', amount:1},
+  {name:'Personal Trainer', salary:45000, stat:'health', amount:2},
+  {name:'Personal Assistant', salary:38000, stat:'smarts', amount:1},
+  {name:'Bodyguard', salary:55000, stat:'karma', amount:1},
+];
+function hireStaffP91(name){
+  if(state.staff.includes(name)) return;
+  const hireFee = 500;
+  if(state.money<hireFee){ log(`Not enough money to hire a ${name}.`,'bad'); openStaffPanelP91(); return; }
+  state.money -= hireFee;
+  state.staff.push(name);
+  log(`You hired a ${name}.`,'good');
+  checkAchievement('has_staff_ach');
+  if(state.staff.length>=4) checkAchievement('full_household_ach');
+  openStaffPanelP91();
+}
+function fireStaffP91(name){
+  state.staff = state.staff.filter(s=>s!==name);
+  log(`You let your ${name} go.`,'neutral');
+  openStaffPanelP91();
+}
+function tickStaffP91(){
+  state.staff.slice().forEach(name=>{
+    const role = STAFF_ROLES_P91.find(r=>r.name===name); if(!role) return;
+    if(state.money<role.salary){
+      state.staff = state.staff.filter(s=>s!==name);
+      log(`You couldn't afford to keep your ${name} on staff any longer.`,'bad');
+      return;
+    }
+    state.money -= role.salary;
+    state.stats[role.stat] = clamp(state.stats[role.stat]+role.amount,0,100);
+  });
+}
+function openStaffPanelP91(){
+  let html = `<p style="color:var(--sub)">Household staff cost a small hiring fee plus an annual salary, in exchange for a steady quality-of-life boost.</p>`;
+  if(state.staff.length){
+    html += `<b>Your Staff</b>`;
+    state.staff.forEach(name=>{
+      const role = STAFF_ROLES_P91.find(r=>r.name===name);
+      html += `<div class="list-item"><div class="li-main"><b>${name}</b><span>${fmtMoney(role.salary)}/yr</span></div><button class="btn btn-danger" onclick='fireStaffP91(${JSON.stringify(name)})'>Let Go</button></div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Available to Hire</b>`;
+  STAFF_ROLES_P91.filter(r=>!state.staff.includes(r.name)).forEach(r=>{
+    html += `<button class="btn btn-block" onclick='hireStaffP91(${JSON.stringify(r.name)})'>${r.name} (${fmtMoney(r.salary)}/yr)</button>`;
+  });
+  openPanel('Household Staff', html);
+}
+const _origOpenAssetsPanel_P91 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P91();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🧑‍💼 Household Staff' + (state.staff.length?(' ('+state.staff.length+')'):'');
+  btn.onclick = openStaffPanelP91;
+  body.appendChild(btn);
+};
+const _origAgeUp_P91 = ageUp;
+ageUp = function(){
+  _origAgeUp_P91();
+  if(!state || !state.alive) return;
+  tickStaffP91();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { has_staff_ach:'Hired your first household staff member', full_household_ach:'Employed 4+ household staff at once' });
 </script>
 </body>
 </html>
