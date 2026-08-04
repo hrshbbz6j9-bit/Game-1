@@ -391,6 +391,8 @@ function freshState(){
     greekLife:null,
     author:{books:[]},
     wardrobe:{owned:[]},
+    kidJob:null,
+    kidJobEarnings:0,
   };
 }
 
@@ -6178,6 +6180,88 @@ netWorth = function(){
   return nw;
 };
 Object.assign(ACHIEVEMENTS, { yacht_owner_ach:'Bought your first luxury asset', billionaire_lifestyle_ach:'Bought a private island' });
+
+/* ---------------------------------------------------------------------
+   P72 — Kid Jobs: kids under 16 hit a hard wall in the Career panel
+   ("too young to work"). This adds real part-time jobs available from
+   ages 6-15 — lemonade stand, dog walking, lawn mowing, paper route,
+   babysitting — each paying out yearly on ageUp. Turning 16 auto-graduates
+   the kid out into the real job market.
+   --------------------------------------------------------------------- */
+const KID_JOBS_P72 = [
+  {name:'Lemonade Stand', minAge:6, pay:[5,20]},
+  {name:'Dog Walking', minAge:9, pay:[8,25]},
+  {name:'Paper Route', minAge:10, pay:[10,30]},
+  {name:'Lawn Mowing', minAge:11, pay:[15,35]},
+  {name:'Babysitting', minAge:12, pay:[15,40]},
+];
+function takeKidJobP72(name){
+  const job = KID_JOBS_P72.find(x=>x.name===name); if(!job) return;
+  if(state.age<job.minAge || state.age>=16 || state.job) return;
+  state.kidJob = {name};
+  log(`You started a ${name.toLowerCase()} gig.`,'good');
+  openCareerPanel();
+}
+function quitKidJobP72(){
+  if(!state.kidJob) return;
+  log(`You stopped your ${state.kidJob.name.toLowerCase()} gig.`,'neutral');
+  state.kidJob = null;
+  openCareerPanel();
+}
+function tickKidJobP72(){
+  if(state.age>=16){
+    if(state.kidJob){
+      log(`You aged out of kid jobs — time to look for real work!`,'neutral');
+      state.kidJob = null;
+    }
+    return;
+  }
+  if(!state.kidJob) return;
+  const job = KID_JOBS_P72.find(x=>x.name===state.kidJob.name); if(!job) return;
+  const pay = rand(job.pay[0],job.pay[1])*4;
+  state.money += pay;
+  state.kidJobEarnings += pay;
+  state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+  log(`Your ${job.name.toLowerCase()} gig earned you ${fmtMoney(pay)} this year.`,'good');
+  checkAchievement('entrepreneur_kid_ach');
+  if(state.kidJobEarnings>=500) checkAchievement('hustler_ach');
+}
+const _origOpenCareerPanel_P72 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P72();
+  if(state.inPrison || state.age>=16 || state.job) return;
+  const body = $('panel-body');
+  body.querySelectorAll('p').forEach(p=>{ if(p.textContent.includes('too young to work')) p.style.display='none'; });
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = '🍋 Kid Jobs'; body.appendChild(label);
+  if(state.kidJob){
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.innerHTML = `<div class="li-main"><b>${state.kidJob.name}</b><span>Total earned: ${fmtMoney(state.kidJobEarnings)}</span></div>`;
+    body.appendChild(row);
+    const quitBtn = document.createElement('button');
+    quitBtn.className = 'btn btn-block btn-danger';
+    quitBtn.textContent = 'Quit';
+    quitBtn.onclick = quitKidJobP72;
+    body.appendChild(quitBtn);
+  } else {
+    KID_JOBS_P72.filter(j=>state.age>=j.minAge).forEach(j=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-block';
+      btn.textContent = j.name;
+      btn.onclick = ()=>takeKidJobP72(j.name);
+      body.appendChild(btn);
+    });
+  }
+};
+const _origAgeUp_P72 = ageUp;
+ageUp = function(){
+  _origAgeUp_P72();
+  if(!state || !state.alive) return;
+  tickKidJobP72();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { entrepreneur_kid_ach:'Held a kid job before turning 16', hustler_ach:'Earned $500+ total from kid jobs' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
