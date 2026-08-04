@@ -4481,6 +4481,7 @@ openAssetsPanel = function(){
 const PRESTIGE_TRACKS_P41 = {
   Doctor: {titles:['Resident Physician','Attending Physician','Senior Physician','Chief of Medicine'], mult:[1, 1.4, 1.9, 2.6]},
   Lawyer: {titles:['Associate Attorney','Senior Associate','Junior Partner','Senior Partner'], mult:[1, 1.35, 1.8, 2.5]},
+  Chef: {titles:['Line Cook','Sous Chef','Head Chef','Executive Chef'], mult:[1, 1.5, 2.2, 3.5]},
 };
 Object.assign(ACHIEVEMENTS, {
   chief_of_medicine_ach:'Rose to Chief of Medicine',
@@ -4509,6 +4510,7 @@ function tickPrestigeCareerP41(){
     newspaper(`${state.name.toUpperCase()} PROMOTED TO ${j.title.toUpperCase()}`, `A well-earned step forward in a demanding career.`, 'Business Desk');
     if(j.prestigeBase==='Doctor' && j.prestigeRank===track.titles.length-1) checkAchievement('chief_of_medicine_ach');
     if(j.prestigeBase==='Lawyer' && j.prestigeRank===track.titles.length-1) checkAchievement('senior_partner_ach');
+    if(j.prestigeBase==='Chef' && j.prestigeRank===track.titles.length-1) checkAchievement('executive_chef_ach');
   }
 }
 const _origAgeUp_P41 = ageUp;
@@ -6599,6 +6601,48 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { script_kiddie_ach:'Started learning to hack', white_hat_ach:'Completed 5 white-hat hacking jobs', black_hat_ach:'Pulled off a black-hat hacking job' });
+
+/* ---------------------------------------------------------------------
+   P78 — Chef prestige track + Michelin Star competition: the 'Chef' job
+   already existed in JOBS but was a flat single-salary role. It now
+   climbs the same rank-ladder shape as Doctor/Lawyer (added directly to
+   PRESTIGE_TRACKS_P41 above, my own earlier same-session code, edited
+   in place per this session's convention). Once an Executive Chef, the
+   Career panel offers a Michelin Star cooking competition — win chance
+   is boosted by the Cooking hobby level from P62, rewarding players who
+   invested in that hobby, same synergy pattern as Author's tie to
+   Creative Writing.
+   --------------------------------------------------------------------- */
+function enterCookingCompetitionP78(){
+  if(!state.job || state.job.prestigeBase!=='Chef' || state.job.prestigeRank<3) return;
+  const cookingLevel = (state.hobbies.cooking && state.hobbies.cooking.level) || 0;
+  const winChance = clamp(20+(state.stats.smarts-50)*0.3+cookingLevel*3,5,60);
+  if(chance(winChance)){
+    const prize = rand(20000,80000);
+    state.money += prize;
+    state.flags.michelinStar = true;
+    log(`Your restaurant earned a MICHELIN STAR! The culinary world is buzzing, and you took home ${fmtMoney(prize)}.`,'good');
+    newspaper(`${state.name.toUpperCase()} EARNS MICHELIN STAR`, `A career-defining achievement in the culinary world.`,'Food & Dining');
+    checkAchievement('michelin_star_ach');
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness-5,0,100);
+    log(`Your dish didn't win over the judges this time. Back to the kitchen.`,'bad');
+  }
+  render();
+}
+const _origOpenCareerPanel_P78 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P78();
+  if(state.job && state.job.prestigeBase==='Chef' && state.job.prestigeRank>=3){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block btn-accent';
+    btn.textContent = state.flags.michelinStar ? '⭐ Defend Your Michelin Star' : '⭐ Compete for a Michelin Star';
+    btn.onclick = enterCookingCompetitionP78;
+    body.appendChild(btn);
+  }
+};
+Object.assign(ACHIEVEMENTS, { executive_chef_ach:'Rose to Executive Chef', michelin_star_ach:'Earned a Michelin Star' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
