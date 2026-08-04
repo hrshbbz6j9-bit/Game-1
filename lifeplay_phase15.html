@@ -5660,6 +5660,88 @@ calcLegacyScore = function(){
   return score;
 };
 Object.assign(ACHIEVEMENTS, { organ_donor_ach:'Registered as an organ donor', blood_donor_ach:'Donated blood', life_saver_ach:'Donated blood 10+ times' });
+
+/* ---------------------------------------------------------------------
+   P65 — Pet Breeding & Pet Shows: deepens the existing pet system.
+   Two living, same-species pets aged 1+ can be bred for a chance at a
+   new litter member; any living pet can be entered into a pet show,
+   scored off its happiness/health plus some luck, for placement prizes.
+   --------------------------------------------------------------------- */
+const PET_BABY_NAMES_P65 = ['Pip','Biscuit','Nugget','Peanut','Clover','Waffles','Bean','Star','Ziggy','Snickers'];
+function petsByTypeP65(type){
+  return state.pets.map((p,i)=>({p,i})).filter(x=>x.p.alive && x.p.type===type && x.p.age>=1);
+}
+function breedPetsP65(type){
+  const pool = petsByTypeP65(type);
+  if(pool.length<2) return;
+  const cost = 150;
+  if(state.money<cost){ log(`Not enough money for a breeding visit.`,'bad'); openPetCarePanelP15(); return; }
+  state.money -= cost;
+  const [a,b] = pool;
+  if(chance(60)){
+    const baby = {name:type+' '+pick(PET_BABY_NAMES_P65), type, age:0, alive:true, happiness:80, health:100, parents:[a.p.name,b.p.name]};
+    state.pets.push(baby);
+    log(`${a.p.name} and ${b.p.name} had a litter! Welcome, ${baby.name}.`,'good');
+    checkAchievement('pet_breeder_ach');
+  } else {
+    log(`The breeding attempt with ${a.p.name} and ${b.p.name} didn't take this time.`,'neutral');
+  }
+  openPetCarePanelP15();
+}
+function enterPetShowP65(idx){
+  const p = state.pets[idx]; if(!p || !p.alive) return;
+  const health = p.health==null?100:p.health;
+  const score = p.happiness*0.4 + health*0.4 + rand(0,20);
+  p.happiness = clamp(p.happiness+5,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+3,0,100);
+  if(score>=90){
+    state.money += 2000;
+    p.showWins = (p.showWins||0)+1;
+    log(`${p.name} took 1st place at the pet show! You win ${fmtMoney(2000)}.`,'good');
+    checkAchievement('pet_champion_ach');
+    if(p.showWins>=3) checkAchievement('pet_dynasty_ach');
+  } else if(score>=70){
+    state.money += 800;
+    log(`${p.name} placed 2nd at the pet show, winning ${fmtMoney(800)}.`,'good');
+  } else if(score>=50){
+    state.money += 300;
+    log(`${p.name} placed 3rd at the pet show, winning ${fmtMoney(300)}.`,'good');
+  } else {
+    log(`${p.name} didn't place at the pet show, but had a great time.`,'neutral');
+  }
+  openPetCarePanelP15();
+}
+const _origOpenPetCarePanelP15_P65 = openPetCarePanelP15;
+openPetCarePanelP15 = function(){
+  _origOpenPetCarePanelP15_P65();
+  const body = $('panel-body');
+  const living = state.pets.filter(p=>p.alive);
+  if(!living.length) return;
+  const hr1 = document.createElement('hr'); hr1.style.borderColor='var(--border)'; body.appendChild(hr1);
+  const showLabel = document.createElement('b'); showLabel.textContent = '🏆 Pet Show'; body.appendChild(showLabel);
+  living.forEach(p=>{
+    const idx = state.pets.indexOf(p);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block';
+    btn.textContent = `Enter ${p.name} in a Pet Show`;
+    btn.onclick = ()=>enterPetShowP65(idx);
+    body.appendChild(btn);
+  });
+  const types = [...new Set(living.map(p=>p.type))];
+  const breedable = types.filter(t=>petsByTypeP65(t).length>=2);
+  if(breedable.length){
+    const hr2 = document.createElement('hr'); hr2.style.borderColor='var(--border)'; body.appendChild(hr2);
+    const breedLabel = document.createElement('b'); breedLabel.textContent = '🐣 Breeding ($150/attempt)'; body.appendChild(breedLabel);
+    breedable.forEach(t=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-block btn-accent';
+      btn.textContent = `Breed your ${t}s`;
+      btn.onclick = ()=>breedPetsP65(t);
+      body.appendChild(btn);
+    });
+  }
+};
+Object.assign(ACHIEVEMENTS, { pet_breeder_ach:'Bred a litter of pets', pet_champion_ach:'Won 1st place at a pet show', pet_dynasty_ach:'Won 3 pet shows' });
 </script>
 </body>
 </html>
