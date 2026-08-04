@@ -4589,6 +4589,66 @@ ageUp = function(){
   tickGrandchildrenP45();
   render();
 };
+
+/* ---------------------------------------------------------------------
+   P46 — Lawsuits: a "getting sued" choice event gated to people with
+   enough money to be worth suing, plus a player-initiated Sue Someone
+   activity. Both check for a Lawyer prestige track to boost the odds.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, { litigious_ach:'Won a lawsuit you filed' });
+function isLawyerP46(s){ return !!(s.job && s.job.prestigeBase==='Lawyer'); }
+CHOICE_EVENTS.adult.push({
+  title:'Frivolous Lawsuit',
+  text:'Someone claims they slipped and got hurt around you, and now they\'re suing for damages.',
+  cond:s=>netWorth()>=20000,
+  choices:[
+    {label:'Settle out of court', type:'neutral', fx:s=>{ s.money=clamp(s.money-rand(2000,6000),-999999999,999999999); }, result:'You settled quietly to make it go away. Cost you, but it\'s over.'},
+    {label:'Fight it in court', type:'neutral', fx:s=>{}, result:s=>{
+      const winChance = clamp(40+(s.stats.smarts-50)*0.5+(isLawyerP46(s)?25:0),10,90);
+      if(chance(winChance)){ s.stats.karma=clamp(s.stats.karma+5,0,100); return 'You won in court. Justice, and your bank account, stay intact.'; }
+      const cost = rand(5000,20000); s.money=clamp(s.money-cost,-999999999,999999999); s.stats.happiness=clamp(s.stats.happiness-8,0,100);
+      return `You lost the case. Ordered to pay ${fmtMoney(cost)}.`;
+    }},
+    {label:'Hire a top lawyer to handle it', type:'neutral', fx:s=>{ s.money=clamp(s.money-3000,-999999999,999999999); }, result:s=>{
+      if(chance(75)){ s.stats.karma=clamp(s.stats.karma+3,0,100); return 'Your lawyer got the case dismissed. Worth every penny.'; }
+      const cost = rand(3000,10000); s.money=clamp(s.money-cost,-999999999,999999999);
+      return `Even your lawyer couldn't save you. Paid ${fmtMoney(cost)} in damages on top of the retainer.`;
+    }},
+  ]
+});
+function sueSomeoneP46(){
+  const living = state.relationships.filter(r=>r.alive);
+  const target = living.length ? pick(living) : null;
+  const winChance = clamp(35+(state.stats.smarts-50)*0.5+(isLawyerP46(state)?25:0),10,90);
+  if(chance(winChance)){
+    const award = rand(1000,8000);
+    state.money += award;
+    state.stats.karma = clamp(state.stats.karma-3,0,100);
+    if(target) target.rel = clamp(target.rel-20,0,100);
+    log(`You sued ${target?target.name:'a local business'} and won ${fmtMoney(award)}.`,'good');
+    checkAchievement('litigious_ach');
+  } else {
+    const cost = rand(1000,4000);
+    state.money = clamp(state.money-cost,-999999999,999999999);
+    state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+    log(`Your lawsuit against ${target?target.name:'a local business'} went nowhere. Legal fees: ${fmtMoney(cost)}.`,'bad');
+  }
+  closePanel(); render();
+}
+const _origOpenActivitiesPanel_P46 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P46();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor = 'var(--border)';
+  body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = 'Legal'; body.appendChild(label);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '⚖️ Sue Someone';
+  btn.onclick = sueSomeoneP46;
+  body.appendChild(btn);
+};
 </script>
 </body>
 </html>
