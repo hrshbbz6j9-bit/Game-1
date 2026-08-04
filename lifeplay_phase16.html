@@ -7639,12 +7639,12 @@ function rollWorldEventP16(){
    16.2 POLITICAL CAMPAIGN SYSTEM — City Council -> President
    --------------------------------------------------------------------- */
 const OFFICES_P16 = [
-  {title:'City Council Member', minAge:18, salary:45000},
-  {title:'Mayor', minAge:25, salary:110000},
-  {title:'State Senator', minAge:25, salary:95000},
-  {title:'Governor', minAge:30, salary:175000},
-  {title:'U.S. Senator', minAge:30, salary:180000},
-  {title:'President', minAge:35, salary:400000},
+  {title:'City Council Member', minAge:18, salary:45000, termLength:4},
+  {title:'Mayor', minAge:25, salary:110000, termLength:4},
+  {title:'State Senator', minAge:25, salary:95000, termLength:4},
+  {title:'Governor', minAge:30, salary:175000, termLength:4},
+  {title:'U.S. Senator', minAge:30, salary:180000, termLength:6},
+  {title:'President', minAge:35, salary:400000, termLength:4},
 ];
 function currentOfficeIndexP16(){ return state.politics.office ? OFFICES_P16.findIndex(o=>o.title===state.politics.office) : -1; }
 function nextOfficeP16(){ return OFFICES_P16[currentOfficeIndexP16()+1]; }
@@ -8371,6 +8371,65 @@ acceptTakeoverP16 = function(bizId){
     businessHeadline(`${name.toUpperCase()} SOLD IN HOSTILE TAKEOVER`, `Deal closes at ${fmtMoney(offer)}, ending an era for the local business.`);
   }
 };
+
+/* ---------------------------------------------------------------------
+   P92 — Political term consequences: holding office previously ran
+   forever with no real stakes — low approval only ever logged a "calls
+   for resignation" flavor line that never actually happened, and terms
+   never ended. This wraps tickPoliticalTermP16 (pre-existing Phase 16
+   code, wrapped rather than rewritten) to add two real consequences:
+   a genuine forced-resignation risk when approval craters alongside
+   repeat scandals, and real term limits (added as a termLength field on
+   each OFFICES_P16 entry above) that trigger a re-election choice —
+   run again and risk losing the seat, or retire on your own terms.
+   --------------------------------------------------------------------- */
+function checkImpeachmentRiskP92(){
+  if(!state.politics.office) return;
+  if(state.politics.approval<15 && state.politics.scandalCount>=3 && chance(15)){
+    const office = state.politics.office;
+    log(`Facing mounting scandals and rock-bottom approval, you were forced to resign from ${office}.`,'bad');
+    newspaper(`${state.name.toUpperCase()} RESIGNS AMID SCANDAL`, `Public pressure forces an early departure from office.`, 'Politics Desk');
+    state.politics.office = null;
+    state.job = null;
+    state.stats.happiness = clamp(state.stats.happiness-15,0,100);
+    checkAchievement('disgraced_politician_ach');
+  }
+}
+function checkTermLimitP92(){
+  if(!state.politics.office) return;
+  const office = OFFICES_P16.find(o=>o.title===state.politics.office);
+  const termLength = (office&&office.termLength)||4;
+  if(state.politics.termYears<termLength) return;
+  const officeTitle = state.politics.office;
+  playScene({title:'Term Ending', text:`Your term as ${officeTitle} is ending. Do you want to run for re-election?`, choices:[
+    {label:'Run for re-election', run:()=>{
+      const winChance = clamp(40+(state.politics.approval-50)*0.8,10,90);
+      if(chance(winChance)){
+        state.politics.termYears = 0;
+        log(`You won re-election as ${officeTitle}!`,'good');
+        newspaper(`${state.name.toUpperCase()} RE-ELECTED ${officeTitle.toUpperCase()}`, `Voters give ${state.name} another term.`, 'Politics Desk');
+        checkAchievement('reelected_ach');
+      } else {
+        log(`You lost your re-election bid for ${officeTitle}. Your political career hits a wall.`,'bad');
+        newspaper(`${state.name.toUpperCase()} OUSTED FROM OFFICE`, `Voters choose a new direction.`, 'Politics Desk');
+        state.politics.office = null;
+        state.job = null;
+      }
+    }},
+    {label:'Retire from office', run:()=>{
+      log(`You chose not to seek re-election, retiring from ${officeTitle} with your legacy intact.`,'neutral');
+      state.politics.office = null;
+      state.job = null;
+    }},
+  ]});
+}
+const _origTickPoliticalTermP16_P92 = tickPoliticalTermP16;
+tickPoliticalTermP16 = function(){
+  _origTickPoliticalTermP16_P92();
+  checkImpeachmentRiskP92();
+  if(state.politics.office) checkTermLimitP92();
+};
+Object.assign(ACHIEVEMENTS, { reelected_ach:'Won re-election to public office', disgraced_politician_ach:'Forced to resign from office in scandal' });
 </script>
 </body>
 </html>
