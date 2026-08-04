@@ -408,6 +408,7 @@ function freshState(){
     staff:[],
     weapons:[],
     citizenships:[],
+    timeCapsules:[],
   };
 }
 
@@ -7837,6 +7838,84 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { working_animal_ach:'Trained a pet for working service', k9_handler_ach:'Trained a Police K9' });
+
+/* ---------------------------------------------------------------------
+   P98 — Time Capsule: distinct from the Bucket List (which is
+   attempted-and-resolved same-year), a buried capsule sits untouched
+   for 10-25 years before opening itself automatically on the right
+   ageUp with a nostalgic callback to the exact age it was buried.
+   Ties into calcLegacyScore (already wrapped by P64's organ donor and
+   P73's will bonuses) for a small +2 once at least one capsule has been
+   opened — leaving something for your future self is its own kind of
+   legacy.
+   --------------------------------------------------------------------- */
+const TIME_CAPSULE_MESSAGES_P98 = [
+  "Dear future me: never forget where you came from.",
+  "To whoever finds this: I hope life turned out even better than I dreamed.",
+  "A reminder of who I was at this age, before everything changed.",
+  "If you're reading this, you made it. Be proud.",
+  "I buried this hoping my future self remembers how it felt to be here, now.",
+];
+function buryTimeCapsuleP98(msgIdx){
+  const message = TIME_CAPSULE_MESSAGES_P98[msgIdx]; if(!message) return;
+  const yearsUntilOpen = rand(10,25);
+  state.timeCapsules.push({message, buriedAge:state.age, openAge:state.age+yearsUntilOpen, opened:false});
+  log(`You buried a time capsule, to be opened in ${yearsUntilOpen} years.`,'good');
+  checkAchievement('time_capsule_ach');
+  closePanel(); render();
+}
+function tickTimeCapsulesP98(){
+  state.timeCapsules.forEach(c=>{
+    if(c.opened || state.age<c.openAge) return;
+    c.opened = true;
+    state.stats.happiness = clamp(state.stats.happiness+10,0,100);
+    log(`⏳ You opened a time capsule buried ${c.openAge-c.buriedAge} years ago, at age ${c.buriedAge}. It read: "${c.message}"`,'good');
+    newspaper(`A MESSAGE FROM THE PAST`, `${state.name} unearths a time capsule buried decades ago.`);
+    const openedCount = state.timeCapsules.filter(x=>x.opened).length;
+    if(openedCount>=3) checkAchievement('capsule_collector_ach');
+  });
+}
+function openTimeCapsulePanelP98(){
+  let html = `<p style="color:var(--sub)">Bury a message for your future self — it'll surface again in 10 to 25 years.</p>`;
+  const unopenedPending = state.timeCapsules.filter(c=>!c.opened);
+  if(unopenedPending.length){
+    html += `<b>Waiting to Be Opened</b>`;
+    unopenedPending.forEach(c=>{
+      html += `<div class="list-item"><div class="li-main"><b>Buried at age ${c.buriedAge}</b><span>Opens at age ${c.openAge}</span></div></div>`;
+    });
+    html += `<hr style="border-color:var(--border)">`;
+  }
+  html += `<b>Bury a New Capsule</b>`;
+  TIME_CAPSULE_MESSAGES_P98.forEach((msg,i)=>{
+    html += `<button class="btn btn-block" onclick='buryTimeCapsuleP98(${i})'>"${msg}"</button>`;
+  });
+  openPanel('Time Capsule', html);
+}
+const _origOpenWorldPanel_P98 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P98();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '⏳ Time Capsule' + (state.timeCapsules.length?(' ('+state.timeCapsules.filter(c=>!c.opened).length+' pending)'):'');
+  btn.onclick = openTimeCapsulePanelP98;
+  body.appendChild(btn);
+};
+const _origAgeUp_P98 = ageUp;
+ageUp = function(){
+  _origAgeUp_P98();
+  if(!state || !state.alive) return;
+  tickTimeCapsulesP98();
+  render();
+};
+const _origCalcLegacyScore_P98 = calcLegacyScore;
+calcLegacyScore = function(){
+  let score = _origCalcLegacyScore_P98();
+  if(state.timeCapsules.some(c=>c.opened)) score = clamp(score+2,0,100);
+  return score;
+};
+Object.assign(ACHIEVEMENTS, { time_capsule_ach:'Buried a time capsule', capsule_collector_ach:'Opened 3+ time capsules in one lifetime' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
