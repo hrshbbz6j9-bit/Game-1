@@ -411,6 +411,7 @@ function freshState(){
     timeCapsules:[],
     farm:{plots:[]},
     treasureHunting:{skill:0, bigFinds:0},
+    freelanceEarnings:0,
   };
 }
 
@@ -8085,6 +8086,47 @@ function installSecuritySystemP102(idx){
   openHouseManagerP68();
 }
 Object.assign(ACHIEVEMENTS, { secured_home_ach:'Installed a home security system' });
+
+/* ---------------------------------------------------------------------
+   P103 — Freelance Gig Work: flexible side income available any time
+   from age 16+, regardless of employment status — fills a real gap
+   since Kid Jobs (P72) is strictly under-16 and a regular career only
+   ever occupies the single state.job slot. Deliberately simple: no
+   skill stat, no tiers, just quick repeatable payouts that add up
+   toward a lifetime-earnings achievement.
+   --------------------------------------------------------------------- */
+const FREELANCE_GIGS_P103 = ['Rideshare Driving','Food Delivery','Freelance Writing','Pet Sitting','Freelance Graphic Design','Online Tutoring'];
+function doFreelanceGigP103(gigName){
+  if(state.age<16) return;
+  const pay = rand(50,300);
+  state.money += pay;
+  state.freelanceEarnings += pay;
+  state.stats.happiness = clamp(state.stats.happiness+rand(-1,2),0,100);
+  log(`You picked up a ${gigName} gig and earned ${fmtMoney(pay)}.`,'good');
+  checkAchievement('gig_worker_ach');
+  if(state.freelanceEarnings>=10000) checkAchievement('side_hustler_ach');
+  openFreelancePanelP103();
+}
+function openFreelancePanelP103(){
+  let html = `<div class="list-item"><div class="li-main"><b>Lifetime Freelance Earnings</b><span>${fmtMoney(state.freelanceEarnings)}</span></div></div>`;
+  html += `<p style="color:var(--sub)">Pick up quick gigs anytime, on top of whatever else you're doing.</p>`;
+  FREELANCE_GIGS_P103.forEach(g=>{
+    html += `<button class="btn btn-block" onclick='doFreelanceGigP103(${JSON.stringify(g)})'>${g}</button>`;
+  });
+  openPanel('Freelance Gigs', html);
+}
+const _origOpenActivitiesPanel_P103 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P103();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '📱 Freelance Gigs' + (state.freelanceEarnings?(' ('+fmtMoney(state.freelanceEarnings)+')'):'');
+  btn.onclick = openFreelancePanelP103;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { gig_worker_ach:'Picked up a freelance gig', side_hustler_ach:'Earned $10,000+ total from freelance gigs' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
