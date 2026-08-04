@@ -394,6 +394,7 @@ function freshState(){
     kidJob:null,
     kidJobEarnings:0,
     will:{beneficiaryId:null},
+    artCollection:[],
   };
 }
 
@@ -6322,6 +6323,82 @@ calcLegacyScore = function(){
   return score;
 };
 Object.assign(ACHIEVEMENTS, { planner_ach:'Wrote a will naming a beneficiary' });
+
+/* ---------------------------------------------------------------------
+   P74 — Art & Antique Collecting: a passive prestige/wealth hobby
+   distinct from Stocks (P40) and Luxury Lifestyle (P71). Buy pieces at
+   auction; each year their value drifts (skewed slightly upward, since
+   fine art tends to appreciate) until sold. Owned pieces count toward
+   net worth via the same netWorth() wrap pattern as P71's luxury items.
+   --------------------------------------------------------------------- */
+const ART_PIECES_P74 = [
+  {name:'Vintage Poster', cost:500, category:'Print'},
+  {name:'Abstract Painting', cost:5000, category:'Painting'},
+  {name:'Ancient Vase', cost:15000, category:'Antique'},
+  {name:'Renaissance Sketch', cost:60000, category:'Fine Art'},
+  {name:'Masterwork Painting', cost:250000, category:'Fine Art'},
+];
+function buyArtP74(name){
+  const piece = ART_PIECES_P74.find(x=>x.name===name); if(!piece) return;
+  if(state.money<piece.cost){ log(`Not enough money for the ${piece.name}.`,'bad'); openArtCollectionP74(); return; }
+  state.money -= piece.cost;
+  state.artCollection.push({name:piece.name, category:piece.category, boughtValue:piece.cost, currentValue:piece.cost});
+  log(`You acquired "${piece.name}" for your collection.`,'good');
+  checkAchievement('art_collector_ach');
+  if(state.artCollection.length>=10) checkAchievement('curator_ach');
+  openArtCollectionP74();
+}
+function sellArtP74(idx){
+  const piece = state.artCollection[idx]; if(!piece) return;
+  state.money += piece.currentValue;
+  const profit = piece.currentValue-piece.boughtValue;
+  log(`You sold "${piece.name}" for ${fmtMoney(piece.currentValue)} (${profit>=0?'+':''}${fmtMoney(profit)} vs. purchase price).`,'neutral');
+  state.artCollection.splice(idx,1);
+  openArtCollectionP74();
+}
+function tickArtValuesP74(){
+  state.artCollection.forEach(piece=>{
+    const pct = rand(-8,15)/100;
+    piece.currentValue = Math.max(Math.round(piece.boughtValue*0.1), Math.round(piece.currentValue*(1+pct)));
+  });
+}
+function openArtCollectionP74(){
+  let html = `<p style="color:var(--sub)">Fine art and antiques appreciate slowly but steadily — patience pays.</p>`;
+  state.artCollection.forEach((piece,idx)=>{
+    const profit = piece.currentValue-piece.boughtValue;
+    html += `<div class="list-item"><div class="li-main"><b>${piece.name}</b><span>${piece.category} · ${fmtMoney(piece.currentValue)} (${profit>=0?'+':''}${fmtMoney(profit)})</span></div>
+      <button class="btn btn-danger" onclick='sellArtP74(${idx})'>Sell</button></div>`;
+  });
+  if(state.artCollection.length) html += `<hr style="border-color:var(--border)">`;
+  ART_PIECES_P74.forEach(piece=>{
+    html += `<button class="btn btn-block" onclick='buyArtP74(${JSON.stringify(piece.name)})'>Buy ${piece.name} (${fmtMoney(piece.cost)})</button>`;
+  });
+  openPanel('Art Collection', html);
+}
+const _origOpenAssetsPanel_P74 = openAssetsPanel;
+openAssetsPanel = function(){
+  _origOpenAssetsPanel_P74();
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🖼️ Art Collection' + (state.artCollection.length?(' ('+state.artCollection.length+')'):'');
+  btn.onclick = openArtCollectionP74;
+  body.appendChild(btn);
+};
+const _origAgeUp_P74 = ageUp;
+ageUp = function(){
+  _origAgeUp_P74();
+  if(!state || !state.alive) return;
+  tickArtValuesP74();
+  render();
+};
+const _origNetWorth_P74 = netWorth;
+netWorth = function(){
+  let nw = _origNetWorth_P74();
+  state.artCollection.forEach(piece=>nw+=piece.currentValue);
+  return nw;
+};
+Object.assign(ACHIEVEMENTS, { art_collector_ach:'Bought your first piece of art', curator_ach:'Own 10+ pieces of art' });
 </script>
 </body>
 </html>
