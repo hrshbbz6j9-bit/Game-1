@@ -1237,7 +1237,7 @@
     padding: 4px 16px 12px;
   }
 
-  .forum-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+  .forum-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
   .forum-tabs::-webkit-scrollbar { display: none; }
 
   .sort-row { display: flex; gap: 8px; padding: 0 16px 12px; }
@@ -1480,6 +1480,8 @@
   .thread-meta {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: 4px;
     gap: 8px;
     margin-top: 8px;
     font-family: var(--font-mono);
