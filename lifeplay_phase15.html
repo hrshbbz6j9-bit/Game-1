@@ -5057,6 +5057,44 @@ proposeMarriage = function(id){
   _origProposeMarriage_P56(id);
   if(state.spouseId && state.spouseId!==wasSpouseId) openWeddingPlannerP56(state.spouseId);
 };
+
+/* ---------------------------------------------------------------------
+   P57 — Relationship mortality: every relationship has aged a year on
+   every ageUp since the base game shipped, but none of them — parents,
+   spouse, siblings, grandparents, anyone — ever actually died of
+   natural causes. They'd just keep aging past 100, 110, 120 forever.
+   This gives every living relationship an age-scaled yearly death
+   chance, same shape as the player's own checkDeath().
+   --------------------------------------------------------------------- */
+const RELATIONSHIP_DEATH_CAUSES_P57 = ['old age','a long illness','a sudden heart attack','peacefully in their sleep','a car accident','complications from a fall'];
+function relationshipDeathChanceP57(age){
+  let c = 0.15;
+  if(age>70) c += (age-70)*0.6;
+  if(age>90) c += 8;
+  if(age>100) c += 15;
+  return c;
+}
+function tickRelationshipDeathsP57(){
+  state.relationships.forEach(r=>{
+    if(!r.alive) return;
+    if(!chance(relationshipDeathChanceP57(r.age))) return;
+    r.alive = false;
+    const cause = pick(RELATIONSHIP_DEATH_CAUSES_P57);
+    log(`💔 ${r.name} (${relLabel(r.type)}) passed away, ${cause}, at age ${r.age}.`,'bad');
+    state.stats.happiness = clamp(state.stats.happiness-rand(3,12),0,100);
+    if(r.type==='spouse'){
+      state.spouseId = null;
+      newspaper(`${state.name.toUpperCase()} LOSES BELOVED SPOUSE`, `${r.name} is remembered fondly by family and friends.`);
+    }
+  });
+}
+const _origAgeUp_P57 = ageUp;
+ageUp = function(){
+  _origAgeUp_P57();
+  if(!state || !state.alive) return;
+  tickRelationshipDeathsP57();
+  render();
+};
 </script>
 </body>
 </html>
