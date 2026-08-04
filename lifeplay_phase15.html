@@ -4820,6 +4820,34 @@ function messageDateCandidateP50(i){
   closePanel(); render();
 }
 findDate = openDatingAppPanelP50;
+
+/* ---------------------------------------------------------------------
+   P51 — Sibling life updates: small flavor beats about what a living
+   sibling is up to, so they read as a person with their own life
+   rather than a name that just sits at a fixed relationship number.
+   --------------------------------------------------------------------- */
+const SIBLING_LIFE_UPDATES_P51 = [
+  s=>`${s.name} got a new job as a ${pick(['barista','store manager','teacher','mechanic','nurse','bartender','accountant'])}.`,
+  s=>`${s.name} started dating someone new.`,
+  s=>`${s.name} moved into a new apartment.`,
+  s=>`${s.name} took up ${pick(['pottery','rock climbing','painting','running','woodworking','photography'])} as a hobby.`,
+  s=>`${s.name} got engaged!`,
+  s=>`${s.name} adopted a pet.`,
+  s=>`${s.name} went on a trip and won't stop talking about it.`,
+  s=>`${s.name} finally learned to drive stick.`,
+];
+function tickSiblingLifeUpdatesP51(){
+  state.relationships.filter(r=>r.alive && r.type==='sibling' && r.age>=18).forEach(sib=>{
+    if(chance(8)) log(pick(SIBLING_LIFE_UPDATES_P51)(sib),'neutral');
+  });
+}
+const _origAgeUp_P51 = ageUp;
+ageUp = function(){
+  _origAgeUp_P51();
+  if(!state || !state.alive) return;
+  tickSiblingLifeUpdatesP51();
+  render();
+};
 </script>
 </body>
 </html>
