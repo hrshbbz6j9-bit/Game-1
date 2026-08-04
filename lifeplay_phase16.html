@@ -387,6 +387,7 @@ function freshState(){
     pension:{fund:0, retired:false},
     hobbies:{},
     bodyMods:{tattoos:[], piercings:[]},
+    donor:{organDonor:false, bloodDonations:0},
   };
 }
 
@@ -5599,6 +5600,66 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { tattooed_ach:'Got your first tattoo', ink_collector_ach:'Got 5+ tattoos and piercings combined' });
+
+/* ---------------------------------------------------------------------
+   P64 — Organ & Blood Donation: registering as an organ donor is a
+   one-time karma/legacy commitment that pays off narratively at death;
+   donating blood is a small, repeatable act of good that costs a
+   sliver of health each time. Both nudge karma and happiness up.
+   --------------------------------------------------------------------- */
+function toggleOrganDonorP64(){
+  state.donor.organDonor = !state.donor.organDonor;
+  if(state.donor.organDonor){
+    state.stats.karma = clamp(state.stats.karma+5,0,100);
+    state.stats.happiness = clamp(state.stats.happiness+2,0,100);
+    log(`You registered as an organ donor. It feels good knowing you could help someone someday.`,'good');
+    checkAchievement('organ_donor_ach');
+  } else {
+    log(`You removed yourself from the organ donor registry.`,'neutral');
+  }
+  openWorldPanel();
+}
+function donateBloodP64(){
+  state.stats.health = clamp(state.stats.health-2,0,100);
+  state.stats.karma = clamp(state.stats.karma+2,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+1,0,100);
+  state.donor.bloodDonations++;
+  log(`You donated blood. One pint down, someone's life potentially saved.`,'good');
+  if(state.donor.bloodDonations===1) checkAchievement('blood_donor_ach');
+  if(state.donor.bloodDonations>=10) checkAchievement('life_saver_ach');
+  openWorldPanel();
+}
+const _origOpenWorldPanel_P64 = openWorldPanel;
+openWorldPanel = function(){
+  _origOpenWorldPanel_P64();
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = '🩸 Health & Giving'; body.appendChild(label);
+  const donorBtn = document.createElement('button');
+  donorBtn.className = 'btn btn-block' + (state.donor.organDonor?' btn-accent':'');
+  donorBtn.textContent = state.donor.organDonor ? '✅ Registered Organ Donor (tap to unregister)' : 'Register as an Organ Donor';
+  donorBtn.onclick = toggleOrganDonorP64;
+  body.appendChild(donorBtn);
+  const bloodBtn = document.createElement('button');
+  bloodBtn.className = 'btn btn-block';
+  bloodBtn.textContent = `Donate Blood (${state.donor.bloodDonations} donations)`;
+  bloodBtn.onclick = donateBloodP64;
+  body.appendChild(bloodBtn);
+};
+const _origDie_P64 = die;
+die = function(cause){
+  _origDie_P64(cause);
+  if(state.donor && state.donor.organDonor){
+    log(`Because you were a registered organ donor, your final gift will go on to save lives.`,'good');
+  }
+};
+const _origCalcLegacyScore_P64 = calcLegacyScore;
+calcLegacyScore = function(){
+  let score = _origCalcLegacyScore_P64();
+  if(state.donor && state.donor.organDonor) score = clamp(score+3,0,100);
+  return score;
+};
+Object.assign(ACHIEVEMENTS, { organ_donor_ach:'Registered as an organ donor', blood_donor_ach:'Donated blood', life_saver_ach:'Donated blood 10+ times' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
