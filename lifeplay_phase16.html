@@ -4682,6 +4682,36 @@ openRelationshipsPanel = function(){
   if(friendBtn) friendBtn.insertAdjacentElement('afterend', btn);
   else body.appendChild(btn);
 };
+
+/* ---------------------------------------------------------------------
+   P48 — Custody Battle: a one-time choice event that follows up on a
+   divorce when kids are involved, using the flags.divorced state
+   fileDivorce() already sets. Gated to fire once per life via a flag
+   set inside each choice's own fx.
+   --------------------------------------------------------------------- */
+CHOICE_EVENTS.adult.push({
+  title:'Custody Battle',
+  text:'Your divorce is getting contentious, and now custody of the kids is on the table.',
+  cond:s=>!!s.flags.divorced && !s.flags.custodyResolved && s.relationships.some(r=>r.type==='child' && r.alive && r.age<18),
+  choices:[
+    {label:'Fight for full custody', type:'neutral', fx:s=>{
+      s.money=clamp(s.money-rand(3000,10000),-999999999,999999999);
+      s.flags.custodyResolved=true;
+      s.flags._custodyWon=chance(50);
+      if(s.flags._custodyWon){ s.stats.happiness=clamp(s.stats.happiness+10,0,100); s.relationships.filter(r=>r.type==='child').forEach(r=>r.rel=clamp(r.rel+15,0,100)); }
+      else { s.stats.happiness=clamp(s.stats.happiness-15,0,100); }
+    }, result:s=>s.flags._custodyWon ? 'The court sided with you. Full custody granted.' : "The court sided with your ex. Heartbreaking, but you'll still see them."},
+    {label:'Agree to joint custody', type:'good', fx:s=>{
+      s.stats.karma=clamp(s.stats.karma+5,0,100); s.stats.happiness=clamp(s.stats.happiness+3,0,100);
+      s.flags.custodyResolved=true;
+      s.relationships.filter(r=>r.type==='child').forEach(r=>r.rel=clamp(r.rel+8,0,100));
+    }, result:"You worked it out like adults, for the kids' sake."},
+    {label:"Let them have custody, it's simpler", type:'bad', fx:s=>{
+      s.stats.happiness=clamp(s.stats.happiness-10,0,100);
+      s.flags.custodyResolved=true;
+    }, result:'You stepped back. Easier, but it stings.'},
+  ]
+});
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
