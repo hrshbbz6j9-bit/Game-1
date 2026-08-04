@@ -5017,6 +5017,46 @@ render = function(){
   const sub = $('hd-sub');
   if(state.flags.isWanted && sub) sub.textContent = '🚨 WANTED · ' + sub.textContent;
 };
+
+/* ---------------------------------------------------------------------
+   P56 — Wedding Planner: getting married used to be an instant flat
+   effect with no say from the player. A successful proposal now opens
+   a choice of wedding style, each with its own cost and payoff.
+   --------------------------------------------------------------------- */
+const WEDDING_STYLES_P56 = [
+  {name:'Elopement', cost:0, relBoost:5, happyBoost:8, desc:'Just the two of you, somewhere spontaneous.'},
+  {name:'Backyard Wedding', cost:2000, relBoost:10, happyBoost:12, desc:'Small, warm, close friends and family only.'},
+  {name:'Traditional Wedding', cost:15000, relBoost:15, happyBoost:18, desc:'A proper ceremony and reception, all the trimmings.'},
+  {name:'Lavish Wedding', cost:60000, relBoost:22, happyBoost:25, desc:'The wedding of the year. Open bar, live band, no expense spared.'},
+];
+function openWeddingPlannerP56(spouseId){
+  const spouse = state.relationships.find(r=>r.id===spouseId);
+  if(!spouse) return;
+  let html = `<p style="color:var(--sub)">How do you and ${spouse.name} want to celebrate?</p>`;
+  WEDDING_STYLES_P56.forEach((w,i)=>{
+    const afford = state.money>=w.cost;
+    html += `<div class="list-item"><div class="li-main"><b>${w.name}</b><span>${w.desc} · ${fmtMoney(w.cost)}</span></div>
+      <button class="btn"${afford?'':' disabled'} onclick='chooseWeddingStyleP56(${JSON.stringify(spouseId)},${i})'>Choose</button></div>`;
+  });
+  openPanel('Plan the Wedding', html);
+}
+function chooseWeddingStyleP56(spouseId, i){
+  const spouse = state.relationships.find(r=>r.id===spouseId);
+  const style = WEDDING_STYLES_P56[i];
+  if(!spouse || !style || state.money<style.cost) return;
+  state.money -= style.cost;
+  spouse.rel = clamp(spouse.rel+style.relBoost,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+style.happyBoost,0,100);
+  log(`You had a ${style.name.toLowerCase()} with ${spouse.name}. ${style.desc}`,'good');
+  newspaper(`${state.name.toUpperCase()} WEDS IN A ${style.name.toUpperCase()}`, `${spouse.name} and ${state.name} celebrate their big day.`, 'Community Desk');
+  closePanel(); render();
+}
+const _origProposeMarriage_P56 = proposeMarriage;
+proposeMarriage = function(id){
+  const wasSpouseId = state.spouseId;
+  _origProposeMarriage_P56(id);
+  if(state.spouseId && state.spouseId!==wasSpouseId) openWeddingPlannerP56(state.spouseId);
+};
 </script>
 </body>
 </html>
