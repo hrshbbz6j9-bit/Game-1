@@ -7764,6 +7764,79 @@ openWorldPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { dual_citizen_ach:'Earned citizenship of a second country', global_citizen_ach:'Earned citizenship of 3+ countries' });
+
+/* ---------------------------------------------------------------------
+   P97 — Working Animals: deepens pets beyond care/breeding/pet shows
+   (P65) with a training track, dogs only for realism. Pet objects gain
+   an optional .workingRole field lazily on first successful training,
+   the same lazy-init pattern already used for house .renovations (P68)
+   and car .mods (P84). A trained animal earns real yearly income via
+   its own tick function, kept independent of the pre-existing
+   tickPetsP15 rather than editing that function.
+   --------------------------------------------------------------------- */
+const WORKING_ROLES_P97 = [
+  {name:'Therapy Animal', trainCost:300, incomeRange:[100,400], karmaBoost:2},
+  {name:'Service Animal', trainCost:800, incomeRange:[200,600], karmaBoost:3},
+  {name:'Police K9', trainCost:1500, incomeRange:[500,1500], karmaBoost:1},
+];
+function trainPetForWorkP97(petIdx, roleName){
+  const p = state.pets[petIdx]; if(!p || !p.alive || p.type!=='Dog' || p.workingRole) return;
+  const role = WORKING_ROLES_P97.find(r=>r.name===roleName); if(!role) return;
+  if(state.money<role.trainCost){ log(`Not enough money to train ${p.name} as a ${roleName}.`,'bad'); openPetCarePanelP15(); return; }
+  state.money -= role.trainCost;
+  if(chance(65)){
+    p.workingRole = roleName;
+    log(`${p.name} completed training and is now a certified ${roleName}!`,'good');
+    checkAchievement('working_animal_ach');
+    if(roleName==='Police K9') checkAchievement('k9_handler_ach');
+  } else {
+    log(`${p.name} didn't pass ${roleName} training this time.`,'bad');
+  }
+  openPetCarePanelP15();
+}
+function tickWorkingAnimalIncomeP97(){
+  state.pets.forEach(p=>{
+    if(!p.alive || !p.workingRole) return;
+    const role = WORKING_ROLES_P97.find(r=>r.name===p.workingRole); if(!role) return;
+    const income = rand(role.incomeRange[0],role.incomeRange[1]);
+    state.money += income;
+    state.stats.karma = clamp(state.stats.karma+role.karmaBoost,0,100);
+  });
+}
+const _origOpenPetCarePanelP15_P97 = openPetCarePanelP15;
+openPetCarePanelP15 = function(){
+  _origOpenPetCarePanelP15_P97();
+  const dogs = state.pets.filter(p=>p.alive && p.type==='Dog');
+  if(!dogs.length) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const label = document.createElement('b'); label.textContent = '🦺 Working Dog Training'; body.appendChild(label);
+  dogs.forEach(p=>{
+    const idx = state.pets.indexOf(p);
+    if(p.workingRole){
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = `<div class="li-main"><b>${p.name}</b><span>Certified ${p.workingRole}</span></div>`;
+      body.appendChild(row);
+    } else {
+      WORKING_ROLES_P97.forEach(role=>{
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-block';
+        btn.textContent = `Train ${p.name} as ${role.name} (${fmtMoney(role.trainCost)})`;
+        btn.onclick = ()=>trainPetForWorkP97(idx, role.name);
+        body.appendChild(btn);
+      });
+    }
+  });
+};
+const _origAgeUp_P97 = ageUp;
+ageUp = function(){
+  _origAgeUp_P97();
+  if(!state || !state.alive) return;
+  tickWorkingAnimalIncomeP97();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { working_animal_ach:'Trained a pet for working service', k9_handler_ach:'Trained a Police K9' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
