@@ -4750,6 +4750,35 @@ adoptChildP47 = function(){
   _origAdoptChildP47_P49();
   if(state.kids.length>before) openRenameChildPanelP49(state.kids[state.kids.length-1]);
 };
+
+/* Same courtesy for a newly adopted pet — pet.name has always been
+   "Type RandomName" (e.g. "Dog Buddy"); only the random part is
+   editable here so the type-prefix display convention stays intact. */
+function openRenamePetPanelP49(petIndex){
+  const pet = state.pets[petIndex];
+  if(!pet) return;
+  const currentPart = pet.name.replace(new RegExp('^'+pet.type+' '),'');
+  const html = `<p style="color:var(--sub)">Name your new ${pet.type.toLowerCase()}, or keep the one we picked.</p>
+    <div class="field"><input type="text" id="rename-pet-input" value="${escapeHtmlP15(currentPart)}" maxlength="20"></div>
+    <button class="btn btn-block btn-primary" onclick='confirmPetNameP49(${petIndex})'>Confirm Name</button>`;
+  openPanel('Name Your Pet', html);
+}
+function confirmPetNameP49(petIndex){
+  const pet = state.pets[petIndex];
+  if(!pet) return;
+  const input = document.getElementById('rename-pet-input');
+  const typed = input ? input.value.trim().replace(/[^A-Za-z0-9\-' ]/g,'').slice(0,20) : '';
+  const newPart = typed || pet.name.replace(new RegExp('^'+pet.type+' '),'');
+  pet.name = pet.type+' '+newPart;
+  log(`You named your ${pet.type.toLowerCase()} ${pet.name}.`,'good');
+  closePanel(); render();
+}
+const _origAdoptPet_P49 = adoptPet;
+adoptPet = function(type){
+  const before = state.pets.length;
+  _origAdoptPet_P49(type);
+  if(state.pets.length>before) openRenamePetPanelP49(state.pets.length-1);
+};
 </script>
 </body>
 </html>
