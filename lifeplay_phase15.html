@@ -3433,7 +3433,7 @@ const FAMILY_REUNION_LINES_P24 = [
 ];
 function tryFamilyReunionP24(){
   if(state.age<8) return;
-  const extended = state.relationships.filter(r=>r.alive && ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','sibling','parent'].includes(r.type));
+  const extended = state.relationships.filter(r=>r.alive && ['grandparent','aunt_uncle','cousin','in_law','niece_nephew','godparent','grandchild','sibling','parent'].includes(r.type));
   if(extended.length<3) return;
   if(!chance(6)) return;
   extended.forEach(r=>{ r.rel = clamp(r.rel+rand(4,10),0,100); });
