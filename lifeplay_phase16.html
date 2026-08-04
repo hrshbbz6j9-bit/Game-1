@@ -4649,6 +4649,39 @@ openActivitiesPanel = function(){
   btn.onclick = sueSomeoneP46;
   body.appendChild(btn);
 };
+
+/* ---------------------------------------------------------------------
+   P47 — Adoption: a second path to parenthood alongside Try for a
+   Baby, available regardless of marital status like it is in life.
+   --------------------------------------------------------------------- */
+Object.assign(ACHIEVEMENTS, { adoptive_parent_ach:'Adopted a child' });
+function adoptChildP47(){
+  const cost = 5000;
+  if(state.money<cost){ log(`Not enough money to cover adoption costs.`,'bad'); closePanel(); render(); return; }
+  state.money -= cost;
+  const gender = pick(['Male','Female']);
+  const kid = newRelationship('child', {gender, age:rand(0,6), rel:70});
+  kid.adopted = true;
+  state.relationships.push(kid); state.kids.push(kid.id);
+  log(`You adopted a child! Welcome, ${kid.name}.`,'good');
+  newspaper(`A NEW ADDITION TO THE ${state.last.toUpperCase()} FAMILY`, `${state.name} welcomes an adopted child, ${kid.name}, home.`);
+  checkAchievement('adoptive_parent_ach');
+  checkAchievement('parent');
+  closePanel(); render();
+}
+const _origOpenRelationshipsPanel_P47 = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P47();
+  if(state.age<21 || state.inPrison) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = `🍼 Adopt a Child ($5,000)`;
+  btn.onclick = adoptChildP47;
+  const friendBtn = [...body.querySelectorAll('button')].find(b=>b.textContent.includes('Make a New Friend'));
+  if(friendBtn) friendBtn.insertAdjacentElement('afterend', btn);
+  else body.appendChild(btn);
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
