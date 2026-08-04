@@ -444,6 +444,10 @@
     gap: 10px;
     cursor: pointer;
   }
+  .term-top:focus-visible, .thread-top:focus-visible {
+    outline: 3px solid var(--violet);
+    outline-offset: 2px;
+  }
 
   .term-name-row {
     display: flex;
@@ -6519,7 +6523,7 @@
       `;
 
       card.innerHTML = `
-        <div class="term-top">
+        <div class="term-top" tabindex="0" role="button" aria-expanded="${openIndex === t._idx}" aria-label="${escapeHtml(t.term)}, toggle details">
           <div style="flex:1; min-width:0;">
             <div class="term-name-row">
               <span class="term-idx">#${String(t._idx + 1).padStart(2, "0")}</span>
@@ -6549,9 +6553,13 @@
         </div>
       `;
 
-      card.querySelector(".term-top").addEventListener("click", () => {
+      const toggleTermOpen = () => {
         openIndex = (openIndex === t._idx) ? null : t._idx;
         renderList();
+      };
+      card.querySelector(".term-top").addEventListener("click", toggleTermOpen);
+      card.querySelector(".term-top").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTermOpen(); }
       });
 
       card.querySelector("[data-fav]").addEventListener("click", (e) => {
@@ -8469,7 +8477,7 @@
           `}
         `;
       card.innerHTML = `
-        <div class="thread-top">
+        <div class="thread-top" tabindex="0" role="button" aria-expanded="${openThreadId === t.id}" aria-label="${escapeHtml(t.title)}, toggle thread">
           <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${isLocked ? '<span class="pin-icon">🔒</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
           ${isOwnThread && !isLocked ? `
             <button class="owner-btn" data-edit-thread="1" aria-label="Edit thread">✎</button>
@@ -8514,11 +8522,15 @@
         const input = btn.closest(".reply-item-body").querySelector(".edit-reply-input");
         if (input) input.value = t.replies[idx].text;
       });
-      card.querySelector(".thread-top").addEventListener("click", () => {
+      const toggleThreadOpen = () => {
         const opening = openThreadId !== t.id;
         openThreadId = opening ? t.id : null;
         if (opening) { registerView(t); markThreadSeen(t); }
         renderThreads();
+      };
+      card.querySelector(".thread-top").addEventListener("click", toggleThreadOpen);
+      card.querySelector(".thread-top").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleThreadOpen(); }
       });
       card.querySelector("[data-watch]").addEventListener("click", (e) => {
         e.stopPropagation();
