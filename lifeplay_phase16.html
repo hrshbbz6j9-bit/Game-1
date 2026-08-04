@@ -4712,6 +4712,44 @@ CHOICE_EVENTS.adult.push({
     }, result:'You stepped back. Easier, but it stings.'},
   ]
 });
+
+/* ---------------------------------------------------------------------
+   P49 — Name Your Baby: a new child (birth or adoption) previously
+   always kept its auto-generated name with no say from the player.
+   Now there's a chance to rename them right after they arrive.
+   --------------------------------------------------------------------- */
+function openRenameChildPanelP49(kidId){
+  const kid = state.relationships.find(r=>r.id===kidId);
+  if(!kid) return;
+  const firstName = kid.name.split(' ')[0];
+  const html = `<p style="color:var(--sub)">Give your ${kid.gender==='Male'?'son':'daughter'} a name, or keep the one we picked.</p>
+    <div class="field"><input type="text" id="rename-child-input" value="${escapeHtmlP15(firstName)}" maxlength="20"></div>
+    <button class="btn btn-block btn-primary" onclick='confirmChildNameP49(${JSON.stringify(kidId)})'>Confirm Name</button>`;
+  openPanel('Name Your Child', html);
+}
+function confirmChildNameP49(kidId){
+  const kid = state.relationships.find(r=>r.id===kidId);
+  if(!kid) return;
+  const input = document.getElementById('rename-child-input');
+  const typed = input ? input.value.trim().replace(/[^A-Za-z\-' ]/g,'').slice(0,20) : '';
+  const firstName = typed || kid.name.split(' ')[0];
+  const lastName = kid.name.split(' ').slice(1).join(' ');
+  kid.name = lastName ? (firstName+' '+lastName) : firstName;
+  log(`You named your child ${kid.name}.`,'good');
+  closePanel(); render();
+}
+const _origTryForBaby_P49 = tryForBaby;
+tryForBaby = function(){
+  const before = state.kids.length;
+  _origTryForBaby_P49();
+  if(state.kids.length>before) openRenameChildPanelP49(state.kids[state.kids.length-1]);
+};
+const _origAdoptChildP47_P49 = adoptChildP47;
+adoptChildP47 = function(){
+  const before = state.kids.length;
+  _origAdoptChildP47_P49();
+  if(state.kids.length>before) openRenameChildPanelP49(state.kids[state.kids.length-1]);
+};
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
