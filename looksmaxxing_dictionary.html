@@ -2876,6 +2876,13 @@
     <label class="form-label">Signature</label>
     <input type="text" class="form-input" id="profileSignatureInput" placeholder="e.g. 8 months mewing | trust the process" maxlength="60">
     <button class="cta-btn" id="profileSave">Save Profile</button>
+    <label class="form-label" style="margin-top:20px;">Danger Zone</label>
+    <button class="photo-remove-btn" id="resetDataBtn" style="width:100%;">Reset All Data on This Device</button>
+    <div class="delete-confirm-row" id="resetDataConfirmRow" style="display:none;">
+      <span>This erases everything stored on this device — threads, replies, achievements, streaks, saved terms, your profile — permanently. Continue?</span>
+      <button class="delete-confirm-btn" id="resetDataConfirmBtn">Reset Everything</button>
+      <button class="delete-cancel-btn" id="resetDataCancelBtn">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -7871,6 +7878,7 @@
     document.getElementById("profileUsernameInput").value = username;
     document.getElementById("profileSignatureInput").value = signature;
     renderPhotoPreview();
+    document.getElementById("resetDataConfirmRow").style.display = "none";
     profileOverlay.classList.add("show");
   }
   function closeProfileModal() { profileOverlay.classList.remove("show"); }
@@ -7885,6 +7893,17 @@
     renderProfileCard();
     renderThreads();
     showToast("Profile updated.");
+  });
+
+  document.getElementById("resetDataBtn").addEventListener("click", () => {
+    document.getElementById("resetDataConfirmRow").style.display = "flex";
+  });
+  document.getElementById("resetDataCancelBtn").addEventListener("click", () => {
+    document.getElementById("resetDataConfirmRow").style.display = "none";
+  });
+  document.getElementById("resetDataConfirmBtn").addEventListener("click", () => {
+    localStorage.clear();
+    location.reload();
   });
 
   const forumSearchInput = document.getElementById("forumSearchInput");
