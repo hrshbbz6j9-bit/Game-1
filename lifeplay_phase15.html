@@ -4900,6 +4900,22 @@ ageUp = function(){
   tickTrustFundP52();
   render();
 };
+
+/* Surface the family wealth tier somewhere durable instead of just a
+   birth-log line that scrolls out of view within a few age-ups. */
+const _origOpenProfilePanel_P53 = openProfilePanel;
+openProfilePanel = function(){
+  _origOpenProfilePanel_P53();
+  if(!state.flags.familyWealthTier) return;
+  const body = $('panel-body');
+  const row = document.createElement('div');
+  row.className = 'list-item';
+  const trustNote = state.flags.trustFundClaimed ? ' · Trust fund claimed' : (state.flags.trustFundEligible ? ' · Trust fund pending' : '');
+  row.innerHTML = `<div class="li-main"><b>Raised</b><span>${state.flags.familyWealthTier}${trustNote}</span></div>`;
+  const photoBtn = [...body.querySelectorAll('button')].find(b=>b.textContent.includes('Photo Album'));
+  if(photoBtn) photoBtn.insertAdjacentElement('afterend', row);
+  else body.insertBefore(row, body.firstChild);
+};
 </script>
 </body>
 </html>
