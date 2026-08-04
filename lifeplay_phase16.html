@@ -399,6 +399,7 @@ function freshState(){
     hacker:{skill:0, heat:0, whiteHatJobs:0},
     extremeActivitiesDone:0,
     bodybuilding:{tier:0, workouts:0},
+    poker:{skill:0, tournamentWins:0},
   };
 }
 
@@ -6769,6 +6770,85 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { bodybuilder_ach:'Won your first bodybuilding competition', olympia_champion_ach:'Won every bodybuilding tier' });
+
+/* ---------------------------------------------------------------------
+   P81 — Poker & High-Stakes Tables: matches the same chance()-driven
+   abstraction level already used by Slots/Blackjack/Roulette (none of
+   them simulate real cards or a wheel either), but adds real
+   progression a single hand doesn't have — a skill stat that improves
+   with play, four table stakes, and three tournament tiers up to a
+   World Series Championship with a real shot at a huge payout.
+   --------------------------------------------------------------------- */
+const POKER_TABLES_P81 = [
+  {name:'Low Stakes Table', buyIn:100, payout:[50,300]},
+  {name:'Mid Stakes Table', buyIn:500, payout:[200,1500]},
+  {name:'High Stakes Table', buyIn:2000, payout:[800,6000]},
+  {name:'VIP Table', buyIn:10000, payout:[3000,30000]},
+];
+const POKER_TOURNAMENTS_P81 = [
+  {name:'Weekly Tournament', buyIn:1000, prize:[100,15000]},
+  {name:'World Series Qualifier', buyIn:5000, prize:[500,100000]},
+  {name:'World Series Championship', buyIn:25000, prize:[2000,1000000]},
+];
+function playPokerTableP81(name){
+  const t = POKER_TABLES_P81.find(x=>x.name===name); if(!t) return;
+  if(state.money<t.buyIn){ log(`Not enough money to sit at the ${name}.`,'bad'); openPokerPanelP81(); return; }
+  state.money -= t.buyIn;
+  const winChance = clamp(40+state.poker.skill*0.5,10,75);
+  if(chance(winChance)){
+    const payout = Math.round(rand(t.payout[0],t.payout[1])*(1+state.poker.skill/200));
+    state.money += payout;
+    state.poker.skill = clamp(state.poker.skill+rand(1,3),0,100);
+    log(`🃏 You won big at the ${name}! +${fmtMoney(payout)}.`,'good');
+    if(state.poker.skill>=50) checkAchievement('poker_shark_ach');
+  } else {
+    state.poker.skill = clamp(state.poker.skill+rand(0,1),0,100);
+    log(`🃏 You lost your buy-in at the ${name}.`,'bad');
+  }
+  openPokerPanelP81();
+}
+function enterPokerTournamentP81(name){
+  const t = POKER_TOURNAMENTS_P81.find(x=>x.name===name); if(!t) return;
+  if(state.money<t.buyIn){ log(`Not enough money to enter the ${name}.`,'bad'); openPokerPanelP81(); return; }
+  state.money -= t.buyIn;
+  const winChance = clamp(8+state.poker.skill*0.3,2,30);
+  if(chance(winChance)){
+    const prize = rand(Math.round(t.prize[1]*0.5),t.prize[1]);
+    state.money += prize;
+    state.poker.tournamentWins++;
+    state.poker.skill = clamp(state.poker.skill+rand(3,8),0,100);
+    log(`🏆 You WON the ${name}! Prize: ${fmtMoney(prize)}.`,'good');
+    newspaper(`${state.name.toUpperCase()} WINS ${name.toUpperCase()}`, `A masterclass at the felt.`, 'Sports Desk');
+    if(name==='World Series Championship') checkAchievement('world_series_ach');
+  } else if(chance(25)){
+    const prize = rand(t.prize[0],Math.round(t.prize[1]*0.15));
+    state.money += prize;
+    log(`You placed in the ${name}, taking home a consolation ${fmtMoney(prize)}.`,'neutral');
+  } else {
+    log(`You busted out of the ${name} early.`,'bad');
+  }
+  openPokerPanelP81();
+}
+function openPokerPanelP81(){
+  let html = `<div class="list-item"><div class="li-main"><b>Poker Skill</b><span>${state.poker.skill}/100${state.poker.tournamentWins?(' · '+state.poker.tournamentWins+' tournament win'+(state.poker.tournamentWins===1?'':'s')):''}</span></div></div>`;
+  html += `<hr style="border-color:var(--border)"><b>Cash Tables</b>`;
+  POKER_TABLES_P81.forEach(t=>{ html += `<button class="btn btn-block" onclick='playPokerTableP81(${JSON.stringify(t.name)})'>${t.name} (${fmtMoney(t.buyIn)})</button>`; });
+  html += `<hr style="border-color:var(--border)"><b>Tournaments</b>`;
+  POKER_TOURNAMENTS_P81.forEach(t=>{ html += `<button class="btn btn-block btn-accent" onclick='enterPokerTournamentP81(${JSON.stringify(t.name)})'>${t.name} (${fmtMoney(t.buyIn)})</button>`; });
+  openPanel('Poker', html);
+}
+const _origOpenActivitiesPanel_P81 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P81();
+  if(state.inPrison) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🃏 Poker' + (state.poker.skill?(' (Skill '+state.poker.skill+')'):'');
+  btn.onclick = openPokerPanelP81;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { poker_shark_ach:'Reached 50 poker skill', world_series_ach:'Won the World Series Championship' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
