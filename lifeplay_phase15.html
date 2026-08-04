@@ -4203,6 +4203,7 @@ Object.assign(ACHIEVEMENTS, {
   honorable_discharge_ach:'Honorably discharged after full service',
   medal_valor_ach:'Earned a medal for valor',
   general_ach:'Reached the rank of General',
+  gi_bill_ach:'Used the GI Bill to pay for college',
 });
 function militaryJobTitleP37(branch, rank){ return MILITARY_RANKS_P37[rank]+' ('+branch+')'; }
 function enlistP37(branch){
@@ -4253,7 +4254,11 @@ function dischargeFromMilitaryP37(){
   state.money += bonus;
   const honorable = m.service>=4;
   log(`You were discharged from the ${m.branch} after ${m.service} years of service. Separation pay: ${fmtMoney(bonus)}.`,'good');
-  if(honorable) checkAchievement('honorable_discharge_ach');
+  if(honorable){
+    checkAchievement('honorable_discharge_ach');
+    state.flags.giBillEligible = true;
+    log(`As an honorably discharged veteran, you're now eligible for the GI Bill — full college tuition coverage.`,'good');
+  }
   state.military = null;
   if(state.job){ state.jobHistory.push(state.job); state.job = null; }
   closePanel(); render();
@@ -7119,16 +7124,21 @@ applyCollege = function(){
 };
 function tickTuitionP85(){
   if(state.eduStage==='college' && !state.dropped && state.eduYear>=1 && state.eduYear<=4){
-    const pct = state.flags.scholarshipPct||0;
-    const cost = Math.round(COLLEGE_ANNUAL_TUITION_P85*(1-pct/100));
-    if(state.money>=cost){
-      state.money -= cost;
-      log(`You paid ${fmtMoney(cost)} in tuition this year.`,'neutral');
+    if(state.flags.giBillEligible){
+      log(`Your GI Bill covered this year's tuition in full.`,'good');
+      checkAchievement('gi_bill_ach');
     } else {
-      const shortfall = cost-state.money;
-      state.money = 0;
-      state.studentDebt += shortfall;
-      log(`You couldn't cover tuition, so you took on ${fmtMoney(shortfall)} in student loans.`,'bad');
+      const pct = state.flags.scholarshipPct||0;
+      const cost = Math.round(COLLEGE_ANNUAL_TUITION_P85*(1-pct/100));
+      if(state.money>=cost){
+        state.money -= cost;
+        log(`You paid ${fmtMoney(cost)} in tuition this year.`,'neutral');
+      } else {
+        const shortfall = cost-state.money;
+        state.money = 0;
+        state.studentDebt += shortfall;
+        log(`You couldn't cover tuition, so you took on ${fmtMoney(shortfall)} in student loans.`,'bad');
+      }
     }
   }
   if(state.studentDebt>0){
