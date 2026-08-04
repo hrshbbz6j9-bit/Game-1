@@ -412,6 +412,8 @@ function freshState(){
     farm:{plots:[]},
     treasureHunting:{skill:0, bigFinds:0},
     freelanceEarnings:0,
+    realityShow:null,
+    realityShowWins:0,
   };
 }
 
@@ -8127,6 +8129,107 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { gig_worker_ach:'Picked up a freelance gig', side_hustler_ach:'Earned $10,000+ total from freelance gigs' });
+
+/* ---------------------------------------------------------------------
+   P104 — Reality TV Show: apply for a casting call (chance driven by
+   looks/smarts/existing fame), then survive elimination rounds. Winning
+   pays real prize money AND feeds fame directly into the existing
+   Influencer follower count (state.influencer.followers) rather than
+   building a parallel fame stat, since that's already the game's one
+   "fame" number. Distinct from Influencer (content grind) and Talent
+   Agent (audition-for-real-roles) — this is a single high-stakes
+   competition arc with a real chance of public elimination/humiliation.
+   --------------------------------------------------------------------- */
+const REALITY_SHOWS_P104 = [
+  {name:'Dating Island', desc:'A tropical dating competition. Charisma and looks decide who survives.', rounds:5, statKey:'looks', prizeRange:[10000,50000], followerGain:[5000,40000]},
+  {name:'Survivor Wilderness', desc:'Outlast the elements and your tribe. Health and grit matter most.', rounds:6, statKey:'health', prizeRange:[15000,75000], followerGain:[3000,25000]},
+  {name:'Talent Spotlight', desc:'A televised talent contest judged live, week after week.', rounds:5, statKey:'smarts', prizeRange:[10000,60000], followerGain:[8000,50000]},
+  {name:'The Compound', desc:'Locked in a house with strangers. Alliances and social strategy win it.', rounds:7, statKey:'happiness', prizeRange:[20000,100000], followerGain:[10000,60000]},
+];
+const REALITY_ELIM_LINES_P104 = [
+  'The other contestants voted you out in a stunning blindside.',
+  'You were eliminated after a shocking twist in the game.',
+  'Your alliance turned on you at the worst possible moment.',
+  'You just missed the cut this week and were sent home.',
+  'A scandal from your past leaked and the producers sent you packing.',
+];
+function castingCallP104(showName){
+  if(state.age<18){ log(`You need to be at least 18 to apply for a reality show.`,'bad'); openRealityShowPanelP104(); return; }
+  if(state.realityShow){ openRealityShowPanelP104(); return; }
+  const show = REALITY_SHOWS_P104.find(s=>s.name===showName); if(!show) return;
+  const statVal = state.stats[show.statKey]!=null ? state.stats[show.statKey] : 50;
+  const followers = (state.influencer && state.influencer.followers) || 0;
+  const castChance = clamp(20 + (statVal-50)*0.5 + Math.min(followers/2000,20), 5, 80);
+  if(chance(castChance)){
+    state.realityShow = {show:show.name, round:0};
+    log(`You were cast on ${show.name}! Filming begins.`,'good');
+    checkAchievement('reality_cast_ach');
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness-2,0,100);
+    log(`Your ${show.name} audition tape didn't make the cut this season.`,'bad');
+  }
+  openRealityShowPanelP104();
+}
+function competeRealityRoundP104(){
+  const rs = state.realityShow; if(!rs) return;
+  const show = REALITY_SHOWS_P104.find(s=>s.name===rs.show); if(!show) return;
+  const statVal = state.stats[show.statKey]!=null ? state.stats[show.statKey] : 50;
+  const survivalChance = clamp(45 + (statVal-50)*0.5, 15, 90);
+  if(chance(survivalChance)){
+    rs.round++;
+    state.stats.happiness = clamp(state.stats.happiness+rand(1,4),0,100);
+    if(rs.round>=show.rounds){
+      const prize = rand(show.prizeRange[0], show.prizeRange[1]);
+      const gain = rand(show.followerGain[0], show.followerGain[1]);
+      state.money += prize;
+      if(!state.influencer) state.influencer = {tier:0, followers:0, platform:null};
+      state.influencer.followers += gain;
+      state.stats.happiness = clamp(state.stats.happiness+rand(8,15),0,100);
+      state.realityShowWins = (state.realityShowWins||0)+1;
+      log(`You WON ${show.name}! Prize: ${fmtMoney(prize)}, and you gained ${gain.toLocaleString()} followers overnight.`,'good');
+      newspaper(`${state.name.toUpperCase()} WINS ${show.name.toUpperCase()}`, `A stunning finale capped off with the season's biggest win.`, 'The Gazette');
+      checkAchievement('reality_winner_ach');
+      if(state.realityShowWins>=3) checkAchievement('reality_dynasty_ach');
+      state.realityShow = null;
+    } else {
+      log(`You survived another round of ${show.name}! (Round ${rs.round}/${show.rounds})`,'good');
+    }
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness-rand(3,8),0,100);
+    log(`${pick(REALITY_ELIM_LINES_P104)}`,'bad');
+    checkAchievement('reality_flop_ach');
+    state.realityShow = null;
+  }
+  openRealityShowPanelP104();
+}
+function openRealityShowPanelP104(){
+  let html = '';
+  if(state.realityShow){
+    const show = REALITY_SHOWS_P104.find(s=>s.name===state.realityShow.show);
+    html += `<div class="list-item"><div class="li-main"><b>${show.name}</b><span>Round ${state.realityShow.round}/${show.rounds}</span></div></div>`;
+    html += `<p style="color:var(--sub)">${show.desc}</p>`;
+    html += `<button class="btn btn-block btn-accent" onclick="competeRealityRoundP104()">🎬 Compete This Round</button>`;
+  } else {
+    html += `<div class="list-item"><div class="li-main"><b>Show Wins</b><span>${state.realityShowWins||0}</span></div></div>`;
+    html += `<p style="color:var(--sub)">Apply for a casting call. Your odds depend on the show's focus stat and your existing fame.</p>`;
+    REALITY_SHOWS_P104.forEach(s=>{
+      html += `<button class="btn btn-block" onclick='castingCallP104(${JSON.stringify(s.name)})'>${s.name}</button>`;
+    });
+  }
+  openPanel('Reality TV', html);
+}
+const _origOpenActivitiesPanel_P104 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P104();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎬 Reality TV' + (state.realityShow?(' (In Progress)'):(state.realityShowWins?(' ('+state.realityShowWins+' win'+(state.realityShowWins===1?'':'s')+')'):''));
+  btn.onclick = openRealityShowPanelP104;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { reality_cast_ach:'Got cast on a reality TV show', reality_winner_ach:'Won a reality TV show', reality_flop_ach:'Got eliminated from a reality TV show', reality_dynasty_ach:'Won 3+ reality TV shows in one lifetime' });
 </script>
 </body>
 </html>
