@@ -396,6 +396,7 @@ function freshState(){
     will:{beneficiaryId:null},
     artCollection:[],
     fertilityAttempts:0,
+    hacker:{skill:0, heat:0, whiteHatJobs:0},
   };
 }
 
@@ -5008,7 +5009,7 @@ openActivitiesPanel = function(){
    a WANTED badge in the header and runs a one-time newspaper card.
    --------------------------------------------------------------------- */
 function tickWantedStatusP55(){
-  const heat = Math.max(state.mafia?state.mafia.heat:0, state.drugEmpire?state.drugEmpire.heat:0);
+  const heat = Math.max(state.mafia?state.mafia.heat:0, state.drugEmpire?state.drugEmpire.heat:0, state.hacker?state.hacker.heat:0);
   const wasWanted = !!state.flags.isWanted;
   const isWanted = heat>=70;
   state.flags.isWanted = isWanted;
@@ -6506,6 +6507,98 @@ openRelationshipsPanel = function(){
   }
 };
 Object.assign(ACHIEVEMENTS, { twins_ach:'Had twins', ivf_ach:'Had a baby through IVF treatment' });
+
+/* ---------------------------------------------------------------------
+   P77 — Hacking: a cybercrime side-hustle distinct from Drug Empire and
+   Mafia. Practicing builds a skill stat that both raises white-hat
+   (legal) job success/pay and lowers black-hat (illegal) detection
+   risk. Black-hat jobs build heat, which feeds into the existing Most
+   Wanted system (P55's tickWantedStatusP55, edited directly since it's
+   my own earlier same-session code) and can be laid low the same way
+   Drug Empire heat already works.
+   --------------------------------------------------------------------- */
+const WHITE_HAT_GIGS_P77 = [
+  {name:'Bug Bounty Report', pay:[200,1500], skillReq:0},
+  {name:'Security Audit Contract', pay:[1000,5000], skillReq:30},
+  {name:'Penetration Testing Job', pay:[3000,12000], skillReq:60},
+];
+const BLACK_HAT_JOBS_P77 = [
+  {name:'Phishing Scam', pay:[500,3000], risk:25, sentence:2},
+  {name:'Data Breach', pay:[5000,30000], risk:40, sentence:5},
+  {name:'Ransomware Attack', pay:[20000,150000], risk:60, sentence:10},
+];
+function practiceHackingP77(){
+  state.hacker.skill = clamp(state.hacker.skill+rand(2,6),0,100);
+  state.stats.smarts = clamp(state.stats.smarts+1,0,100);
+  state.stats.happiness = clamp(state.stats.happiness+1,0,100);
+  log(`You practiced your hacking skills.`,'neutral');
+  checkAchievement('script_kiddie_ach');
+  openHackingPanelP77();
+}
+function doBountyP77(name){
+  const job = WHITE_HAT_GIGS_P77.find(x=>x.name===name); if(!job) return;
+  if(state.hacker.skill<job.skillReq){ log(`Your hacking skill isn't high enough for that yet.`,'bad'); openHackingPanelP77(); return; }
+  const successChance = clamp(40+state.hacker.skill*0.6,10,95);
+  if(chance(successChance)){
+    const pay = Math.round(rand(job.pay[0],job.pay[1])*(1+state.hacker.skill/200));
+    state.money += pay;
+    state.stats.karma = clamp(state.stats.karma+2,0,100);
+    state.hacker.whiteHatJobs++;
+    log(`You completed a ${name.toLowerCase()} and earned ${fmtMoney(pay)}, ethically.`,'good');
+    if(state.hacker.whiteHatJobs>=5) checkAchievement('white_hat_ach');
+  } else {
+    log(`Your ${name.toLowerCase()} attempt didn't pan out this time.`,'bad');
+  }
+  openHackingPanelP77();
+}
+function doBlackHatP77(name){
+  const job = BLACK_HAT_JOBS_P77.find(x=>x.name===name); if(!job) return;
+  const caughtChance = clamp(job.risk-state.hacker.skill*0.4,5,90);
+  if(chance(caughtChance)){
+    state.criminalRecord.push(name);
+    state.inPrison = true;
+    state.prisonYearsLeft = job.sentence;
+    state.hacker.heat = 0;
+    log(`The feds traced your ${name.toLowerCase()} back to you. Sentenced to ${job.sentence} years.`,'bad');
+    newspaper(`${state.name.toUpperCase()} ARRESTED IN CYBERCRIME BUST`, `Authorities charge local resident with ${name.toLowerCase()}.`);
+  } else {
+    const pay = rand(job.pay[0],job.pay[1]);
+    state.money += pay;
+    state.stats.karma = clamp(state.stats.karma-8,0,100);
+    state.hacker.heat = clamp(state.hacker.heat+15,0,100);
+    log(`You pulled off a ${name.toLowerCase()} and got away with ${fmtMoney(pay)}.`,'neutral');
+    checkAchievement('black_hat_ach');
+  }
+  openHackingPanelP77();
+}
+function layLowHackerP77(){
+  state.hacker.heat = clamp(state.hacker.heat-30,0,100);
+  log(`You went dark online for a while. Heat reduced.`,'neutral');
+  openHackingPanelP77();
+}
+function openHackingPanelP77(){
+  let html = `<div class="list-item"><div class="li-main"><b>Hacking Skill</b><span>${state.hacker.skill}/100${state.hacker.heat?(' · Heat: '+state.hacker.heat):''}</span></div></div>`;
+  html += `<button class="btn btn-block" onclick="practiceHackingP77()">Practice Skills</button>`;
+  html += `<hr style="border-color:var(--border)"><b>White Hat (Legal)</b>`;
+  WHITE_HAT_GIGS_P77.forEach(j=>{ html += `<button class="btn btn-block" onclick='doBountyP77(${JSON.stringify(j.name)})'>${j.name}${j.skillReq?(' (Skill '+j.skillReq+'+)'):''}</button>`; });
+  html += `<hr style="border-color:var(--border)"><b>Black Hat (Illegal)</b>`;
+  BLACK_HAT_JOBS_P77.forEach(j=>{ html += `<button class="btn btn-block btn-danger" onclick='doBlackHatP77(${JSON.stringify(j.name)})'>${j.name}</button>`; });
+  if(state.hacker.heat>0) html += `<button class="btn btn-block" onclick="layLowHackerP77()">Lay Low (Heat: ${state.hacker.heat})</button>`;
+  openPanel('Hacking', html);
+}
+const _origOpenActivitiesPanel_P77 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P77();
+  if(state.inPrison || state.age<13) return;
+  const body = $('panel-body');
+  const hr = document.createElement('hr'); hr.style.borderColor='var(--border)'; body.appendChild(hr);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '💻 Hacking' + (state.hacker.skill?(' (Skill '+state.hacker.skill+')'):'');
+  btn.onclick = openHackingPanelP77;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { script_kiddie_ach:'Started learning to hack', white_hat_ach:'Completed 5 white-hat hacking jobs', black_hat_ach:'Pulled off a black-hat hacking job' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
