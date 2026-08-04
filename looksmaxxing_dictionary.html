@@ -7295,7 +7295,12 @@
   }
 
   function saveThreads() {
-    localStorage.setItem("looksmax_threads", JSON.stringify(threads));
+    try {
+      localStorage.setItem("looksmax_threads", JSON.stringify(threads));
+    } catch (e) {
+      // Deferred so it isn't instantly clobbered by the caller's own success toast.
+      setTimeout(() => showToast("Storage is full — try removing a photo from an older thread."), 50);
+    }
   }
 
   /* ---------------- Username & Member Tiers ---------------- */
@@ -9018,7 +9023,11 @@
   }
 
   function saveCourses() {
-    localStorage.setItem("looksmax_courses", JSON.stringify(courses));
+    try {
+      localStorage.setItem("looksmax_courses", JSON.stringify(courses));
+    } catch (e) {
+      setTimeout(() => showToast("Storage is full — try removing a photo from an older thread."), 50);
+    }
   }
 
   let openCourseId = null;
