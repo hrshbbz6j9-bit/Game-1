@@ -5116,6 +5116,7 @@ function tickRelationshipDeathsP57(){
     if(r.type==='parent' && typeof handleParentInheritanceP75==='function'){
       handleParentInheritanceP75(r);
     }
+    if(typeof handleFuneralP95==='function') handleFuneralP95(r);
   });
 }
 const _origAgeUp_P57 = ageUp;
@@ -7689,6 +7690,40 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { gun_owner_ach:'Purchased your first firearm', arsenal_ach:'Own 4+ weapons' });
+
+/* ---------------------------------------------------------------------
+   P95 — Attending the Funeral: hooked directly into P57's
+   tickRelationshipDeathsP57 (my own earlier same-session code, edited
+   in place per this session's convention) so a close relationship's
+   death (parent/spouse/sibling/child/best friend) is more than a single
+   log line. Attending is the likely default, gives a small karma boost,
+   and carries a rare chance of reconnecting with another mourner;
+   skipping it costs karma instead. handleFuneralP95 is a hoisted plain
+   function declaration, so it's safely callable from P57 above despite
+   being defined here.
+   --------------------------------------------------------------------- */
+const CLOSE_RELATIONSHIP_TYPES_P95 = ['parent','spouse','sibling','child'];
+function handleFuneralP95(r){
+  const isClose = CLOSE_RELATIONSHIP_TYPES_P95.includes(r.type) || r.id===state.bestFriendId;
+  if(!isClose) return;
+  if(chance(80)){
+    state.stats.karma = clamp(state.stats.karma+2,0,100);
+    log(`You attended ${r.name}'s funeral to say goodbye.`,'neutral');
+    checkAchievement('eulogy_ach');
+    if(chance(10)){
+      const others = state.relationships.filter(x=>x.alive && x.id!==r.id);
+      if(others.length){
+        const other = pick(others);
+        other.rel = clamp(other.rel+rand(5,12),0,100);
+        log(`At the funeral, you reconnected with ${other.name} over shared grief.`,'good');
+      }
+    }
+  } else {
+    state.stats.karma = clamp(state.stats.karma-3,0,100);
+    log(`You couldn't bring yourself to attend ${r.name}'s funeral.`,'bad');
+  }
+}
+Object.assign(ACHIEVEMENTS, { eulogy_ach:'Attended a loved one\'s funeral' });
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
