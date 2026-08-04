@@ -5304,6 +5304,72 @@ openCareerPanel = function(){
     }
   }
 };
+
+/* ---------------------------------------------------------------------
+   P60 — Divorce Settlement: filing for divorce used to be one click
+   with a flat 25% money hit and no real decision. Now the "File for
+   Divorce" button opens a settlement panel with two real paths: an
+   Amicable Split (softer financially and emotionally) or a Contested
+   Battle (hire a lawyer and gamble on a bigger payout, at real karma
+   and happiness cost). Both paths still route through the existing
+   fileDivorce() for the core relationship severance / healing arc /
+   achievement logic, then layer differentiated outcomes on top.
+   --------------------------------------------------------------------- */
+function openDivorceSettlementPanelP60(){
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse) return;
+  let html = `<p style="color:var(--sub)">Divorcing ${spouse.name} is a big step. How do you want to handle the settlement?</p>`;
+  html += `<button class="btn btn-block btn-accent" onclick="closePanel(); coupleCounselingP15();">💑 Try Counseling First</button>`;
+  html += `<button class="btn btn-block" onclick="divorceAmicableP60()">🤝 Amicable Split — fair and quick, easier on everyone</button>`;
+  html += `<button class="btn btn-block btn-danger" onclick="divorceContestedP60()">⚖️ Contested Battle — hire a lawyer and fight for more</button>`;
+  openPanel('Divorce Settlement', html);
+}
+function divorceAmicableP60(){
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse) return;
+  const name = spouse.name;
+  const preMoney = state.money;
+  fileDivorce();
+  const lost = Math.max(0, preMoney - state.money);
+  state.money += Math.round(lost*0.5);
+  state.stats.happiness = clamp(state.stats.happiness+5,0,100);
+  state.stats.karma = clamp(state.stats.karma+3,0,100);
+  log(`You and ${name} settled things amicably. It stung less than it could have.`,'good');
+  render();
+}
+function divorceContestedP60(){
+  const spouse = state.relationships.find(r=>r.id===state.spouseId);
+  if(!spouse) return;
+  const name = spouse.name;
+  const lawyerCost = Math.round(clamp(state.money,0,999999999)*0.05)+2000;
+  state.money -= lawyerCost;
+  fileDivorce();
+  const win = chance(clamp(50+(state.stats.smarts-50)*0.3,15,85));
+  if(win){
+    const bonus = Math.round(state.money*0.15);
+    state.money += bonus;
+    state.stats.karma = clamp(state.stats.karma-5,0,100);
+    state.stats.happiness = clamp(state.stats.happiness-8,0,100);
+    log(`The courtroom battle with ${name} was brutal, but you walked away with a favorable settlement.`,'neutral');
+  } else {
+    state.stats.karma = clamp(state.stats.karma-8,0,100);
+    state.stats.happiness = clamp(state.stats.happiness-15,0,100);
+    log(`The courtroom battle with ${name} went against you. It cost you dearly, financially and emotionally.`,'bad');
+  }
+  checkAchievement('contested_divorce_ach');
+  render();
+}
+const _origOpenRelationshipsPanel_P60 = openRelationshipsPanel;
+openRelationshipsPanel = function(){
+  _origOpenRelationshipsPanel_P60();
+  if(state.spouseId){
+    const body = $('panel-body');
+    body.querySelectorAll('button').forEach(b=>{
+      if(b.textContent==='File for Divorce') b.onclick = openDivorceSettlementPanelP60;
+    });
+  }
+};
+Object.assign(ACHIEVEMENTS, { contested_divorce_ach:'Fought a contested divorce battle' });
 </script>
 </body>
 </html>
