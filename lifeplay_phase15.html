@@ -7164,6 +7164,45 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { scholarship_ach:'Earned a merit scholarship', debt_free_ach:'Paid off all student loan debt' });
+
+/* ---------------------------------------------------------------------
+   P86 — Cost of Living / Rent: adults with no owned house paid nothing
+   at all in living expenses, regardless of income. Now renting (having
+   no house) costs a modest yearly amount, scaled slightly by salary
+   (a bigger paycheck implies a nicer apartment), silently deducted the
+   same way base job salary already is — only logging when it actually
+   tips the player into the red, to match the game's existing quiet
+   handling of routine yearly money in/out rather than adding log spam.
+   Buying any house immediately stops rent on the next tick.
+   --------------------------------------------------------------------- */
+const RENT_BASE_P86 = 6000;
+function tickRentP86(){
+  if(state.age<18 || state.inPrison || state.assets.houses.length>0) return;
+  const rent = RENT_BASE_P86+(state.job?Math.round(state.job.salary*0.05):0);
+  const wasPositive = state.money>=0;
+  state.money -= rent;
+  state.flags.rentYears = (state.flags.rentYears||0)+1;
+  if(state.money<0 && wasPositive){
+    state.stats.happiness = clamp(state.stats.happiness-3,0,100);
+    log(`Rent ate into your savings this year — you're in the red.`,'bad');
+  }
+}
+const _origBuyHouse_P86 = buyHouse;
+buyHouse = function(name){
+  const before = state.assets.houses.length;
+  _origBuyHouse_P86(name);
+  if(state.assets.houses.length>before && before===0 && (state.flags.rentYears||0)>=5){
+    checkAchievement('homeowner_at_last_ach');
+  }
+};
+const _origAgeUp_P86 = ageUp;
+ageUp = function(){
+  _origAgeUp_P86();
+  if(!state || !state.alive) return;
+  tickRentP86();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { homeowner_at_last_ach:'Bought your first house after 5+ years of renting' });
 </script>
 </body>
 </html>
