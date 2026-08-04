@@ -388,6 +388,7 @@ function freshState(){
     hobbies:{},
     bodyMods:{tattoos:[], piercings:[]},
     donor:{organDonor:false, bloodDonations:0},
+    greekLife:null,
   };
 }
 
@@ -5804,6 +5805,101 @@ openRelationshipsPanel = function(){
   }
 };
 Object.assign(ACHIEVEMENTS, { prenup_ach:'Signed a prenuptial agreement' });
+
+/* ---------------------------------------------------------------------
+   P67 — Greek Life: college used to only have flavor-only lines about
+   "joining Greek life." This adds a real Rush -> Pledge -> Member ->
+   Officer -> President ladder with a genuine hazing/pledge-task risk
+   (a small chance of it going badly enough to wash out) and social
+   mixers that build reputation toward the next rank.
+   --------------------------------------------------------------------- */
+const GREEK_ORGS_P67 = ['Alpha Beta Gamma','Delta Epsilon Zeta','Kappa Theta Iota','Sigma Chi Omega','Omega Phi Psi'];
+function rushGreekLifeP67(name){
+  if(state.eduStage!=='college' || state.greekLife) return;
+  const cost = 100;
+  if(state.money<cost){ log(`Not enough money for rush week fees.`,'bad'); openGreekLifePanelP67(); return; }
+  state.money -= cost;
+  if(chance(70)){
+    state.greekLife = {org:name, rank:'Pledge', reputation:0};
+    log(`You got a bid from ${name}! Pledge season begins.`,'good');
+  } else {
+    log(`You didn't get a bid from ${name} this rush season. Better luck next time.`,'bad');
+  }
+  openGreekLifePanelP67();
+}
+function pledgeTaskP67(){
+  const g = state.greekLife; if(!g || g.rank!=='Pledge') return;
+  if(chance(75)){
+    g.reputation += rand(15,30);
+    state.stats.happiness = clamp(state.stats.happiness+4,0,100);
+    log(`You aced a pledge task for ${g.org}. Respect is building.`,'good');
+  } else {
+    state.stats.health = clamp(state.stats.health-rand(4,10),0,100);
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,6),0,100);
+    log(`A rough pledge task for ${g.org} took a toll on you.`,'bad');
+    if(chance(15)){
+      log(`It was too much. You dropped out of ${g.org}.`,'bad');
+      state.greekLife = null;
+      openGreekLifePanelP67();
+      return;
+    }
+  }
+  if(g.reputation>=100){
+    g.rank = 'Member'; g.reputation = 0;
+    log(`You're officially a full member of ${g.org}!`,'good');
+    checkAchievement('greek_member_ach');
+  }
+  openGreekLifePanelP67();
+}
+function attendMixerP67(){
+  const g = state.greekLife; if(!g || g.rank==='Pledge') return;
+  state.stats.happiness = clamp(state.stats.happiness+rand(3,8),0,100);
+  g.reputation += rand(5,15);
+  log(`You partied at a ${g.org} mixer.`,'good');
+  if(g.rank==='Member' && g.reputation>=100){
+    g.rank = 'Officer'; g.reputation = 0;
+    log(`Your leadership got noticed — you're now an Officer in ${g.org}!`,'good');
+    checkAchievement('greek_officer_ach');
+  } else if(g.rank==='Officer' && g.reputation>=150){
+    g.rank = 'President'; g.reputation = 0;
+    log(`You were elected President of ${g.org}!`,'good');
+    checkAchievement('greek_president_ach');
+  }
+  openGreekLifePanelP67();
+}
+function leaveGreekLifeP67(){
+  if(!state.greekLife) return;
+  log(`You left ${state.greekLife.org}.`,'neutral');
+  state.greekLife = null;
+  openGreekLifePanelP67();
+}
+function openGreekLifePanelP67(){
+  let html = '';
+  if(state.greekLife){
+    const g = state.greekLife;
+    html += `<div class="list-item"><div class="li-main"><b>${g.org}</b><span>${g.rank}${g.rank!=='President'?(' · '+g.reputation+'/'+(g.rank==='Officer'?150:100)+' rep'):''}</span></div></div>`;
+    if(g.rank==='Pledge') html += `<button class="btn btn-block" onclick="pledgeTaskP67()">Complete a Pledge Task</button>`;
+    else html += `<button class="btn btn-block" onclick="attendMixerP67()">Attend a Mixer</button>`;
+    html += `<button class="btn btn-block btn-danger" onclick="leaveGreekLifeP67()">Leave ${g.org}</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">Rush week is your chance to join a Greek organization. A $100 fee applies whether or not you get a bid.</p>`;
+    GREEK_ORGS_P67.forEach(o=>{ html += `<button class="btn btn-block" onclick='rushGreekLifeP67(${JSON.stringify(o)})'>Rush ${o}</button>`; });
+  }
+  openPanel('Greek Life', html);
+}
+const _origOpenCareerPanel_P67 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P67();
+  if(state.eduStage==='college'){
+    const body = $('panel-body');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-block';
+    btn.textContent = '🏛️ Greek Life' + (state.greekLife?(' ('+state.greekLife.rank+')'):'');
+    btn.onclick = openGreekLifePanelP67;
+    body.appendChild(btn);
+  }
+};
+Object.assign(ACHIEVEMENTS, { greek_member_ach:'Became a full Greek life member', greek_officer_ach:'Became an officer in your Greek org', greek_president_ach:'Became president of your Greek org' });
 </script>
 </body>
 </html>
