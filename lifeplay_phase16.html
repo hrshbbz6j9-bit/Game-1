@@ -8622,6 +8622,62 @@ openActivitiesPanel = function(){
 Object.assign(ACHIEVEMENTS, { winning_ticket_ach:'Won a bet at the horse track', longshot_ach:'Won a 20:1+ longshot bet' });
 
 /* ---------------------------------------------------------------------
+   P110 — Royal Birth: an ultra-rare 6th tier on top of P52's existing
+   family-wealth-at-birth system (extended via .push(), not edited in
+   place, since P52 predates this session). About a 1-in-100 life gets
+   born into a royal family: a title, a free palace added straight to
+   your houses, and a lifelong yearly stipend — with a small ongoing
+   tension, since every stipend year also risks a tabloid scandal that
+   costs karma and happiness.
+   --------------------------------------------------------------------- */
+FAMILY_WEALTH_TIERS_P52.push(
+  {name:'Royalty', weight:1, statMod:{health:5, looks:8, smarts:4}, flavor:'A title, a palace, and a life under a spotlight you never asked for — you were born into a royal family.'}
+);
+function titleForRoyaltyP110(){
+  if(state.gender==='Male') return 'Prince';
+  if(state.gender==='Female') return 'Princess';
+  return 'Royal Heir';
+}
+const _origStartNewLife_P110 = startNewLife;
+startNewLife = function(){
+  _origStartNewLife_P110();
+  if(state && state.flags.familyWealthTier==='Royalty'){
+    state.royalty = {title: titleForRoyaltyP110(), stipendTotal:0, scandals:0};
+    state.assets.houses.push({name:'The Royal Palace', value: rand(20000000,80000000), mortgage:0, royal:true});
+    log(`As the newborn ${state.royalty.title}, you're carried out to a crowd of well-wishers outside the palace gates.`,'good',0);
+    checkAchievement('royal_birth_ach');
+  }
+};
+function tickRoyalStipendP110(){
+  if(!state.royalty) return;
+  const stipend = rand(30000,120000);
+  state.money += stipend;
+  state.royalty.stipendTotal += stipend;
+  if(chance(8)){
+    state.royalty.scandals++;
+    state.stats.happiness = clamp(state.stats.happiness-rand(3,10),0,100);
+    state.stats.karma = clamp(state.stats.karma-rand(2,8),0,100);
+    log(`A tabloid catches you on a bad night out. The palace issues a statement; your family is not pleased.`,'bad');
+    newspaper(`${state.royalty.title.toUpperCase()} CAUGHT IN LATE-NIGHT SCANDAL`, `Palace aides scramble to contain the fallout.`, 'Spotlight');
+    if(state.royalty.scandals>=3) checkAchievement('royal_scandal_ach');
+  } else {
+    log(`Your annual royal stipend of ${fmtMoney(stipend)} is deposited, as always.`,'good');
+  }
+  if(state.age>=60 && state.stats.karma>=70 && !state.flags.belovedRoyalGiven){
+    state.flags.belovedRoyalGiven = true;
+    checkAchievement('beloved_royal_ach');
+  }
+}
+const _origAgeUp_P110 = ageUp;
+ageUp = function(){
+  _origAgeUp_P110();
+  if(!state || !state.alive) return;
+  tickRoyalStipendP110();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { royal_birth_ach:'Born into a royal family', royal_scandal_ach:'Weathered 3+ royal tabloid scandals', beloved_royal_ach:'Reached 60 as a royal with a spotless public image' });
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
