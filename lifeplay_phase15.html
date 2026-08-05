@@ -8678,6 +8678,88 @@ ageUp = function(){
 Object.assign(ACHIEVEMENTS, { royal_birth_ach:'Born into a royal family', royal_scandal_ach:'Weathered 3+ royal tabloid scandals', beloved_royal_ach:'Reached 60 as a royal with a spotless public image' });
 
 /* ---------------------------------------------------------------------
+   P111 — First Responder Career Depth: Police Officer and Firefighter
+   have existed as flat-salary JOBS entries since the original base
+   engine with no ladder and no on-duty stakes, unlike the Doctor/
+   Lawyer/Chef prestige tracks (P41). This gives both a real rank
+   ladder AND yearly on-duty incident rolls — a hero moment (karma,
+   happiness, a shot at commendation) or a line-of-duty injury, with a
+   small chance of a job-ending or fatal outcome — real stakes for an
+   everyday career, not just a promotion treadmill.
+   --------------------------------------------------------------------- */
+const FIRST_RESPONDER_TRACKS_P111 = {
+  'Police Officer': {titles:['Police Officer','Detective','Sergeant','Lieutenant','Police Captain'], mult:[1, 1.3, 1.7, 2.2, 3]},
+  'Firefighter': {titles:['Firefighter','Senior Firefighter','Fire Lieutenant','Fire Captain','Battalion Chief'], mult:[1, 1.3, 1.7, 2.2, 3]},
+};
+const _origApplyForJob_P111 = applyForJob;
+applyForJob = function(job){
+  const beforeJob = state.job;
+  _origApplyForJob_P111(job);
+  if(state.job && state.job!==beforeJob && FIRST_RESPONDER_TRACKS_P111[job.title]){
+    const track = FIRST_RESPONDER_TRACKS_P111[job.title];
+    state.job.responderBase = job.title;
+    state.job.responderRank = 0;
+    state.job.title = track.titles[0];
+    state.job.commendations = 0;
+  }
+};
+function tickResponderRankP111(){
+  const j = state.job; if(!j || !j.responderBase) return;
+  const track = FIRST_RESPONDER_TRACKS_P111[j.responderBase];
+  if(j.responderRank < track.titles.length-1 && j.years >= (j.responderRank+1)*3 && chance(40)){
+    j.responderRank++;
+    j.title = track.titles[j.responderRank];
+    const stepRatio = track.mult[j.responderRank] / track.mult[j.responderRank-1];
+    j.salary = Math.round(j.salary * stepRatio);
+    log(`You were promoted to ${j.title}.`,'good');
+    newspaper(`${state.name.toUpperCase()} PROMOTED TO ${j.title.toUpperCase()}`, `Years on the job pay off with a step up in rank.`, 'Spotlight');
+    if(j.responderRank===track.titles.length-1) checkAchievement('top_responder_ach');
+  }
+}
+function tickResponderDutyP111(){
+  const j = state.job; if(!j || !j.responderBase) return;
+  const isFire = j.responderBase==='Firefighter';
+  const roll = Math.random()*100;
+  if(roll<4.5){
+    if(roll<0.5){
+      state.inPrison = false;
+      state.job = null;
+      state.stats.happiness = clamp(state.stats.happiness-rand(15,30),0,100);
+      log(isFire ? `You were killed in the line of duty, caught in a collapsing structure.` : `You were killed in the line of duty during a call gone wrong.`,'bad');
+      state.alive = false;
+      state.lastCause = 'a line-of-duty incident';
+    } else {
+      state.stats.health = clamp(state.stats.health-rand(15,35),0,100);
+      state.stats.happiness = clamp(state.stats.happiness-rand(5,12),0,100);
+      log(isFire ? `You were injured pulling someone from a burning building.` : `You were injured responding to an active scene.`,'bad');
+      checkAchievement('wounded_in_service_ach');
+    }
+  } else if(roll<20){
+    j.commendations = (j.commendations||0)+1;
+    state.stats.karma = clamp(state.stats.karma+rand(3,8),0,100);
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,10),0,100);
+    log(isFire ? `You pulled a family out of a burning building — the local news wants an interview.` : `You talked a suspect down without a shot fired, saving several lives.`,'good');
+    newspaper(`${state.name.toUpperCase()} HAILED AS LOCAL HERO`, isFire?`A daring rescue from a burning building.`:`A tense standoff ends without bloodshed.`, 'Spotlight');
+    checkAchievement('local_hero_ach');
+    if(j.commendations>=5) checkAchievement('decorated_responder_ach');
+  }
+}
+const _origAgeUp_P111 = ageUp;
+ageUp = function(){
+  _origAgeUp_P111();
+  if(!state || !state.alive) return;
+  tickResponderRankP111();
+  if(state.alive) tickResponderDutyP111();
+  render();
+};
+Object.assign(ACHIEVEMENTS, {
+  top_responder_ach:'Reached the top rank as a first responder',
+  wounded_in_service_ach:'Injured in the line of duty',
+  local_hero_ach:'Hailed as a local hero on duty',
+  decorated_responder_ach:'Earned 5+ commendations in the line of duty',
+});
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
