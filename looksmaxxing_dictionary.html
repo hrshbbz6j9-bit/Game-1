@@ -6420,6 +6420,7 @@
     const t = pickTermOfDay();
     els.totdTerm.textContent = t.term;
     els.totdDef.textContent = t.definition;
+    els.totdCard.setAttribute("aria-label", `Term of the Day: ${t.term}, toggle details`);
   }
 
   const toggleTotdCard = () => {
@@ -6550,7 +6551,7 @@
       `;
 
       card.innerHTML = `
-        <div class="term-top" tabindex="0" role="button" aria-expanded="${openIndex === t._idx}" aria-label="${escapeHtml(t.term)}, toggle details">
+        <div class="term-top" tabindex="0" role="button" aria-expanded="${openIndex === t._idx}" aria-label="${escapeHtml(t.term)}, ${diff.label} difficulty${t.premium ? ", premium" : ""}, toggle details">
           <div style="flex:1; min-width:0;">
             <div class="term-name-row">
               <span class="term-idx">#${String(t._idx + 1).padStart(2, "0")}</span>
@@ -8530,7 +8531,7 @@
           `}
         `;
       card.innerHTML = `
-        <div class="thread-top" tabindex="0" role="button" aria-expanded="${openThreadId === t.id}" aria-label="${escapeHtml(t.title)}, toggle thread">
+        <div class="thread-top" tabindex="0" role="button" aria-expanded="${openThreadId === t.id}" aria-label="${t.pinned ? "Pinned, " : ""}${isLocked ? "Locked, " : ""}${t.prefix ? `[${escapeHtml(t.prefix)}] ` : ""}${escapeHtml(t.title)}, ${escapeHtml(t.category)}, toggle thread">
           <div class="thread-title">${t.pinned ? '<span class="pin-icon">📌</span>' : ""}${isLocked ? '<span class="pin-icon">🔒</span>' : ""}${t.prefix ? `<span class="thread-prefix">[${escapeHtml(t.prefix)}]</span>` : ""}${highlight(escapeHtml(t.title), forumSearchTerm)}</div>
           ${isOwnThread && !isLocked ? `
             <button class="owner-btn" data-edit-thread="1" aria-label="Edit thread">✎</button>
