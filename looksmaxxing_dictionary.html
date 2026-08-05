@@ -9386,6 +9386,17 @@
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   });
 
+  /* ---------------- Keep closed modals out of the tab order ---------------- */
+  function syncOverlayInert(el) {
+    if (!el.classList.contains("paywall-overlay") && !el.classList.contains("popup-ad-overlay")) return;
+    if (el.classList.contains("show")) el.removeAttribute("inert");
+    else el.setAttribute("inert", "");
+  }
+  document.querySelectorAll(".paywall-overlay, .popup-ad-overlay").forEach(syncOverlayInert);
+  new MutationObserver((mutations) => {
+    mutations.forEach(m => syncOverlayInert(m.target));
+  }).observe(document.body, { attributes: true, attributeFilter: ["class"], subtree: true });
+
   /* ---------------- Escape key closes whichever modal is open ---------------- */
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
