@@ -454,6 +454,7 @@ function freshState(){
     realityShow:null,
     realityShowWins:0,
     cult:null,
+    genie:null,
   };
 }
 
@@ -8389,6 +8390,236 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { cult_joined_ach:'Joined a fringe group', cult_leader_ach:'Broke away to found your own following', cult_empire_ach:'Grew your following to 50+ members', cult_fortune_ach:'Collected $100,000+ in lifetime tithes as a cult leader' });
+
+/* ---------------------------------------------------------------------
+   P107 — Fortune Teller: a novelty activity, not a mechanical system —
+   pay a small fee, get a cryptic reading (a mix of ominous, auspicious
+   and joke lines) and a tiny happiness nudge. No hidden buffs on other
+   systems; the fun is the flavor text and the repeat-visit tally.
+   --------------------------------------------------------------------- */
+const FORTUNE_LINES_P107 = [
+  "The cards show a great change coming — for better or worse, they wouldn't say.",
+  "Someone close to you is not who they seem. Trust your gut.",
+  "A door will open soon. Whether you should walk through it is your call.",
+  "Money troubles fade this year. Money troubles from next year, less so.",
+  "You will surprise yourself with your own courage very soon.",
+  "The stars are unusually quiet about you right now. Interesting.",
+  "An old friend will resurface — decide now if that's good news.",
+  "Your patience is about to be tested. You've survived worse.",
+  "A small risk pays off bigger than you'd expect. A big risk doesn't.",
+  "I see... actually never mind. You don't want to know.",
+  "Someone is jealous of you. Let them be.",
+  "The path forward is clearer than you think — you're just not looking at it.",
+];
+function visitFortuneTellerP107(){
+  if(state.age<10) return;
+  const cost = 20;
+  if(state.money<cost){ log(`Not enough money for a fortune teller reading.`,'bad'); openFortuneTellerPanelP107(); return; }
+  state.money -= cost;
+  state.flags.fortuneVisits = (state.flags.fortuneVisits||0)+1;
+  state.stats.happiness = clamp(state.stats.happiness+rand(-1,4),0,100);
+  const line = pick(FORTUNE_LINES_P107);
+  log(`Fortune Teller: "${line}"`,'neutral');
+  checkAchievement('fortune_seeker_ach');
+  if(state.flags.fortuneVisits>=10) checkAchievement('true_believer_ach');
+  openFortuneTellerPanelP107();
+}
+function openFortuneTellerPanelP107(){
+  let html = `<div class="list-item"><div class="li-main"><b>Readings So Far</b><span>${state.flags.fortuneVisits||0}</span></div></div>`;
+  html += `<p style="color:var(--sub)">A neon sign hums in the window. Pay $20 for a reading — take it as seriously as you like.</p>`;
+  html += `<button class="btn btn-block btn-accent" onclick="visitFortuneTellerP107()">🔮 Get a Reading ($20)</button>`;
+  openPanel('Fortune Teller', html);
+}
+const _origOpenActivitiesPanel_P107 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P107();
+  if(state.inPrison || state.age<10) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🔮 Fortune Teller';
+  btn.onclick = openFortuneTellerPanelP107;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { fortune_seeker_ach:'Got a fortune teller reading', true_believer_ach:'Visited the fortune teller 10+ times' });
+
+/* ---------------------------------------------------------------------
+   P108 — Genie's Lamp: a rare find while searching, then a wish with
+   real stakes — most wishes land clean, a minority twist on you
+   monkey's-paw style. Deliberately low-frequency (a handful of finds
+   per lifetime at most) so it stays a special moment, not a system.
+   --------------------------------------------------------------------- */
+const GENIE_WISHES_P108 = [
+  {label:'Wish for Wealth', key:'wealth'},
+  {label:'Wish for Health', key:'health'},
+  {label:'Wish for Fame', key:'fame'},
+  {label:'Wish for Love', key:'love'},
+  {label:'Wish for Wisdom', key:'wisdom'},
+];
+function searchForLampP108(){
+  if(state.age<10) return;
+  state.flags.lampSearches = (state.flags.lampSearches||0)+1;
+  if(chance(4)){
+    state.genie = state.genie || {lampsFound:0, wishesUsed:0};
+    state.genie.lampsFound++;
+    log(`Half-buried in the dirt, something glints — an old brass lamp.`,'good');
+    checkAchievement('lamp_finder_ach');
+    openGenieWishModalP108();
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness+rand(-1,1),0,100);
+    log(`You searched for something magical and found... a lot of dirt.`,'neutral');
+    openGeniePanelP108();
+  }
+}
+function openGenieWishModalP108(){
+  playScene({
+    title: 'A Genie Appears',
+    text: 'Smoke curls from the lamp. "One wish," the genie says, already looking bored. "Choose wisely — or don\'t, I\'m not your mother."',
+    choices: GENIE_WISHES_P108.map(w=>({
+      label: w.label,
+      run(){ grantWishP108(w.key); }
+    }))
+  });
+}
+function grantWishP108(key){
+  state.genie.wishesUsed++;
+  const twisted = chance(20);
+  if(key==='wealth'){
+    if(!twisted){
+      const amt = rand(20000,150000);
+      state.money += amt;
+      log(`Your wish for wealth is granted — ${fmtMoney(amt)} appears in your account.`,'good');
+    } else {
+      const amt = rand(20000,150000);
+      state.money += amt;
+      state.studentDebt = (state.studentDebt||0) + Math.round(amt*0.8);
+      log(`Your wish for wealth is granted... but it turns out to be a loan, not a gift. ${fmtMoney(amt)} in, nearly as much in new debt.`,'bad');
+    }
+  } else if(key==='health'){
+    if(!twisted){
+      state.stats.health = 100;
+      log(`Your wish for health is granted — you feel completely renewed.`,'good');
+    } else {
+      state.stats.health = 100;
+      state.stats.looks = clamp(state.stats.looks-15,0,100);
+      log(`Your wish for health is granted — but the genie's idea of "healthy" cost you your looks.`,'bad');
+    }
+  } else if(key==='fame'){
+    if(!state.influencer) state.influencer = {tier:0, followers:0, platform:null};
+    if(!twisted){
+      const gain = rand(20000,100000);
+      state.influencer.followers += gain;
+      log(`Your wish for fame is granted — ${gain.toLocaleString()} new followers overnight.`,'good');
+    } else {
+      const gain = rand(20000,100000);
+      state.influencer.followers += gain;
+      state.stats.happiness = clamp(state.stats.happiness-10,0,100);
+      log(`Your wish for fame is granted — but it's the wrong kind. You're a punchline online tonight.`,'bad');
+    }
+  } else if(key==='love'){
+    const candidates = state.relationships.filter(r=>r.alive && r.type!=='parent' && r.type!=='child');
+    if(!twisted && candidates.length){
+      candidates.forEach(r=>{ r.rel = clamp(r.rel+25,0,100); });
+      log(`Your wish for love is granted — everyone in your life feels closer to you.`,'good');
+    } else if(candidates.length){
+      candidates.forEach(r=>{ r.rel = clamp(r.rel+25,0,100); });
+      state.stats.smarts = clamp(state.stats.smarts-5,0,100);
+      log(`Your wish for love is granted — everyone adores you now, whether or not you've earned it. Something about that unsettles you.`,'bad');
+    } else {
+      state.stats.happiness = clamp(state.stats.happiness+10,0,100);
+      log(`Your wish for love is granted, but there's no one around to feel it. A strange kind of contentment settles in anyway.`,'neutral');
+    }
+  } else if(key==='wisdom'){
+    if(!twisted){
+      state.stats.smarts = clamp(state.stats.smarts+30,0,100);
+      log(`Your wish for wisdom is granted — the world makes more sense than it used to.`,'good');
+    } else {
+      state.stats.smarts = clamp(state.stats.smarts+30,0,100);
+      state.stats.happiness = clamp(state.stats.happiness-12,0,100);
+      log(`Your wish for wisdom is granted — and now you understand a few things you wish you didn't.`,'bad');
+    }
+  }
+  checkAchievement('wish_granted_ach');
+  if(state.genie.wishesUsed>=3) checkAchievement('three_wishes_ach');
+  openGeniePanelP108();
+}
+function openGeniePanelP108(){
+  const g = state.genie;
+  let html = `<div class="list-item"><div class="li-main"><b>Lamps Found</b><span>${g?g.lampsFound:0} · ${g?g.wishesUsed:0} wish${g&&g.wishesUsed===1?'':'es'} used</span></div></div>`;
+  html += `<p style="color:var(--sub)">Search wherever seems promising. Most of the time it's nothing — but not always.</p>`;
+  html += `<button class="btn btn-block btn-accent" onclick="searchForLampP108()">🪔 Search for a Lamp</button>`;
+  openPanel("Genie's Lamp", html);
+}
+const _origOpenActivitiesPanel_P108 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P108();
+  if(state.inPrison || state.age<10) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = "🪔 Genie's Lamp" + (state.genie&&state.genie.lampsFound?(' ('+state.genie.lampsFound+' found)'):'');
+  btn.onclick = openGeniePanelP108;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { lamp_finder_ach:"Found a genie's lamp", wish_granted_ach:'Had a wish granted by a genie', three_wishes_ach:'Used 3+ genie wishes in one lifetime' });
+
+/* ---------------------------------------------------------------------
+   P109 — Horse Racing: a betting minigame at the track, same shape as
+   the existing Poker tables (P81) but odds-driven rather than skill-
+   driven — favorites pay little and win often, longshots pay big and
+   rarely hit, so the choice is purely a risk appetite one.
+   --------------------------------------------------------------------- */
+const HORSES_P109 = [
+  {name:'Old Reliable', odds:2, winChance:45},
+  {name:'Steady Gait', odds:3, winChance:32},
+  {name:'Dark Horse', odds:6, winChance:16},
+  {name:'Longshot Lucy', odds:12, winChance:8},
+  {name:"Wildcard's Folly", odds:25, winChance:3.5},
+];
+function placeBetP109(horseName, amount){
+  const horse = HORSES_P109.find(h=>h.name===horseName); if(!horse) return;
+  if(state.money<amount){ log(`Not enough money for that bet.`,'bad'); openHorseRacingPanelP109(); return; }
+  state.money -= amount;
+  state.flags.racesEntered = (state.flags.racesEntered||0)+1;
+  if(chance(horse.winChance)){
+    const payout = Math.round(amount*horse.odds);
+    state.money += payout;
+    state.flags.racesWon = (state.flags.racesWon||0)+1;
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,9),0,100);
+    log(`${horse.name} crosses the line first! You win ${fmtMoney(payout)} on a ${fmtMoney(amount)} bet.`,'good');
+    checkAchievement('winning_ticket_ach');
+    if(horse.odds>=20) checkAchievement('longshot_ach');
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,5),0,100);
+    log(`${horse.name} doesn't even place. Your ${fmtMoney(amount)} bet is gone.`,'bad');
+  }
+  openHorseRacingPanelP109();
+}
+function openHorseRacingPanelP109(){
+  let html = `<div class="list-item"><div class="li-main"><b>Record</b><span>${state.flags.racesWon||0} won / ${state.flags.racesEntered||0} entered</span></div></div>`;
+  html += `<p style="color:var(--sub)">Pick a horse and a bet size. Longer odds pay more but hit far less often.</p>`;
+  HORSES_P109.forEach(h=>{
+    html += `<div class="list-item"><div class="li-main"><b>${h.name}</b><span>${h.odds}:1 odds</span></div></div>`;
+    html += `<div class="row" style="margin-bottom:10px;">`;
+    [50,200,1000].forEach(amt=>{
+      html += `<button class="btn" onclick='placeBetP109(${JSON.stringify(h.name)},${amt})'>${fmtMoney(amt)}</button>`;
+    });
+    html += `</div>`;
+  });
+  openPanel('Horse Racing', html);
+}
+const _origOpenActivitiesPanel_P109 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P109();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🐎 Horse Racing';
+  btn.onclick = openHorseRacingPanelP109;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { winning_ticket_ach:'Won a bet at the horse track', longshot_ach:'Won a 20:1+ longshot bet' });
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
