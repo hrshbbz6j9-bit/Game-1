@@ -1998,6 +1998,10 @@
     cursor: pointer;
     position: relative;
   }
+  .thumb-swatch:focus-visible {
+    outline: 3px solid var(--violet);
+    outline-offset: 2px;
+  }
   .thumb-swatch.selected::after {
     content: "✓";
     position: absolute;
@@ -9254,12 +9258,17 @@
   function renderThumbSwatches() {
     const row = document.getElementById("thumbSwatchRow");
     row.innerHTML = courseGradients.map((g, i) => `
-      <div class="thumb-swatch ${i === selectedCourseGradientIdx ? "selected" : ""}" data-swatch="${i}" style="background:${g};"></div>
+      <div class="thumb-swatch ${i === selectedCourseGradientIdx ? "selected" : ""}" data-swatch="${i}" style="background:${g};" tabindex="0" role="button" aria-pressed="${i === selectedCourseGradientIdx}" aria-label="Thumbnail style ${i + 1}${i === selectedCourseGradientIdx ? ", selected" : ""}"></div>
     `).join("");
     row.querySelectorAll("[data-swatch]").forEach(el => {
-      el.addEventListener("click", () => {
+      const selectSwatch = (viaKeyboard) => {
         selectedCourseGradientIdx = parseInt(el.dataset.swatch, 10);
         renderThumbSwatches();
+        if (viaKeyboard) row.querySelector(`[data-swatch="${selectedCourseGradientIdx}"]`)?.focus();
+      };
+      el.addEventListener("click", () => selectSwatch(false));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectSwatch(true); }
       });
     });
   }
