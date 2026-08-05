@@ -448,7 +448,8 @@
     gap: 10px;
     cursor: pointer;
   }
-  .term-top:focus-visible, .thread-top:focus-visible, .totd-card:focus-visible {
+  .term-top:focus-visible, .thread-top:focus-visible, .totd-card:focus-visible,
+  .premium-pill:focus-visible, .ad-banner-card:focus-visible {
     outline: 3px solid var(--violet);
     outline-offset: 2px;
   }
@@ -2532,7 +2533,7 @@
 </script>
 
 <div class="ad-banner" id="adBanner">
-  <div class="ad-banner-card" id="adBannerCard">
+  <div class="ad-banner-card" id="adBannerCard" tabindex="0" role="button" aria-label="Sponsored ad, tap to view Remove Ads options">
     <div class="ad-banner-icon">GL</div>
     <div class="ad-banner-body">
       <span class="ad-banner-sponsored">Sponsored</span>
@@ -2562,7 +2563,7 @@
       <h1 class="title">LOOKSMAXXING<br>DICTIONARY</h1>
       <div class="subtitle">The definitive glossary of facial &amp; frame aesthetics</div>
       <div class="premium-pill-wrap">
-        <div class="premium-pill" id="premiumPill"></div>
+        <div class="premium-pill" id="premiumPill" tabindex="0" role="button" aria-label="Premium status, unlock technique guides"></div>
       </div>
     </header>
 
@@ -6339,9 +6340,11 @@
     if (isPremium) {
       els.premiumPill.className = "premium-pill active";
       els.premiumPill.innerHTML = "👑 Premium Active";
+      els.premiumPill.setAttribute("aria-label", "Premium active");
     } else {
       els.premiumPill.className = "premium-pill";
       els.premiumPill.innerHTML = "✨ Unlock Technique Guides";
+      els.premiumPill.setAttribute("aria-label", "Unlock technique guides");
     }
   }
 
@@ -6379,12 +6382,16 @@
     els.paywallOverlay.classList.remove("show");
   }
 
-  els.premiumPill.addEventListener("click", () => {
+  const activatePremiumPill = () => {
     if (isPremium) {
       showToast("Premium already active on this device.");
     } else {
       openPaywall();
     }
+  };
+  els.premiumPill.addEventListener("click", activatePremiumPill);
+  els.premiumPill.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activatePremiumPill(); }
   });
 
   els.paywallClose.addEventListener("click", closePaywall);
@@ -6842,6 +6849,9 @@
   }
 
   adEls.bannerCard.addEventListener("click", openRemoveAds);
+  adEls.bannerCard.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openRemoveAds(); }
+  });
   adEls.dismissBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     dismissAdForSession();
@@ -9391,10 +9401,38 @@
   });
 
   /* ---------------- Keep closed modals out of the tab order ---------------- */
+  const shownOverlays = new WeakSet();
+  let focusBeforeModalId = null;
+  let focusBeforeModalEl = null;
   function syncOverlayInert(el) {
     if (!el.classList.contains("paywall-overlay") && !el.classList.contains("popup-ad-overlay")) return;
-    if (el.classList.contains("show")) el.removeAttribute("inert");
-    else el.setAttribute("inert", "");
+    const isShown = el.classList.contains("show");
+    const wasShown = shownOverlays.has(el);
+    if (isShown) {
+      el.removeAttribute("inert");
+      if (!wasShown) {
+        shownOverlays.add(el);
+        const prev = document.activeElement;
+        focusBeforeModalId = prev && prev.id ? prev.id : null;
+        focusBeforeModalEl = prev;
+        const target = el.querySelector("h2") || el.querySelector(".popup-ad-title") || el.querySelector(".paywall-close");
+        if (target) {
+          if (target.tagName === "H2" || target.classList.contains("popup-ad-title")) target.setAttribute("tabindex", "-1");
+          target.focus();
+        }
+      }
+    } else {
+      el.setAttribute("inert", "");
+      if (wasShown) {
+        shownOverlays.delete(el);
+        // Prefer re-querying by id: re-renders often replace the original DOM node.
+        const restoreTarget = (focusBeforeModalId && document.getElementById(focusBeforeModalId))
+          || (focusBeforeModalEl && document.body.contains(focusBeforeModalEl) ? focusBeforeModalEl : null);
+        if (restoreTarget && !restoreTarget.closest("[inert]")) restoreTarget.focus();
+        focusBeforeModalId = null;
+        focusBeforeModalEl = null;
+      }
+    }
   }
   document.querySelectorAll(".paywall-overlay, .popup-ad-overlay").forEach(syncOverlayInert);
   new MutationObserver((mutations) => {
