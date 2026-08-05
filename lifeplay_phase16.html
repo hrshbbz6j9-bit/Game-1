@@ -455,6 +455,7 @@ function freshState(){
     realityShowWins:0,
     cult:null,
     genie:null,
+    comedy:null,
   };
 }
 
@@ -8803,6 +8804,88 @@ ageUp = function(){
   render();
 };
 Object.assign(ACHIEVEMENTS, { woke_up_ach:'Survived a coma', renewed_purpose_ach:'Found lasting perspective after a near-death experience' });
+
+/* ---------------------------------------------------------------------
+   P113 — Stand-up Comedy: a special career (replaces state.job, same
+   shape as Esports/Mafia/Music) built around a per-set "kill it or bomb
+   it" roll rather than a straight promotion ladder — every single set
+   is its own small risk, not just a yearly tick, which is what makes a
+   comedy career feel different from the Doctor/Lawyer prestige tracks.
+   --------------------------------------------------------------------- */
+const COMEDY_STAGES_P113 = [
+  {name:'Open Mic Regular', minFame:0, pay:[0,50]},
+  {name:'Local Headliner', minFame:200, pay:[100,600]},
+  {name:'Touring Comedian', minFame:1000, pay:[800,4000]},
+  {name:'Comedy Special Star', minFame:5000, pay:[15000,80000]},
+  {name:'Legendary Comedian', minFame:20000, pay:[50000,300000]},
+];
+function comedyStageP113(){
+  let best = COMEDY_STAGES_P113[0];
+  for(const s of COMEDY_STAGES_P113){ if(state.comedy.fame>=s.minFame) best=s; }
+  return best;
+}
+function joinComedyCircuitP113(){
+  if(state.age<16){ log(`You need to be at least 16 to try stand-up.`,'bad'); openComedyPanelP113(); return; }
+  if(state.job) state.jobHistory.push(state.job);
+  state.job = {title:'Open Mic Regular', salary:0, tier:1, years:0, isComedy:true};
+  state.comedy = {stage:0, fame:0, sets:0, bombedCount:0, killedCount:0};
+  log(`You signed up for open mic night at a dive bar downtown.`,'good');
+  checkAchievement('comedy_debut_ach');
+  openComedyPanelP113();
+}
+function performSetP113(){
+  if(!state.job || !state.job.isComedy || !state.comedy) return;
+  const stage = comedyStageP113();
+  const skillBonus = Math.min(state.comedy.sets*0.5, 25);
+  const killChance = clamp(35 + skillBonus + (state.stats.happiness-50)*0.15, 10, 85);
+  state.comedy.sets++;
+  if(chance(killChance)){
+    const pay = rand(stage.pay[0], stage.pay[1]);
+    const fameGain = rand(20,80) + Math.round(stage.minFame*0.02);
+    state.money += pay;
+    state.comedy.fame += fameGain;
+    state.comedy.killedCount++;
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,10),0,100);
+    log(`You killed it on stage tonight. The crowd wouldn't stop laughing.${pay?(' Pay: '+fmtMoney(pay)+'.'):''}`,'good');
+    const newStage = comedyStageP113();
+    if(newStage.name!==stage.name){
+      state.job.title = newStage.name;
+      log(`You've made it — you're a ${newStage.name} now.`,'good');
+      newspaper(`${state.name.toUpperCase()} RISES TO ${newStage.name.toUpperCase()}`, `Years of grinding open mics finally pay off.`, 'Spotlight');
+      if(newStage.name==='Legendary Comedian') checkAchievement('legendary_comedian_ach');
+    }
+  } else {
+    state.comedy.bombedCount++;
+    state.stats.happiness = clamp(state.stats.happiness-rand(4,10),0,100);
+    log(`You bombed. Dead silence, one cough, and a heckler yelling "get off the stage!"`,'bad');
+    if(state.comedy.bombedCount>=10) checkAchievement('thick_skin_ach');
+  }
+  openComedyPanelP113();
+}
+function openComedyPanelP113(){
+  let html = '';
+  if(state.job && state.job.isComedy && state.comedy){
+    const stage = comedyStageP113();
+    html += `<div class="list-item"><div class="li-main"><b>${stage.name}</b><span>Fame ${state.comedy.fame.toLocaleString()} · ${state.comedy.sets} sets (${state.comedy.killedCount} killed / ${state.comedy.bombedCount} bombed)</span></div></div>`;
+    html += `<button class="btn btn-block btn-accent" onclick="performSetP113()">🎤 Perform a Set</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">Every legend started at an open mic with three people in the audience.</p>`;
+    html += `<button class="btn btn-block" onclick="joinComedyCircuitP113()">🎤 Sign Up for Open Mic Night</button>`;
+  }
+  openPanel('Stand-up Comedy', html);
+}
+const _origOpenCareerPanel_P113 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P113();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎤 Stand-up Comedy' + (state.comedy?(' ('+state.comedy.sets+' sets)'):'');
+  btn.onclick = openComedyPanelP113;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { comedy_debut_ach:'Signed up for your first open mic night', legendary_comedian_ach:'Became a Legendary Comedian', thick_skin_ach:'Bombed 10+ sets and kept going anyway' });
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
