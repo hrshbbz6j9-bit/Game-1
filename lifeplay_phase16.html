@@ -8760,6 +8760,51 @@ Object.assign(ACHIEVEMENTS, {
 });
 
 /* ---------------------------------------------------------------------
+   P112 — Coma & Near-Death Experience: distinct from the Phase-16-only
+   diagnosed terminal illness system (a slow, treatment-choice arc) —
+   this is a sudden event triggered whenever health crashes to a
+   critical level from ANY source (extreme sports, crime, first-
+   responder duty, old age, etc.), so it lives in the base engine and
+   flows through every future rebuild rather than needing a Phase-16-
+   only hand-edit. A guard flag stops it firing on every single tick
+   while health stays low.
+   --------------------------------------------------------------------- */
+function checkComaTriggerP112(){
+  if(!state.alive || state.flags.inComaEpisode) return;
+  if(state.stats.health>5) return;
+  state.flags.inComaEpisode = true;
+  const wakeChance = clamp(35 + (state.age<60?15:0) - (state.age>80?15:0), 10, 80);
+  if(chance(wakeChance)){
+    state.stats.health = clamp(rand(30,55),0,100);
+    state.flags.comasSurvived = (state.flags.comasSurvived||0)+1;
+    log(`You slipped into a coma — and after a long, uncertain stretch, you woke up.`,'good');
+    newspaper(`${state.name.toUpperCase()} WAKES FROM COMA`, `Family and doctors call it nothing short of a miracle.`, 'Breaking');
+    checkAchievement('woke_up_ach');
+    playScene({
+      title: 'A Second Chance',
+      text: `Waking up changes something in you. The world looks different now — smaller problems feel smaller, and the things that matter feel closer.`,
+      choices: [
+        {label:'Let it change how you live', run(){ state.stats.happiness = clamp(state.stats.happiness+rand(8,15),0,100); state.stats.karma = clamp(state.stats.karma+rand(5,12),0,100); log(`You come out of it with a real, lasting sense of perspective.`,'good'); checkAchievement('renewed_purpose_ach'); }},
+        {label:"Go right back to how things were", run(){ state.stats.happiness = clamp(state.stats.happiness+rand(1,4),0,100); log(`Within a few weeks, life is back to exactly how it was before.`,'neutral'); }},
+      ]
+    });
+  } else {
+    log(`You slipped into a coma. Days pass, then weeks. You never wake up.`,'bad');
+    state.alive = false;
+    state.lastCause = 'complications from a coma';
+  }
+}
+const _origAgeUp_P112 = ageUp;
+ageUp = function(){
+  _origAgeUp_P112();
+  if(!state) return;
+  if(state.alive && state.stats.health>5) state.flags.inComaEpisode = false;
+  if(state.alive) checkComaTriggerP112();
+  render();
+};
+Object.assign(ACHIEVEMENTS, { woke_up_ach:'Survived a coma', renewed_purpose_ach:'Found lasting perspective after a near-death experience' });
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
