@@ -8888,6 +8888,110 @@ openCareerPanel = function(){
 Object.assign(ACHIEVEMENTS, { comedy_debut_ach:'Signed up for your first open mic night', legendary_comedian_ach:'Became a Legendary Comedian', thick_skin_ach:'Bombed 10+ sets and kept going anyway' });
 
 /* ---------------------------------------------------------------------
+   P114 — Night Out: a single spontaneous nightlife action (21+) with a
+   weighted outcome table instead of a system to manage — a good time,
+   a spark with someone new, a bar fight you get to choose how to
+   handle, or a DUI if you own a car and drive home anyway. The kind of
+   one-button "see what happens tonight" activity BitLife-style games
+   lean on heavily and this game didn't have yet.
+   --------------------------------------------------------------------- */
+function hitTheTownP114(){
+  if(state.age<21){ log(`You need to be 21 to hit the bars.`,'bad'); openNightOutPanelP114(); return; }
+  state.flags.nightsOut = (state.flags.nightsOut||0)+1;
+  const roll = Math.random()*100;
+  if(roll<35){
+    state.stats.happiness = clamp(state.stats.happiness+rand(5,12),0,100);
+    log(`You had a genuinely great night out. No drama, just good company and good music.`,'good');
+  } else if(roll<55){
+    const alreadyPartnered = state.relationships.some(r=>r.alive && (r.type==='spouse'||r.type==='datingpartner'));
+    if(!alreadyPartnered && state.age>=18){
+      const person = newRelationship('datingpartner',{gender:pick(['Male','Female']), age:clamp(state.age+rand(-4,4),18,99), rel:rand(45,70)});
+      state.relationships.push(person);
+      state.stats.happiness = clamp(state.stats.happiness+rand(6,14),0,100);
+      log(`You met ${person.name} out tonight, and it clicked. You exchanged numbers before the night was over.`,'good');
+      checkAchievement('met_someone_ach');
+    } else {
+      state.stats.happiness = clamp(state.stats.happiness+rand(3,8),0,100);
+      log(`You had a fun night catching up with people you don't see often enough.`,'good');
+    }
+  } else if(roll<80){
+    playScene({
+      title: 'It\'s About to Go Off',
+      text: 'Someone bumps into you hard enough that it wasn\'t an accident, and now they\'re squaring up. The whole bar has gone quiet, waiting to see what you do.',
+      choices: [
+        {label:'Try to talk it down', run(){
+          if(chance(65)){ state.stats.karma=clamp(state.stats.karma+rand(2,6),0,100); log(`You managed to defuse it. Cooler heads, and all that.`,'good'); }
+          else { state.stats.health=clamp(state.stats.health-rand(5,15),0,100); log(`Didn't work. You caught a punch before security pulled you apart.`,'bad'); }
+        }},
+        {label:'Throw the first punch', run(){
+          if(chance(45)){ state.stats.happiness=clamp(state.stats.happiness+rand(2,6),0,100); state.stats.karma=clamp(state.stats.karma-rand(3,8),0,100); log(`You got the better of it. Bouncers tossed you both out anyway.`,'neutral'); }
+          else {
+            state.stats.health=clamp(state.stats.health-rand(15,30),0,100);
+            state.criminalRecord.push('Bar Fight (Assault)');
+            state.stats.karma=clamp(state.stats.karma-rand(5,10),0,100);
+            log(`You got beaten badly, and the cops showed up before it was over. Assault charge, on top of the bruises.`,'bad');
+            checkAchievement('bar_brawler_ach');
+          }
+        }},
+        {label:'Walk away and leave', run(){
+          state.stats.happiness=clamp(state.stats.happiness-rand(1,4),0,100);
+          log(`You walked out before it escalated. Not every fight is worth having.`,'neutral');
+        }},
+      ]
+    });
+  } else {
+    const hasCar = state.assets.cars && state.assets.cars.length>0;
+    if(hasCar && chance(50)){
+      playScene({
+        title: 'One Too Many',
+        text: 'It\'s late, you\'ve had more than you should have, and your car is right there in the lot. Your phone has a rideshare app on it too.',
+        choices: [
+          {label:'Call a ride home', run(){ if(state.money>=15) state.money-=15; state.stats.happiness=clamp(state.stats.happiness+rand(1,4),0,100); log(`You called a ride. Boring, responsible, and you woke up with no regrets.`,'good'); checkAchievement('responsible_choice_ach'); }},
+          {label:'Drive home anyway', run(){
+            if(chance(40)){
+              state.inPrison = true; state.prisonYearsLeft = rand(1,2);
+              state.criminalRecord.push('DUI');
+              log(`You got pulled over three blocks from home. DUI. It could have been so much worse.`,'bad');
+            } else {
+              state.stats.happiness=clamp(state.stats.happiness-rand(1,3),0,100);
+              log(`You made it home, but you know exactly how lucky that was.`,'neutral');
+            }
+          }},
+        ]
+      });
+    } else {
+      state.stats.happiness = clamp(state.stats.happiness-rand(1,3),0,100);
+      log(`It was a long night. You're feeling it this morning.`,'neutral');
+    }
+  }
+  if(state.flags.nightsOut>=25) checkAchievement('nightlife_regular_ach');
+  openNightOutPanelP114();
+}
+function openNightOutPanelP114(){
+  let html = `<div class="list-item"><div class="li-main"><b>Nights Out</b><span>${state.flags.nightsOut||0}</span></div></div>`;
+  html += `<p style="color:var(--sub)">You never quite know how the night's going to go.</p>`;
+  html += `<button class="btn btn-block btn-accent" onclick="hitTheTownP114()">🍸 Hit the Town</button>`;
+  openPanel('Night Out', html);
+}
+const _origOpenActivitiesPanel_P114 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P114();
+  if(state.inPrison || state.age<21) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🍸 Night Out' + (state.flags.nightsOut?(' ('+state.flags.nightsOut+')'):'');
+  btn.onclick = openNightOutPanelP114;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, {
+  met_someone_ach:'Met someone new on a night out',
+  bar_brawler_ach:'Got arrested after a bar fight',
+  responsible_choice_ach:'Called a ride home instead of driving drunk',
+  nightlife_regular_ach:'Hit the town 25+ times',
+});
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
