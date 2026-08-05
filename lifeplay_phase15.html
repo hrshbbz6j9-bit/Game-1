@@ -9090,6 +9090,74 @@ openCareerPanel = function(){
 Object.assign(ACHIEVEMENTS, { podcast_launch_ach:'Started a podcast', viral_episode_ach:'Had an episode go viral', media_network_ach:'Grew your podcast into a Media Network' });
 
 /* ---------------------------------------------------------------------
+   P116 — Class Clown & Detention: a deliberate, player-chosen school
+   activity (as opposed to the existing pool of passive random school
+   events) — pull a prank on purpose and see if it lands. A clean hit
+   buys popularity and happiness; getting caught costs GPA and a
+   parent-relationship hit, and repeat offenders risk real detention
+   and, eventually, expulsion (the base engine's `expelled` flag has
+   existed since freshState() but nothing in the base ever set it).
+   --------------------------------------------------------------------- */
+const PRANK_TYPES_P116 = [
+  {label:'Whoopee cushion on the teacher\'s chair', risk:20, severity:1},
+  {label:'Prank call the school intercom', risk:35, severity:2},
+  {label:'Superglue the principal\'s desk drawers', risk:55, severity:3},
+];
+function pullPrankP116(prankLabel){
+  if(!['elementary','middle','highschool'].includes(state.eduStage)){ log(`You need to be in school to pull a prank.`,'bad'); openClassClownPanelP116(); return; }
+  const prank = PRANK_TYPES_P116.find(p=>p.label===prankLabel); if(!prank) return;
+  state.flags.pranksPulled = (state.flags.pranksPulled||0)+1;
+  if(chance(100-prank.risk)){
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,10),0,100);
+    state.stats.karma = clamp(state.stats.karma+rand(1,3),0,100);
+    log(`The prank goes off perfectly. The whole class is still laughing at lunch.`,'good');
+    checkAchievement('class_clown_ach');
+    if(state.flags.pranksPulled>=10) checkAchievement('legendary_prankster_ach');
+  } else {
+    state.flags.detentions = (state.flags.detentions||0)+1;
+    state.gpa = clamp(state.gpa-0.1*prank.severity,0,4);
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,6),0,100);
+    const parent = state.relationships.find(r=>r.alive && r.type==='parent');
+    if(parent) parent.rel = clamp(parent.rel-rand(3,8),0,100);
+    log(`You got caught. Detention, a call home, and a lecture you've heard before.`,'bad');
+    checkAchievement('detention_ach');
+    if(state.flags.detentions>=5 && !state.expelled && chance(25)){
+      state.expelled = true;
+      state.eduStage = 'none';
+      log(`After one detention too many, the school expels you. That's on your record now.`,'bad');
+      newspaper(`STUDENT EXPELLED AFTER REPEATED INCIDENTS`, `The school cites "a pattern of disruptive behavior."`, 'Breaking');
+      checkAchievement('expelled_ach');
+    }
+  }
+  openClassClownPanelP116();
+}
+function openClassClownPanelP116(){
+  let html = `<div class="list-item"><div class="li-main"><b>Track Record</b><span>${state.flags.pranksPulled||0} pranks · ${state.flags.detentions||0} detentions</span></div></div>`;
+  html += `<p style="color:var(--sub)">Bigger pranks get bigger laughs — and bigger consequences if you're caught.</p>`;
+  PRANK_TYPES_P116.forEach(p=>{
+    html += `<button class="btn btn-block" onclick='pullPrankP116(${JSON.stringify(p.label)})'>${p.label}</button>`;
+  });
+  openPanel('Class Clown', html);
+}
+const _origOpenActivitiesPanel_P116 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P116();
+  if(state.inPrison || !['elementary','middle','highschool'].includes(state.eduStage)) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🤡 Class Clown' + (state.flags.pranksPulled?(' ('+state.flags.pranksPulled+')'):'');
+  btn.onclick = openClassClownPanelP116;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, {
+  class_clown_ach:'Pulled off a prank without getting caught',
+  detention_ach:'Got caught and sent to detention',
+  legendary_prankster_ach:'Pulled 10+ pranks in your school years',
+  expelled_ach:'Got expelled after one detention too many',
+});
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
