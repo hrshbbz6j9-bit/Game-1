@@ -7515,8 +7515,8 @@
     document.getElementById("achievementsGrid").innerHTML = ACHIEVEMENTS.map(a => {
       const isUnlocked = a.check();
       return `
-        <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}">
-          <div class="achievement-icon">${isUnlocked ? a.icon : "🔒"}</div>
+        <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}" role="group" aria-label="${isUnlocked ? "Unlocked" : "Locked"}">
+          <div class="achievement-icon" aria-hidden="true">${isUnlocked ? a.icon : "🔒"}</div>
           <div class="achievement-name">${escapeHtml(a.name)}</div>
           <div class="achievement-desc">${escapeHtml(a.desc)}</div>
         </div>
