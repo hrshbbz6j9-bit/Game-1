@@ -457,6 +457,7 @@ function freshState(){
     genie:null,
     comedy:null,
     podcast:null,
+    onlineStore:null,
   };
 }
 
@@ -9156,6 +9157,99 @@ Object.assign(ACHIEVEMENTS, {
   legendary_prankster_ach:'Pulled 10+ pranks in your school years',
   expelled_ach:'Got expelled after one detention too many',
 });
+
+/* ---------------------------------------------------------------------
+   P117 — Online Store: a small e-commerce side business, distinct from
+   the existing Business Empire (state.business.companies — acquiring
+   and running real companies) and Freelance Gigs (P103 — one-off paid
+   tasks). This is a single niche storefront you grow action-by-action:
+   restock-and-market rolls for revenue with an escalating tier ladder,
+   a rare viral-product spike, and a real risk of a supplier scam
+   wiping out that round's investment.
+   --------------------------------------------------------------------- */
+const STORE_NICHES_P117 = ['Phone Accessories','Fitness Gear','Home Decor','Pet Products','Skincare','Novelty T-Shirts'];
+const STORE_TIERS_P117 = [
+  {name:'Side Hustle Store', minRevenue:0},
+  {name:'Growing Storefront', minRevenue:5000},
+  {name:'Six-Figure Shop', minRevenue:100000},
+  {name:'E-Commerce Brand', minRevenue:1000000},
+];
+function storeTierP117(){
+  let best = STORE_TIERS_P117[0];
+  for(const t of STORE_TIERS_P117){ if(state.onlineStore.revenue>=t.minRevenue) best=t; }
+  return best;
+}
+function launchOnlineStoreP117(niche){
+  if(state.age<16){ log(`You need to be at least 16 to open an online store.`,'bad'); openOnlineStorePanelP117(); return; }
+  state.onlineStore = {niche, revenue:0, orders:0, scams:0};
+  log(`You launched a ${niche} storefront out of your bedroom, one product listing at a time.`,'good');
+  checkAchievement('store_launch_ach');
+  openOnlineStorePanelP117();
+}
+function restockAndMarketP117(adSpend){
+  if(!state.onlineStore) return;
+  if(state.money<adSpend){ log(`Not enough money for that ad budget.`,'bad'); openOnlineStorePanelP117(); return; }
+  state.money -= adSpend;
+  const roll = Math.random()*100;
+  if(roll<8){
+    state.onlineStore.scams++;
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,6),0,100);
+    log(`Your supplier took the payment and vanished. The ${fmtMoney(adSpend)} is gone, and so is the inventory.`,'bad');
+  } else if(roll<15){
+    const revenue = adSpend * rand(15,40);
+    state.money += revenue;
+    state.onlineStore.revenue += revenue;
+    state.onlineStore.orders += rand(200,800);
+    state.stats.happiness = clamp(state.stats.happiness+rand(6,12),0,100);
+    log(`One of your listings goes viral overnight. Orders won't stop coming in — you made ${fmtMoney(revenue)}.`,'good');
+    newspaper(`${state.name.toUpperCase()}'S ${state.onlineStore.niche.toUpperCase()} STORE EXPLODES ONLINE`, `A single product catches fire on social media.`, 'Spotlight');
+    checkAchievement('viral_product_ach');
+  } else {
+    const revenue = Math.round(adSpend * (rand(15,35)/10));
+    state.money += revenue;
+    state.onlineStore.revenue += revenue;
+    state.onlineStore.orders += rand(5,40);
+    log(`Steady sales this round. Revenue: ${fmtMoney(revenue)}.`,'good');
+  }
+  const newTier = storeTierP117();
+  if(!state.onlineStore.currentTier || newTier.name!==state.onlineStore.currentTier){
+    state.onlineStore.currentTier = newTier.name;
+    if(newTier.minRevenue>0){
+      log(`Your store has grown into a ${newTier.name}.`,'good');
+      if(newTier.name==='E-Commerce Brand') checkAchievement('ecommerce_brand_ach');
+    }
+  }
+  openOnlineStorePanelP117();
+}
+function openOnlineStorePanelP117(){
+  let html = '';
+  if(state.onlineStore){
+    const tier = storeTierP117();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name} — ${state.onlineStore.niche}</b><span>Lifetime revenue ${fmtMoney(state.onlineStore.revenue)} · ${state.onlineStore.orders} orders</span></div></div>`;
+    html += `<p style="color:var(--sub)">Bigger ad budgets mean bigger swings, both ways.</p>`;
+    [100,500,2000].forEach(amt=>{
+      html += `<button class="btn btn-block" onclick='restockAndMarketP117(${amt})'>Restock & Market (${fmtMoney(amt)} ad spend)</button>`;
+    });
+  } else {
+    html += `<p style="color:var(--sub)">Pick a niche and open your storefront.</p>`;
+    STORE_NICHES_P117.forEach(n=>{
+      html += `<button class="btn btn-block" onclick='launchOnlineStoreP117(${JSON.stringify(n)})'>${n}</button>`;
+    });
+  }
+  openPanel('Online Store', html);
+}
+const _origOpenActivitiesPanel_P117 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P117();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🛒 Online Store' + (state.onlineStore?(' ('+fmtMoney(state.onlineStore.revenue)+')'):'');
+  btn.onclick = openOnlineStorePanelP117;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { store_launch_ach:'Launched an online store', viral_product_ach:'Had a product go viral', ecommerce_brand_ach:'Grew your store into an E-Commerce Brand' });
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
