@@ -456,6 +456,7 @@ function freshState(){
     cult:null,
     genie:null,
     comedy:null,
+    podcast:null,
   };
 }
 
@@ -8990,6 +8991,103 @@ Object.assign(ACHIEVEMENTS, {
   responsible_choice_ach:'Called a ride home instead of driving drunk',
   nightlife_regular_ach:'Hit the town 25+ times',
 });
+
+/* ---------------------------------------------------------------------
+   P115 — Podcast Host: a special career (replaces state.job, same
+   shape as Esports/Comedy/Music) built around releasing episodes
+   rather than gigs or sets — distinct from Influencer (passive content
+   posting) and Comedy (live performance risk) in that it's a steady
+   release cadence with a guest-booking choice each episode and a small
+   chance any given episode goes viral, plus sponsorship income once
+   the show is big enough to matter to advertisers.
+   --------------------------------------------------------------------- */
+const PODCAST_TIERS_P115 = [
+  {name:'Garage Podcast', minListeners:0, sponsorPay:[0,0]},
+  {name:'Growing Show', minListeners:2000, sponsorPay:[50,300]},
+  {name:'Established Podcast', minListeners:20000, sponsorPay:[500,3000]},
+  {name:'Top-Charts Show', minListeners:150000, sponsorPay:[5000,25000]},
+  {name:'Media Network', minListeners:1000000, sponsorPay:[30000,150000]},
+];
+const PODCAST_GUEST_TYPES_P115 = [
+  {label:'Book a local expert', listenerMult:1, risk:5},
+  {label:'Book a rising influencer', listenerMult:1.6, risk:15},
+  {label:'Book a controversial guest', listenerMult:2.4, risk:35},
+];
+function podcastTierP115(){
+  let best = PODCAST_TIERS_P115[0];
+  for(const t of PODCAST_TIERS_P115){ if(state.podcast.listeners>=t.minListeners) best=t; }
+  return best;
+}
+function startPodcastP115(){
+  if(state.age<16){ log(`You need to be at least 16 to start a podcast.`,'bad'); openPodcastPanelP115(); return; }
+  if(state.job) state.jobHistory.push(state.job);
+  state.job = {title:'Garage Podcast', salary:0, tier:1, years:0, isPodcast:true};
+  state.podcast = {listeners:0, episodes:0, viralEpisodes:0};
+  log(`You recorded your first episode in your bedroom with a $40 microphone.`,'good');
+  checkAchievement('podcast_launch_ach');
+  openPodcastPanelP115();
+}
+function releaseEpisodeP115(guestLabel){
+  if(!state.job || !state.job.isPodcast || !state.podcast) return;
+  const guest = PODCAST_GUEST_TYPES_P115.find(g=>g.label===guestLabel); if(!guest) return;
+  const tier = podcastTierP115();
+  state.podcast.episodes++;
+  const baseGrowth = rand(20,150) * guest.listenerMult;
+  const viral = chance(guest.risk*0.4);
+  let listenerGain = Math.round(baseGrowth);
+  if(viral){
+    listenerGain = Math.round(listenerGain * rand(8,25));
+    state.podcast.viralEpisodes++;
+    log(`Episode ${state.podcast.episodes} blows up completely. Clips are everywhere by morning.`,'good');
+    newspaper(`${state.name.toUpperCase()}'S PODCAST GOES VIRAL`, `A single episode sends the show's numbers through the roof.`, 'Spotlight');
+    checkAchievement('viral_episode_ach');
+  } else if(chance(guest.risk)){
+    listenerGain = Math.round(listenerGain*0.3);
+    state.stats.happiness = clamp(state.stats.happiness-rand(2,6),0,100);
+    log(`Episode ${state.podcast.episodes} doesn't land well — the guest was a bad call, and listeners noticed.`,'bad');
+  } else {
+    log(`Episode ${state.podcast.episodes} goes out. Solid, steady growth.`,'good');
+  }
+  state.podcast.listeners += listenerGain;
+  const newTier = podcastTierP115();
+  if(newTier.sponsorPay[1]>0){
+    const sponsorPay = rand(newTier.sponsorPay[0], newTier.sponsorPay[1]);
+    state.money += sponsorPay;
+  }
+  if(newTier.name!==tier.name){
+    state.job.title = newTier.name;
+    log(`Your show has grown into a ${newTier.name}.`,'good');
+    if(newTier.name==='Media Network') checkAchievement('media_network_ach');
+  }
+  openPodcastPanelP115();
+}
+function openPodcastPanelP115(){
+  let html = '';
+  if(state.job && state.job.isPodcast && state.podcast){
+    const tier = podcastTierP115();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name}</b><span>${state.podcast.listeners.toLocaleString()} listeners · ${state.podcast.episodes} episodes${state.podcast.viralEpisodes?(' · '+state.podcast.viralEpisodes+' viral'):''}</span></div></div>`;
+    html += `<p style="color:var(--sub)">Book your next guest — bigger names grow the show faster, but they're a bigger risk too.</p>`;
+    PODCAST_GUEST_TYPES_P115.forEach(g=>{
+      html += `<button class="btn btn-block" onclick='releaseEpisodeP115(${JSON.stringify(g.label)})'>${g.label}</button>`;
+    });
+  } else {
+    html += `<p style="color:var(--sub)">Every network show started with someone talking into a cheap microphone in their bedroom.</p>`;
+    html += `<button class="btn btn-block" onclick="startPodcastP115()">🎙️ Start a Podcast</button>`;
+  }
+  openPanel('Podcast', html);
+}
+const _origOpenCareerPanel_P115 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P115();
+  if(state.inPrison || state.age<16) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎙️ Podcast' + (state.podcast?(' ('+state.podcast.listeners.toLocaleString()+' listeners)'):'');
+  btn.onclick = openPodcastPanelP115;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { podcast_launch_ach:'Started a podcast', viral_episode_ach:'Had an episode go viral', media_network_ach:'Grew your podcast into a Media Network' });
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
