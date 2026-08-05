@@ -7441,7 +7441,7 @@
       const rank = i + 1;
       const { current } = tierForScore(a.score);
       return `
-        <div class="leaderboard-row ${a.name === username ? "is-you" : ""}" data-author="${escapeHtml(a.name)}">
+        <div class="leaderboard-row ${a.name === username ? "is-you" : ""}" data-author="${escapeHtml(a.name)}" aria-label="Rank ${rank}: @${escapeHtml(a.name)}, ${current.name} tier, ${a.score} points. View profile">
           <div class="leaderboard-rank ${rank <= 3 ? "top3" : ""}">${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : "#" + rank}</div>
           ${avatarHtml(a.name)}
           <div class="leaderboard-name-wrap">
@@ -7758,7 +7758,9 @@
       if (el.closest("#memberProfileBody, #profileCard")) return;
       el.setAttribute("tabindex", "0");
       el.setAttribute("role", "button");
-      el.setAttribute("aria-label", `View @${el.dataset.author}'s profile`);
+      if (!el.hasAttribute("aria-label")) {
+        el.setAttribute("aria-label", `View @${el.dataset.author}'s profile`);
+      }
     });
   }
   new MutationObserver(makeAuthorLinksFocusable).observe(document.body, { childList: true, subtree: true });
