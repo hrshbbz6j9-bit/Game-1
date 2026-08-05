@@ -9334,6 +9334,63 @@ openCareerPanel = function(){
 Object.assign(ACHIEVEMENTS, { coach_launch_ach:'Became a Life Coach', celebrity_coach_ach:'Became a Celebrity Life Coach', life_changer_ach:'Had 50+ client breakthroughs as a Life Coach' });
 
 /* ---------------------------------------------------------------------
+   P119 — School Talent Show: a school-years activity distinct from
+   Reality TV (adult, elimination-format, fame/money stakes) and Class
+   Clown (deliberate rule-breaking) — this is a once-a-year, low-stakes
+   showcase where kids get their own moment. Each category is skill-
+   checked against a different stat, and losing is framed gently (an
+   encouraging note, not a public flop) since the audience is your own
+   grade school, not a TV network.
+   --------------------------------------------------------------------- */
+const TALENT_CATEGORIES_P119 = [
+  {label:'Sing a Song', stat:'happiness'},
+  {label:'Dance Routine', stat:'looks'},
+  {label:'Magic Trick', stat:'smarts'},
+  {label:'Stand-up Bit', stat:'smarts'},
+  {label:'Gymnastics Routine', stat:'health'},
+];
+function enterTalentShowP119(categoryLabel){
+  if(!['elementary','middle','highschool'].includes(state.eduStage)){ log(`You need to be in school to enter the talent show.`,'bad'); openTalentShowPanelP119(); return; }
+  if(state.flags.talentShowYear===state.age){ log(`You already performed in this year's talent show.`,'bad'); openTalentShowPanelP119(); return; }
+  state.flags.talentShowYear = state.age;
+  state.flags.talentShowsEntered = (state.flags.talentShowsEntered||0)+1;
+  const cat = TALENT_CATEGORIES_P119.find(c=>c.label===categoryLabel); if(!cat) return;
+  const statVal = state.stats[cat.stat]!=null ? state.stats[cat.stat] : 50;
+  const winChance = clamp(30 + (statVal-50)*0.6, 10, 80);
+  if(chance(winChance)){
+    state.flags.talentShowsWon = (state.flags.talentShowsWon||0)+1;
+    state.stats.happiness = clamp(state.stats.happiness+rand(8,15),0,100);
+    log(`You win first place at the talent show with your ${categoryLabel.toLowerCase()}. The whole school is talking about it.`,'good');
+    checkAchievement('talent_show_winner_ach');
+    if(state.flags.talentShowsWon>=3) checkAchievement('talent_show_legend_ach');
+  } else {
+    state.stats.happiness = clamp(state.stats.happiness+rand(1,4),0,100);
+    log(`Your ${categoryLabel.toLowerCase()} doesn't place, but everyone claps anyway and your teacher says you should be proud you got up there.`,'neutral');
+  }
+  openTalentShowPanelP119();
+}
+function openTalentShowPanelP119(){
+  let html = `<div class="list-item"><div class="li-main"><b>Talent Show Record</b><span>${state.flags.talentShowsWon||0} wins / ${state.flags.talentShowsEntered||0} entered</span></div></div>`;
+  html += `<p style="color:var(--sub)">Once a year, the school puts on a talent show. Pick your act.</p>`;
+  TALENT_CATEGORIES_P119.forEach(c=>{
+    html += `<button class="btn btn-block" onclick='enterTalentShowP119(${JSON.stringify(c.label)})'>${c.label}</button>`;
+  });
+  openPanel('Talent Show', html);
+}
+const _origOpenActivitiesPanel_P119 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P119();
+  if(state.inPrison || !['elementary','middle','highschool'].includes(state.eduStage)) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🌟 Talent Show' + (state.flags.talentShowsWon?(' ('+state.flags.talentShowsWon+' wins)'):'');
+  btn.onclick = openTalentShowPanelP119;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { talent_show_winner_ach:'Won a school talent show', talent_show_legend_ach:'Won 3+ school talent shows' });
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
