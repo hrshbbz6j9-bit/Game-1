@@ -458,6 +458,7 @@ function freshState(){
     comedy:null,
     podcast:null,
     onlineStore:null,
+    lifeCoach:null,
   };
 }
 
@@ -9250,6 +9251,87 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { store_launch_ach:'Launched an online store', viral_product_ach:'Had a product go viral', ecommerce_brand_ach:'Grew your store into an E-Commerce Brand' });
+
+/* ---------------------------------------------------------------------
+   P118 — Life Coach: a special career (replaces state.job, same shape
+   as Comedy/Podcast) built around per-client sessions rather than a
+   flat salary — distinct from the grad-degree-gated Psychologist JOBS
+   entry, this is a no-credential-required hustle where reputation
+   (built session by session, and occasionally damaged by a client who
+   walks out unimpressed) is the entire ladder.
+   --------------------------------------------------------------------- */
+const COACH_TIERS_P118 = [
+  {name:'Certified Life Coach', minRep:0, payMult:1},
+  {name:'In-Demand Coach', minRep:100, payMult:2.2},
+  {name:'Sought-After Coach', minRep:500, payMult:5},
+  {name:'Celebrity Life Coach', minRep:2000, payMult:12},
+];
+function coachTierP118(){
+  let best = COACH_TIERS_P118[0];
+  for(const t of COACH_TIERS_P118){ if(state.lifeCoach.reputation>=t.minRep) best=t; }
+  return best;
+}
+function becomeLifeCoachP118(){
+  if(state.age<18){ log(`You need to be at least 18 to start coaching clients.`,'bad'); openLifeCoachPanelP118(); return; }
+  if(state.job) state.jobHistory.push(state.job);
+  state.job = {title:'Certified Life Coach', salary:0, tier:2, years:0, isLifeCoach:true};
+  state.lifeCoach = {clients:0, reputation:0, breakthroughs:0};
+  log(`You hung out a shingle: "Life Coaching, Sliding Scale."`,'good');
+  checkAchievement('coach_launch_ach');
+  openLifeCoachPanelP118();
+}
+function coachSessionP118(){
+  if(!state.job || !state.job.isLifeCoach || !state.lifeCoach) return;
+  const tier = coachTierP118();
+  state.lifeCoach.clients++;
+  const successChance = clamp(55 + Math.min(state.lifeCoach.reputation*0.05,25),40,90);
+  if(chance(successChance)){
+    const pay = Math.round(rand(80,250)*tier.payMult);
+    state.money += pay;
+    state.lifeCoach.reputation += rand(4,12);
+    state.lifeCoach.breakthroughs++;
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,9),0,100);
+    state.stats.karma = clamp(state.stats.karma+rand(1,4),0,100);
+    log(`Your client has a real breakthrough this session. That's what makes the job worth it — plus ${fmtMoney(pay)}.`,'good');
+    const newTier = coachTierP118();
+    if(newTier.name!==tier.name){
+      state.job.title = newTier.name;
+      log(`Word is spreading. You're now a ${newTier.name}.`,'good');
+      newspaper(`${state.name.toUpperCase()} IN DEMAND AS ${newTier.name.toUpperCase()}`, `A growing client list speaks for itself.`, 'Spotlight');
+      if(newTier.name==='Celebrity Life Coach') checkAchievement('celebrity_coach_ach');
+    }
+  } else {
+    state.lifeCoach.reputation = Math.max(0, state.lifeCoach.reputation-rand(2,6));
+    state.stats.happiness = clamp(state.stats.happiness-rand(1,4),0,100);
+    log(`This client just isn't clicking with your approach. They don't book a follow-up.`,'bad');
+  }
+  if(state.lifeCoach.breakthroughs>=50) checkAchievement('life_changer_ach');
+  openLifeCoachPanelP118();
+}
+function openLifeCoachPanelP118(){
+  let html = '';
+  if(state.job && state.job.isLifeCoach && state.lifeCoach){
+    const tier = coachTierP118();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name}</b><span>Reputation ${state.lifeCoach.reputation} · ${state.lifeCoach.clients} clients (${state.lifeCoach.breakthroughs} breakthroughs)</span></div></div>`;
+    html += `<button class="btn btn-block btn-accent" onclick="coachSessionP118()">🧠 Take a Client Session</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">No degree required — just confidence and a willingness to charge people to hear it.</p>`;
+    html += `<button class="btn btn-block" onclick="becomeLifeCoachP118()">🧠 Become a Life Coach</button>`;
+  }
+  openPanel('Life Coach', html);
+}
+const _origOpenCareerPanel_P118 = openCareerPanel;
+openCareerPanel = function(){
+  _origOpenCareerPanel_P118();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🧠 Life Coach' + (state.lifeCoach?(' ('+state.lifeCoach.clients+' clients)'):'');
+  btn.onclick = openLifeCoachPanelP118;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { coach_launch_ach:'Became a Life Coach', celebrity_coach_ach:'Became a Celebrity Life Coach', life_changer_ach:'Had 50+ client breakthroughs as a Life Coach' });
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
