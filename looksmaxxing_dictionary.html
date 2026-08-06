@@ -2894,6 +2894,13 @@
     <button class="cta-btn" id="profileSave">Save Profile</button>
     <label class="form-label" style="margin-top:20px;">Your Data</label>
     <button class="photo-remove-btn" id="exportDataBtn" style="width:100%;">⬇ Export My Data (JSON)</button>
+    <button class="photo-remove-btn" id="importDataBtn" style="width:100%;margin-top:8px;">⬆ Import Data (JSON)</button>
+    <input type="file" id="importDataInput" accept="application/json,.json" style="display:none;">
+    <div class="delete-confirm-row" id="importDataConfirmRow" style="display:none;">
+      <span id="importDataConfirmText">This will overwrite your current data on this device with the imported backup. Continue?</span>
+      <button class="delete-confirm-btn" id="importDataConfirmBtn">Import &amp; Overwrite</button>
+      <button class="delete-cancel-btn" id="importDataCancelBtn">Cancel</button>
+    </div>
     <label class="form-label" style="margin-top:20px;">Danger Zone</label>
     <button class="photo-remove-btn" id="resetDataBtn" style="width:100%;">Reset All Data on This Device</button>
     <div class="delete-confirm-row" id="resetDataConfirmRow" style="display:none;">
@@ -7913,6 +7920,9 @@
     document.getElementById("profileSignatureInput").value = signature;
     renderPhotoPreview();
     document.getElementById("resetDataConfirmRow").style.display = "none";
+    document.getElementById("importDataConfirmRow").style.display = "none";
+    pendingImportData = null;
+    document.getElementById("importDataInput").value = "";
     profileOverlay.classList.add("show");
   }
   function closeProfileModal() { profileOverlay.classList.remove("show"); }
@@ -7947,6 +7957,51 @@
     a.remove();
     URL.revokeObjectURL(url);
     showToast("Data exported.");
+  });
+
+  let pendingImportData = null;
+  document.getElementById("importDataBtn").addEventListener("click", () => {
+    document.getElementById("importDataInput").click();
+  });
+  document.getElementById("importDataInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try {
+        parsed = JSON.parse(reader.result);
+      } catch (err) {
+        showToast("That file isn't valid JSON.");
+        e.target.value = "";
+        return;
+      }
+      const keys = Object.keys(parsed).filter(k => k.startsWith("looksmax_"));
+      if (!keys.length) {
+        showToast("That file doesn't look like a Looksmaxing Dictionary backup.");
+        e.target.value = "";
+        return;
+      }
+      pendingImportData = parsed;
+      document.getElementById("importDataConfirmText").textContent =
+        `This backup has ${keys.length} saved item${keys.length === 1 ? "" : "s"}. Importing will overwrite your current data on this device. Continue?`;
+      document.getElementById("importDataConfirmRow").style.display = "flex";
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById("importDataCancelBtn").addEventListener("click", () => {
+    pendingImportData = null;
+    document.getElementById("importDataConfirmRow").style.display = "none";
+    document.getElementById("importDataInput").value = "";
+  });
+  document.getElementById("importDataConfirmBtn").addEventListener("click", () => {
+    if (!pendingImportData) return;
+    Object.keys(localStorage).filter(k => k.startsWith("looksmax_")).forEach(k => localStorage.removeItem(k));
+    Object.entries(pendingImportData).forEach(([key, value]) => {
+      if (!key.startsWith("looksmax_")) return;
+      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+    });
+    location.reload();
   });
 
   document.getElementById("resetDataBtn").addEventListener("click", () => {
