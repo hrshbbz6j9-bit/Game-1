@@ -1187,6 +1187,7 @@
   }
   .block-btn.active { background: var(--coral); color: #fff; border-color: var(--coral); }
   .block-btn:active { transform: scale(0.97); }
+  .block-btn:disabled { opacity: 0.4; cursor: default; }
 
   .blocked-thread-card {
     background: var(--card);
@@ -7759,6 +7760,7 @@
   }
 
   function openMemberProfile(name) {
+    memberReportMode = false;
     renderMemberProfile(name);
     document.getElementById("memberOverlay").classList.add("show");
   }
@@ -7770,6 +7772,15 @@
     if (e.target.id === "memberOverlay") closeMemberProfile();
   });
 
+  let memberReportMode = false;
+  function submitUserReport(name, reason) {
+    reportedItems.add(`user:${name}`);
+    saveReportedItems();
+    memberReportMode = false;
+    renderMemberProfile(name);
+    showToast(`Reported for "${reason}". Moderators will review this.`);
+  }
+
   function renderMemberProfile(name) {
     const { threadCount, replyCount, score } = authorStats(name);
     const { current } = tierForScore(score);
@@ -7779,6 +7790,18 @@
     const isSelf = name === username;
     const isFollowing = following.has(name);
     const isBlocked = blockedUsers.has(name);
+    const isReported = reportedItems.has(`user:${name}`);
+    const reportRowHtml = isSelf ? "" : memberReportMode ? `
+      <div class="delete-confirm-row report-panel">
+        <span>Report @${escapeHtml(name)} — why?</span>
+        <div class="report-reasons-row">
+          ${REPORT_REASONS.map(rs => `<button class="report-reason-btn" data-member-reason="${rs}">${rs}</button>`).join("")}
+        </div>
+        <button class="delete-cancel-btn" id="memberReportCancel" style="align-self:flex-start;">Cancel</button>
+      </div>
+    ` : isReported
+      ? `<button class="block-btn" id="memberReportBtn" disabled>🚩 Reported</button>`
+      : `<button class="block-btn" id="memberReportBtn">🚩 Report this user</button>`;
     document.getElementById("memberProfileBody").innerHTML = `
       <div class="profile-top">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -7795,6 +7818,7 @@
         ${isSelf ? "" : `<button class="follow-btn ${isFollowing ? "active" : ""}" id="memberFollowBtn">${isFollowing ? "✓ Following" : "+ Follow"}</button>`}
       </div>
       ${isSelf ? "" : `<button class="block-btn ${isBlocked ? "active" : ""}" id="memberBlockBtn">${isBlocked ? "🚫 Blocked — tap to unblock" : "🚫 Block this user"}</button>`}
+      ${reportRowHtml}
       ${signatureHtml(name)}
       <div class="profile-stats">
         <span>${threadCount} thread${threadCount === 1 ? "" : "s"}</span>
@@ -7828,6 +7852,13 @@
     if (followBtn) followBtn.addEventListener("click", () => toggleFollow(name));
     const blockBtn = document.getElementById("memberBlockBtn");
     if (blockBtn) blockBtn.addEventListener("click", () => toggleBlock(name));
+    const reportBtn = document.getElementById("memberReportBtn");
+    if (reportBtn) reportBtn.addEventListener("click", () => { memberReportMode = true; renderMemberProfile(name); });
+    const reportCancelBtn = document.getElementById("memberReportCancel");
+    if (reportCancelBtn) reportCancelBtn.addEventListener("click", () => { memberReportMode = false; renderMemberProfile(name); });
+    document.querySelectorAll("#memberProfileBody [data-member-reason]").forEach(btn => {
+      btn.addEventListener("click", () => submitUserReport(name, btn.dataset.memberReason));
+    });
   }
 
   document.addEventListener("click", (e) => {
