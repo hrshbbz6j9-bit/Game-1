@@ -8286,11 +8286,13 @@
 
   function getNotifications() {
     return threads
-      .filter(t => (t.author === username || watchedThreads.has(t.id)) && t.replies.length > (notifSeen[t.id] || 0))
+      .filter(t => t.author === username || watchedThreads.has(t.id))
       .map(t => {
         const seen = notifSeen[t.id] || 0;
-        return { thread: t, newCount: t.replies.length - seen, latest: t.replies[t.replies.length - 1] };
+        const newReplies = t.replies.slice(seen).filter(r => !blockedUsers.has(r.author));
+        return { thread: t, newCount: newReplies.length, latest: newReplies[newReplies.length - 1] };
       })
+      .filter(item => item.newCount > 0)
       .sort((a, b) => b.thread.id - a.thread.id);
   }
 
