@@ -2995,6 +2995,10 @@
       <div class="activity-section-label" id="activityFollowingLabel">Following</div>
       <div class="activity-list" id="activityFollowingList"></div>
     </div>
+    <div class="activity-section">
+      <div class="activity-section-label" id="activityBlockedLabel">Blocked</div>
+      <div class="activity-list" id="activityBlockedList"></div>
+    </div>
   </div>
 </div>
 
@@ -7702,6 +7706,22 @@
       : `<div class="activity-empty">Not following anyone yet.</div>`;
     document.querySelectorAll("[data-view-member]").forEach(btn => {
       btn.addEventListener("click", () => { closeMyActivity(); openMemberProfile(btn.dataset.viewMember); });
+    });
+
+    document.getElementById("activityBlockedLabel").textContent = `Blocked (${blockedUsers.size})`;
+    document.getElementById("activityBlockedList").innerHTML = blockedUsers.size
+      ? [...blockedUsers].map(name => `
+          <div class="activity-row" style="cursor:default;">
+            <div class="activity-row-text">
+              <div class="activity-row-title">@${escapeHtml(name)}</div>
+              <div class="activity-row-meta">${tierForScore(authorStats(name).score).current.name}</div>
+            </div>
+            <button type="button" class="follow-btn active" data-unblock-activity="${escapeHtml(name)}">Unblock</button>
+          </div>
+        `).join("")
+      : `<div class="activity-empty">Not blocking anyone.</div>`;
+    document.querySelectorAll("[data-unblock-activity]").forEach(btn => {
+      btn.addEventListener("click", () => { toggleBlock(btn.dataset.unblockActivity); renderMyActivity(); });
     });
 
     document.querySelectorAll("[data-jump-thread]").forEach(btn => {
