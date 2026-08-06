@@ -1170,6 +1170,51 @@
   .follow-btn:active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(142,124,168,0.15); }
   .edit-profile-btn:active { transform: scale(0.97); box-shadow: 0 1px 2px rgba(27,14,46,0.06); }
 
+  .block-btn {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: none;
+    color: var(--ink-mute);
+    border: 1px solid var(--card-line);
+    border-radius: var(--r-md);
+    padding: 7px 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    width: 100%;
+  }
+  .block-btn.active { background: var(--coral); color: #fff; border-color: var(--coral); }
+  .block-btn:active { transform: scale(0.97); }
+
+  .blocked-thread-card {
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: var(--r-lg);
+    padding: 14px 15px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+  .blocked-thread-card button {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--card-line);
+    border-radius: var(--r-pill);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
   .profile-stats {
     display: flex;
     gap: 8px;
@@ -7713,6 +7758,7 @@
     const myThreads = threads.filter(t => t.author === name).slice(0, 5);
     const isSelf = name === username;
     const isFollowing = following.has(name);
+    const isBlocked = blockedUsers.has(name);
     document.getElementById("memberProfileBody").innerHTML = `
       <div class="profile-top">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -7728,6 +7774,7 @@
         </div>
         ${isSelf ? "" : `<button class="follow-btn ${isFollowing ? "active" : ""}" id="memberFollowBtn">${isFollowing ? "✓ Following" : "+ Follow"}</button>`}
       </div>
+      ${isSelf ? "" : `<button class="block-btn ${isBlocked ? "active" : ""}" id="memberBlockBtn">${isBlocked ? "🚫 Blocked — tap to unblock" : "🚫 Block this user"}</button>`}
       ${signatureHtml(name)}
       <div class="profile-stats">
         <span>${threadCount} thread${threadCount === 1 ? "" : "s"}</span>
@@ -7759,6 +7806,8 @@
     });
     const followBtn = document.getElementById("memberFollowBtn");
     if (followBtn) followBtn.addEventListener("click", () => toggleFollow(name));
+    const blockBtn = document.getElementById("memberBlockBtn");
+    if (blockBtn) blockBtn.addEventListener("click", () => toggleBlock(name));
   }
 
   document.addEventListener("click", (e) => {
@@ -8140,6 +8189,28 @@
     renderThreads();
   }
 
+  let blockedUsers = loadBlockedUsers();
+
+  function loadBlockedUsers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("looksmax_blocked"));
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (e) {}
+    return new Set();
+  }
+
+  function saveBlockedUsers() {
+    localStorage.setItem("looksmax_blocked", JSON.stringify([...blockedUsers]));
+  }
+
+  function toggleBlock(name) {
+    if (blockedUsers.has(name)) blockedUsers.delete(name);
+    else blockedUsers.add(name);
+    saveBlockedUsers();
+    renderMemberProfile(name);
+    renderThreads();
+  }
+
   /* ---------------- Notifications ---------------- */
   let notifSeen = loadNotifSeen();
 
@@ -8486,6 +8557,18 @@
     const ordered = [...pinned, ...rest];
 
     ordered.forEach(t => {
+      if (blockedUsers.has(t.author)) {
+        const blocked = document.createElement("div");
+        blocked.className = "blocked-thread-card";
+        blocked.dataset.threadId = t.id;
+        blocked.innerHTML = `
+          <span>🚫 Content from a blocked user — @${escapeHtml(t.author)}</span>
+          <button type="button" data-unblock="${escapeHtml(t.author)}">Unblock</button>
+        `;
+        blocked.querySelector("[data-unblock]").addEventListener("click", () => toggleBlock(t.author));
+        list.appendChild(blocked);
+        return;
+      }
       const card = document.createElement("div");
       card.className = "thread-card" + (openThreadId === t.id ? " open" : "") + (t.pinned ? " pinned" : "");
       card.dataset.threadId = t.id;
