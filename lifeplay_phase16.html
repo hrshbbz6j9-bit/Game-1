@@ -9391,6 +9391,67 @@ openActivitiesPanel = function(){
 Object.assign(ACHIEVEMENTS, { talent_show_winner_ach:'Won a school talent show', talent_show_legend_ach:'Won 3+ school talent shows' });
 
 /* ---------------------------------------------------------------------
+   P120 — Street Performer / Busking: a low-barrier, one-button activity
+   available from age 12 (younger than nearly everything else in the
+   game), distinct from the formal Comedy/Podcast/Music careers — this
+   is loose change in an open guitar case, not a job. A rare "discovered
+   by a scout" outcome feeds directly into the existing Music career
+   (state.music), which several other systems already read/write
+   directly (see line ~5036), so bumping it here from a new feature
+   follows an established, safe pattern rather than inventing a new one.
+   --------------------------------------------------------------------- */
+function buskP120(){
+  if(state.age<12){ log(`You're a little young to busk on the street corner.`,'bad'); openBuskingPanelP120(); return; }
+  state.flags.buskingSessions = (state.flags.buskingSessions||0)+1;
+  const roll = Math.random()*100;
+  if(roll<10){
+    state.stats.happiness = clamp(state.stats.happiness-rand(1,3),0,100);
+    log(`A security guard tells you to move along. You pack up your case and find a new corner.`,'neutral');
+  } else if(roll<15){
+    if(!state.music || state.music.stage===0){
+      if(!state.music) state.music = {stage:0, fame:0, songs:0, grammys:0};
+      state.music.stage = Math.max(state.music.stage,1);
+      state.music.fame = clamp(state.music.fame+rand(5,15),0,100);
+      state.stats.happiness = clamp(state.stats.happiness+rand(8,15),0,100);
+      log(`A talent scout stops to listen for a full song, then hands you a business card. This could be the start of something.`,'good');
+      checkAchievement('discovered_ach');
+    } else {
+      const tip = rand(50,150);
+      state.money += tip;
+      state.stats.happiness = clamp(state.stats.happiness+rand(5,10),0,100);
+      log(`A fan recognizes you mid-set and tips generously. Some things never get old.`,'good');
+    }
+  } else {
+    const tip = rand(5,60);
+    state.money += tip;
+    state.flags.buskingEarnings = (state.flags.buskingEarnings||0)+tip;
+    state.stats.happiness = clamp(state.stats.happiness+rand(2,6),0,100);
+    log(`You busk for a couple of hours and pass the hat. Made ${fmtMoney(tip)} in loose change and compliments.`,'good');
+  }
+  checkAchievement('street_performer_ach');
+  if(state.flags.buskingEarnings>=2000) checkAchievement('busking_veteran_ach');
+  openBuskingPanelP120();
+}
+function openBuskingPanelP120(){
+  let html = `<div class="list-item"><div class="li-main"><b>Busking Sessions</b><span>${state.flags.buskingSessions||0} · ${fmtMoney(state.flags.buskingEarnings||0)} earned</span></div></div>`;
+  html += `<p style="color:var(--sub)">Grab an instrument, find a good corner, and see what the crowd thinks.</p>`;
+  html += `<button class="btn btn-block btn-accent" onclick="buskP120()">🎻 Busk on the Street</button>`;
+  openPanel('Street Performing', html);
+}
+const _origOpenActivitiesPanel_P120 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P120();
+  if(state.inPrison || state.age<12) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '🎻 Street Performing' + (state.flags.buskingSessions?(' ('+state.flags.buskingSessions+')'):'');
+  btn.onclick = openBuskingPanelP120;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, { street_performer_ach:'Busked on the street for the first time', discovered_ach:'Got discovered by a talent scout while busking', busking_veteran_ach:'Earned $2,000+ total from busking' });
+
+/* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
    masthead in favor of a slim, clearly-labeled placeholder ad unit at
    the top of the game screen (the exact spot the masthead used to
