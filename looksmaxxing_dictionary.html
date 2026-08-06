@@ -449,7 +449,7 @@
     cursor: pointer;
   }
   .term-top:focus-visible, .thread-top:focus-visible, .totd-card:focus-visible,
-  .premium-pill:focus-visible, .ad-banner-card:focus-visible {
+  .premium-pill:focus-visible, .ad-banner-card:focus-visible, .poll-option:focus-visible {
     outline: 3px solid var(--violet);
     outline-offset: 2px;
   }
@@ -8415,8 +8415,11 @@
         ${poll.options.map((o, idx) => {
           const pct = totalVotes ? Math.round((o.votes / totalVotes) * 100) : 0;
           const isMyVote = hasVoted && myVoteIdx === idx;
+          const optLabel = hasVoted
+            ? `${escapeHtml(o.text)}, ${pct}%${isMyVote ? ", your vote" : ""}`
+            : `Vote for ${escapeHtml(o.text)}`;
           return `
-            <div class="poll-option ${isMyVote ? "voted-for" : ""}" data-poll-vote="${idx}">
+            <div class="poll-option ${isMyVote ? "voted-for" : ""}" data-poll-vote="${idx}" tabindex="0" role="button" aria-label="${optLabel}">
               ${hasVoted ? `<div class="poll-option-fill" style="width:${pct}%;"></div>` : ""}
               <div class="poll-option-row-inner">
                 <span>${escapeHtml(o.text)}${isMyVote ? " ✓" : ""}</span>
@@ -8907,6 +8910,16 @@
       });
       card.querySelectorAll("[data-poll-vote]").forEach(opt => {
         opt.addEventListener("click", (e) => { e.stopPropagation(); voteInPoll(t, parseInt(opt.dataset.pollVote, 10)); });
+        opt.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          e.stopPropagation();
+          const optIdx = parseInt(opt.dataset.pollVote, 10);
+          voteInPoll(t, optIdx);
+          const newCard = document.querySelector(`.thread-card[data-thread-id="${t.id}"]`);
+          const newOpt = newCard && newCard.querySelector(`[data-poll-vote="${optIdx}"]`);
+          if (newOpt) newOpt.focus();
+        });
       });
 
       list.appendChild(card);
