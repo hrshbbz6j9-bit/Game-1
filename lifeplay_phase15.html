@@ -459,6 +459,7 @@ function freshState(){
     podcast:null,
     onlineStore:null,
     lifeCoach:null,
+    salon:null,
   };
 }
 
@@ -9450,6 +9451,100 @@ openActivitiesPanel = function(){
   body.appendChild(btn);
 };
 Object.assign(ACHIEVEMENTS, { street_performer_ach:'Busked on the street for the first time', discovered_ach:'Got discovered by a talent scout while busking', busking_veteran_ach:'Earned $2,000+ total from busking' });
+
+/* ---------------------------------------------------------------------
+   P121 — Barbershop / Salon Ownership: a personal-care service
+   business, distinct from Chef/Restaurant (P90, food service), Online
+   Store (P117, pure e-commerce), and the general Business Empire
+   (acquiring existing companies) — this is a single storefront built
+   client-appointment by client-appointment, with a nice unique touch:
+   a great appointment also polishes the OWNER's own looks stat a
+   little, since running a styling business means staying styled.
+   --------------------------------------------------------------------- */
+const SALON_TYPES_P121 = ['Barbershop','Beauty Salon','Nail Studio'];
+const SALON_TIERS_P121 = [
+  {name:'Corner Shop', minRevenue:0},
+  {name:'Neighborhood Favorite', minRevenue:8000},
+  {name:'Multi-Chair Studio', minRevenue:80000},
+  {name:'Celebrity Stylist Brand', minRevenue:800000},
+];
+function salonTierP121(){
+  let best = SALON_TIERS_P121[0];
+  for(const t of SALON_TIERS_P121){ if(state.salon.revenue>=t.minRevenue) best=t; }
+  return best;
+}
+function openSalonP121(salonType){
+  if(state.age<18){ log(`You need to be at least 18 to open a shop.`,'bad'); openSalonPanelP121(); return; }
+  const cost = 15000;
+  if(state.money<cost){ log(`You need at least ${fmtMoney(cost)} to lease a space and get set up.`,'bad'); openSalonPanelP121(); return; }
+  state.money -= cost;
+  state.salon = {type:salonType, revenue:0, regulars:0, appointments:0};
+  log(`You signed the lease on a small space and opened your ${salonType.toLowerCase()}.`,'good');
+  checkAchievement('salon_owner_ach');
+  openSalonPanelP121();
+}
+function takeAppointmentsP121(){
+  if(!state.salon) return;
+  const tier = salonTierP121();
+  state.salon.appointments++;
+  if(chance(12)){
+    state.salon.regulars++;
+    const revenue = rand(200,900);
+    state.money += revenue;
+    state.salon.revenue += revenue;
+    state.stats.looks = clamp(state.stats.looks+1,0,100);
+    state.stats.happiness = clamp(state.stats.happiness+rand(4,9),0,100);
+    log(`A client leaves thrilled with their look and books a standing monthly appointment. New regular, plus ${fmtMoney(revenue)}.`,'good');
+    checkAchievement('regular_clientele_ach');
+    if(state.salon.regulars>=25) checkAchievement('booked_solid_ach');
+  } else {
+    const revenue = rand(40,180) * Math.max(1, Math.round(state.salon.regulars/5));
+    state.money += revenue;
+    state.salon.revenue += revenue;
+    if(chance(30)) state.stats.looks = clamp(state.stats.looks+1,0,100);
+    log(`A full day of walk-ins and regulars. Revenue: ${fmtMoney(revenue)}.`,'good');
+  }
+  const newTier = salonTierP121();
+  if(!state.salon.currentTier || newTier.name!==state.salon.currentTier){
+    state.salon.currentTier = newTier.name;
+    if(newTier.minRevenue>0){
+      log(`Your ${state.salon.type.toLowerCase()} has grown into a ${newTier.name}.`,'good');
+      if(newTier.name==='Celebrity Stylist Brand') checkAchievement('celebrity_stylist_ach');
+    }
+  }
+  openSalonPanelP121();
+}
+function openSalonPanelP121(){
+  let html = '';
+  if(state.salon){
+    const tier = salonTierP121();
+    html += `<div class="list-item"><div class="li-main"><b>${tier.name} — ${state.salon.type}</b><span>${fmtMoney(state.salon.revenue)} lifetime · ${state.salon.regulars} regulars</span></div></div>`;
+    html += `<button class="btn btn-block btn-accent" onclick="takeAppointmentsP121()">✂️ Take Appointments</button>`;
+  } else {
+    html += `<p style="color:var(--sub)">Lease a space and open your shop for ${fmtMoney(15000)}.</p>`;
+    SALON_TYPES_P121.forEach(t=>{
+      html += `<button class="btn btn-block" onclick='openSalonP121(${JSON.stringify(t)})'>Open a ${t}</button>`;
+    });
+  }
+  openPanel('Barbershop & Salon', html);
+}
+const _origOpenActivitiesPanel_P121 = openActivitiesPanel;
+openActivitiesPanel = function(){
+  _origOpenActivitiesPanel_P121();
+  if(state.inPrison || state.age<18) return;
+  const body = $('panel-body');
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-block';
+  btn.textContent = '✂️ Barbershop & Salon' + (state.salon?(' ('+fmtMoney(state.salon.revenue)+')'):'');
+  btn.onclick = openSalonPanelP121;
+  body.appendChild(btn);
+};
+Object.assign(ACHIEVEMENTS, {
+  salon_owner_ach:'Opened your own barbershop or salon',
+  regular_clientele_ach:'Booked your first regular client',
+  booked_solid_ach:'Built a client base of 25+ regulars',
+  celebrity_stylist_ach:'Grew your shop into a Celebrity Stylist Brand',
+});
 
 /* ---------------------------------------------------------------------
    P106 — Ad banner: the visual identity pass retired the newspaper
