@@ -2892,6 +2892,8 @@
     <label class="form-label">Signature</label>
     <input type="text" class="form-input" id="profileSignatureInput" placeholder="e.g. 8 months mewing | trust the process" maxlength="60">
     <button class="cta-btn" id="profileSave">Save Profile</button>
+    <label class="form-label" style="margin-top:20px;">Your Data</label>
+    <button class="photo-remove-btn" id="exportDataBtn" style="width:100%;">⬇ Export My Data (JSON)</button>
     <label class="form-label" style="margin-top:20px;">Danger Zone</label>
     <button class="photo-remove-btn" id="resetDataBtn" style="width:100%;">Reset All Data on This Device</button>
     <div class="delete-confirm-row" id="resetDataConfirmRow" style="display:none;">
@@ -7925,6 +7927,26 @@
     renderProfileCard();
     renderThreads();
     showToast("Profile updated.");
+  });
+
+  document.getElementById("exportDataBtn").addEventListener("click", () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key.startsWith("looksmax_")) continue;
+      try { data[key] = JSON.parse(localStorage.getItem(key)); }
+      catch (e) { data[key] = localStorage.getItem(key); }
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `looksmaxxing-dictionary-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Data exported.");
   });
 
   document.getElementById("resetDataBtn").addEventListener("click", () => {
