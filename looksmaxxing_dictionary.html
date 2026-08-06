@@ -8638,6 +8638,18 @@
             const rKey = `${t.id}:${idx}`;
             const rMode = replyEditMode[rKey];
             const isOwnReply = r.author === username;
+            if (blockedUsers.has(r.author)) {
+              return `
+                <div class="reply-item">
+                  <div class="reply-item-body">
+                    <div class="delete-confirm-row">
+                      <span>🚫 Reply from a blocked user — @${escapeHtml(r.author)}</span>
+                      <button class="delete-cancel-btn" data-unblock-reply="${escapeHtml(r.author)}">Unblock</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
             if (rMode === "edit") {
               return `
                 <div class="reply-item">
@@ -8859,6 +8871,9 @@
           const r = t.replies[parseInt(btn.dataset.quoteIdx, 10)];
           setQuote(t.id, r.author, r.text);
         });
+      });
+      card.querySelectorAll("[data-unblock-reply]").forEach(btn => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); toggleBlock(btn.dataset.unblockReply); });
       });
       const cancelQuoteBtn = card.querySelector("[data-cancel-quote]");
       if (cancelQuoteBtn) {
