@@ -1,0 +1,7 @@
+[
+  { "name": "House Red", "region": "Local Vineyard", "tier": 1 },
+  { "name": "Reserve Cabernet", "region": "Napa Valley", "tier": 2 },
+  { "name": "Estate Chardonnay", "region": "Burgundy", "tier": 2 },
+  { "name": "Vintage Barolo", "region": "Piedmont", "tier": 3 },
+  { "name": "Rare Grand Cru", "region": "Bordeaux", "tier": 4 }
+]

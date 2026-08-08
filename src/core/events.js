@@ -27,3 +27,11 @@ function initDelegatedEvents(containerIds) {
     if (el) el.addEventListener('click', dispatchDelegatedClick);
   });
 }
+
+/* Containers whose innerHTML gets replaced by dynamically-built feature
+   markup (panels, modals, the log). One listener each, attached once,
+   here — a new feature file should never call initDelegatedEvents()
+   itself, just registerAction() for its own data-action names. */
+window.addEventListener('DOMContentLoaded', () => {
+  initDelegatedEvents(['panel-body', 'modal-card', 'log']);
+});
