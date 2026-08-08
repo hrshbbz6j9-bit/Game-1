@@ -1,0 +1,11 @@
+{
+  "name": "lifeplay",
+  "private": true,
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}

@@ -2121,10 +2121,10 @@ Object.assign(ACHIEVEMENTS, {
    API key + model are stored in this browser's localStorage only, never
    in game state (so they aren't part of any save/export of a life).
    --------------------------------------------------------------------- */
-function getApiKeyP15(){ return localStorage.getItem('lifeplay_api_key')||''; }
-function setApiKeyP15(k){ localStorage.setItem('lifeplay_api_key', k); }
-function getApiModelP15(){ return localStorage.getItem('lifeplay_api_model')||'claude-sonnet-4-5-20250929'; }
-function setApiModelP15(m){ localStorage.setItem('lifeplay_api_model', m); }
+function getApiKeyP15(){ return loadStorage('aiApiKey'); }
+function setApiKeyP15(k){ saveStorage('aiApiKey', k); }
+function getApiModelP15(){ return loadStorage('aiApiModel'); }
+function setApiModelP15(m){ saveStorage('aiApiModel', m); }
 
 function escapeHtmlP15(str){
   return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -7400,13 +7400,11 @@ openProfilePanel = function(){
    the collection survives "Begin a New Volume" and even closing the
    tab. Undiscovered endings show only a lock — no title, no hint.
    --------------------------------------------------------------------- */
-const ENDINGS_STORAGE_KEY_P89 = 'lifeplay_endings_discovered';
 function getDiscoveredEndingsP89(){
-  try{ return new Set(JSON.parse(localStorage.getItem(ENDINGS_STORAGE_KEY_P89)||'[]')); }
-  catch(e){ return new Set(); }
+  return new Set(loadStorage('discoveredEndings'));
 }
 function saveDiscoveredEndingsP89(set){
-  try{ localStorage.setItem(ENDINGS_STORAGE_KEY_P89, JSON.stringify([...set])); }catch(e){}
+  saveStorage('discoveredEndings', [...set]);
 }
 const _origCheckSecretEndings_P89 = checkSecretEndings;
 checkSecretEndings = function(){
@@ -9638,6 +9636,80 @@ window.addEventListener('DOMContentLoaded', ()=>{
   rotateAdBannerP106();
   setInterval(rotateAdBannerP106, 9000);
 });
+
+/* ==========================================================================
+   storage.js — the ONLY file in this codebase that touches localStorage
+   directly. Every persisted value has one entry in STORAGE_SCHEMA and is
+   read/written through loadStorage()/saveStorage() below. Adding a new
+   persisted field means adding one key here — never a new getX/setX pair
+   reaching into localStorage on its own (see rule #10: that pattern is
+   exactly how the pre-refactor codebase grew unmanageable).
+
+   Concatenated as plain global-scope functions (no import/export) since
+   the shipped artifact is one <script> tag with no module loader — module
+   boundaries here are a source-organization/code-review convention, not
+   something enforced by a bundler (Option B: no build step).
+   ========================================================================== */
+
+const STORAGE_SCHEMA = {
+  aiApiKey: { key: 'lifeplay_api_key', type: 'string', default: '' },
+  aiApiModel: { key: 'lifeplay_api_model', type: 'string', default: 'claude-sonnet-4-5-20250929' },
+  discoveredEndings: { key: 'lifeplay_endings_discovered', type: 'json', default: [] },
+};
+
+function loadStorage(name) {
+  const entry = STORAGE_SCHEMA[name];
+  if (!entry) return undefined;
+  try {
+    const raw = localStorage.getItem(entry.key);
+    if (raw == null) return entry.default;
+    return entry.type === 'json' ? JSON.parse(raw) : raw;
+  } catch (e) {
+    return entry.default;
+  }
+}
+
+function saveStorage(name, value) {
+  const entry = STORAGE_SCHEMA[name];
+  if (!entry) return;
+  try {
+    localStorage.setItem(entry.key, entry.type === 'json' ? JSON.stringify(value) : value);
+  } catch (e) {
+    // storage unavailable (private browsing, quota, etc.) — fail silently, same as prior call sites
+  }
+}
+
+
+/* ==========================================================================
+   events.js — delegated event wiring. Render functions return HTML
+   strings and never call addEventListener themselves (rule #3). Instead,
+   markup carries data-action (+ optional data-arg) attributes, and this
+   file attaches exactly one click listener per container, once, at init.
+   New features register their handlers with registerAction() rather than
+   wiring their own listeners.
+   ========================================================================== */
+
+const ACTION_HANDLERS = {};
+
+function registerAction(name, handler) {
+  ACTION_HANDLERS[name] = handler;
+}
+
+function dispatchDelegatedClick(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const handler = ACTION_HANDLERS[el.dataset.action];
+  if (!handler) return;
+  handler(el, e);
+}
+
+function initDelegatedEvents(containerIds) {
+  containerIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', dispatchDelegatedClick);
+  });
+}
+
 /* =========================================================================
    PHASE 16 ADDITIONS — injected below existing code per project convention.
    Existing functions are extended via the const _orig = fn; fn = function(){...}
