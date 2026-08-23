@@ -6,72 +6,87 @@ community forum + course marketplace). No backend; all state lives in
 `localStorage`. Deployed as static files (GitHub Pages), entry point
 `index.html` → `looksmaxxing_dictionary.html`.
 
-`[DECISION NEEDED]` `lifeplay_phase15.html` / `lifeplay_phase16.html` are a
-different, unrelated project (a life-sim game) that happens to live in this
-repo. Until resolved: do not add to them, do not reference them from the
-dictionary app, do not delete them without the repo owner's say-so. Target:
-moved to their own repo.
+`lifeplay_phase15.html` / `lifeplay_phase16.html` were an unrelated life-sim
+project that used to share this repo — removed. This repo now contains only
+the Looksmaxxing Dictionary.
+
+## Two decisions this file used to flag as open — now resolved
+
+1. **No build step.** Decided: stay single-file, enforce boundaries by
+   convention + review, not tooling. `looksmaxxing_dictionary.html` continues
+   to be committed and deployed as-is — no Vite, no bundler, no separate
+   build output. This is a real tradeoff, not a free win: it means weaker
+   guarantees than real `import`/`export` module boundaries would give.
+   Section discipline (below) is how we compensate.
+2. **LifePlay files: deleted**, not migrated elsewhere. Gone from this repo
+   as of this decision.
 
 ## Current state vs. target state — be honest about which one you're in
 
-As of this file's creation, `looksmaxxing_dictionary.html` is still a single
-~9,700-line file (HTML + one `<style>` block + one script IIFE), including a
-~3,000-line hardcoded dictionary-content array. That has NOT been fixed yet.
+`looksmaxxing_dictionary.html` is still a single ~9,700-line file (HTML + one
+`<style>` block + one script IIFE), including a ~3,000-line hardcoded
+dictionary-content array. That has NOT been fixed yet — the rules below
+describe the target shape for that same single file, not a promise that it
+already looks like this.
+
 What *has* shipped: a real, git-tracked test suite (`/tests`, run via
 `npm test`) — previously every regression check lived only in an ephemeral
-session scratchpad and left no trace in the repo. That gap is closed; the
-file-structure gap is still open pending the decision below.
+session scratchpad and left no trace in the repo. That gap is closed.
 
-`[DECISION NEEDED]` Whether to introduce a build step (Vite, vanilla JS, no
-framework) to enable real `import`/`export` module boundaries, bundled back
-to static output for deploy — vs. staying single-file and enforcing
-boundaries by convention + review only. Recommended: take the build step —
-9,700 lines in one shared closure is past where discipline alone holds the
-line. But it changes the deploy model (build output instead of committing
-raw HTML directly), so it's a call for the repo owner, not an assumption to
-bake into tooling silently.
+## Target shape (still one file — organized by discipline, not tooling)
 
-Until that's decided, treat every rule below marked "(module)" as aspirational
-for the eventual split, and every rule NOT marked that way as binding right now,
-inside the current single file.
-
-## Target architecture
+Since there's no build step, "module" isn't literal here — it means a
+clearly-delimited, single-responsibility region of the same file, in a fixed
+order, each held to the same size/purity rules a real file would have:
 
 ```
-/data/                    static JSON content (terms.json, courses-seed.json)     (module)
-/src/state/storage.js     the ONLY module allowed to call localStorage directly   (module)
-/src/state/*.js           one file per state domain (favorites, forum, courses,
-                           moderation, profile) — imports storage.js, exports
-                           typed get/set + a single `toggleX`-style helper factory (module)
-/src/render/*.js          one file per view domain — pure "data in, HTML string
-                           out" functions. No DOM writes, no event listeners.      (module)
-/src/dom/*.js             DOM writes + event delegation. Listeners attached ONCE
-                           via delegation on a stable ancestor, never re-attached
-                           per re-render.                                          (module)
-/src/features/*.js        self-contained features (scanner, achievements,
-                           notifications, paywall)                                 (module)
-/src/main.js              composition root — the only file allowed to import
-                           from every layer above                                  (module)
-/src/styles/               tokens.css + one file per view domain, mirroring /render (module)
-/tests/                   Playwright test scripts + fixtures. Real, committed,
-                           run via `npm test`.                                     ✅ done
-/tests/README.md          how to run tests and how to write a new one.             ✅ done
-index.html                entry point, deploys as-is (or as build output, if
-                           the build-step decision above lands on "yes")
+looksmaxxing_dictionary.html
+  <style>                one stylesheet, organized by view domain (top to
+                          bottom: tokens → base → dictionary → forum →
+                          courses → modals), not a flat unordered dump
+  <script> (one IIFE)
+    STATE                one shared getState(key, fallback) / setState(key,
+                          value) pair, used by every feature — not 17+ hand-
+                          rolled loadX()/saveX() copies. Nothing outside this
+                          region touches `localStorage` directly.
+    RENDER                "data in, HTML string out" functions. No DOM
+                          writes, no addEventListener calls in this region.
+    DOM / EVENTS          DOM writes + event delegation. Listeners attached
+                          ONCE per container via delegation, never
+                          re-attached on re-render.
+    FEATURES              self-contained features (scanner, achievements,
+                          notifications, paywall) — each a clearly-banked
+                          section, not interleaved with unrelated ones.
+    INIT                  composition root — the only region allowed to call
+                          across all the others above.
+data/terms-data.js         dictionary content ONLY: `const TERMS = [...]`,
+                          nothing else. Loaded via a plain <script> tag
+                          before the main script, same as today's markup —
+                          not `fetch()`/JSON, because fetching a local file
+                          from a `file://` page (how this app is tested) hits
+                          a browser CORS wall with no server in front of it.
+                          A classic <script src> has no such restriction and
+                          needs no build tooling. This is the one place a
+                          second file is worth it even without a build step.
+tests/                    Playwright test scripts + fixtures. Real,
+                          committed, run via `npm test`.                     ✅ done
+tests/README.md           how to run tests and how to write a new one.       ✅ done
+index.html                entry point, deploys as-is
 ```
 
-## Hard rules (binding today, single-file or not)
+## Hard rules
 
-1. **No new state without going through the shared persistence pattern.**
-   Today that means: before writing a new `loadX()`/`saveX()` pair, search for
-   an existing one shaped like what you need — this codebase has 17+ near-
-   identical `try { JSON.parse(localStorage.getItem(...)) } catch {}` pairs
-   because that check didn't happen. Once `src/state/storage.js` exists
-   (module), this becomes: never call `localStorage` outside that file.
-2. **No content in `.js`.** Dictionary terms, course seed data, and similar
-   static content belong in JSON, never as JS literals inside a script file —
-   this is the single highest-value cleanup available (~3,000 lines) and
-   doesn't require the build-step decision to start.
+1. **No new state without going through the shared `getState`/`setState`
+   pair.** Before writing a new `loadX()`/`saveX()` pair, search for the
+   shared helper first — this codebase has 17+ near-identical
+   `try { JSON.parse(localStorage.getItem(...)) } catch {}` pairs because
+   that search didn't happen. Consolidating them into one helper is the
+   single highest-value cleanup available that doesn't touch rendering at all.
+2. **No content mixed into the application logic.** Dictionary terms, course
+   seed data, and similar static content live in their own file
+   (`data/terms-data.js`, loaded via `<script src>`), never as a literal
+   sitting in the middle of the app's script. ~3,000 lines move out of the
+   logic file for free, no build step required.
 3. **A function that returns/builds an HTML string must not call
    `addEventListener`.** Rendering and event-wiring are different
    responsibilities; today's render functions (`renderThreads()` and similar)
@@ -83,22 +98,21 @@ index.html                entry point, deploys as-is (or as build output, if
 5. **No inline `style=""` in markup or template strings**, except values
    genuinely computed at runtime (a dynamic gradient, a percentage width).
    Anything static belongs in the stylesheet.
-6. **File size ceiling: 400 lines.** Crossing it is a signal to split by
-   responsibility, not a target to write toward. (The current monolith
-   predates this rule — it's the reason the rule exists, not an exception to it.)
+6. **Region size ceiling: ~400 lines per named section** (STATE, RENDER,
+   DOM/EVENTS, per-feature blocks under FEATURES). Crossing it is a signal to
+   split the section further (e.g. one feature's state helpers get their own
+   clearly-banked sub-region), not a target to write toward.
 7. **Function size ceiling: ~40 lines.** A render function that also filters,
    sorts, and wires events is three functions wearing a trenchcoat.
 8. **Every new stateful feature ships with a test file under `/tests`,
    committed in the same PR/commit, and `npm test` passing before you call it
-   done.** "I ran the tests locally" is not evidence unless it's in the repo —
-   this was true and unenforced before; now it's enforced by the fact the
-   suite actually lives here.
+   done.** "I ran the tests locally" is not evidence unless it's in the repo.
 9. **One feature or one refactor step per commit.** Don't mix structural
    refactoring with new functionality in the same commit — makes both harder
    to review and impossible to bisect.
 10. **Before adding a new `loadX`/`saveX`-shaped pair, stop and search first.**
-    That exact pattern, copy-pasted, is how the pre-refactor state grew
-    unmanageable. This is rule 1 again because it's the rule most likely to
+    That exact pattern, copy-pasted, is how this codebase grew unmanageable
+    the first time. This is rule 1 again because it's the rule most likely to
     get skipped under deadline pressure — it's the one that matters most.
 
 ## Code style
@@ -114,10 +128,10 @@ index.html                entry point, deploys as-is (or as build output, if
 - Check whether the state key, render pattern, or helper you're about to add
   already exists. Duplicated near-identical helpers are this codebase's
   single biggest historical problem — search first, every time.
-- If a change would push a file over the 400-line ceiling, split it as part
+- If a change would push a section over its size ceiling, split it as part
   of the same change rather than filing a "refactor later" note. Later
   doesn't come on its own; it comes when someone schedules it.
 - If you're adding a feature that touches `localStorage`, DOM rendering, and
   event wiring, write it as three things even inside the current single file
-  (three clearly separated functions/sections), not one function that does
-  all three — so the eventual module split is a copy-paste, not a rewrite.
+  (three clearly separated functions in their respective STATE/RENDER/DOM
+  regions), not one function that does all three.
